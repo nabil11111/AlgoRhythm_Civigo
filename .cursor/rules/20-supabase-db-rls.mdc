@@ -1,0 +1,19 @@
+---
+alwaysApply: false
+description: Supabase schema, RLS, and query standards
+---
+
+Write SQL migrations for schema changes; include rollback notes at top of the migration file.
+
+RLS policies:
+
+citizens: only their rows (user_id match)
+
+officers: restricted by department_id
+
+admins: full access
+
+Storage: use signed URLs; enforce MIME/size validation before upload.
+
+Index frequently filtered columns (service_id, start_time) and use efficient range queries; prefer RPC/functions or scoped selects from server.
+

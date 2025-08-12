@@ -1,0 +1,59 @@
+---
+globs: apps/civigo-gov/**
+alwaysApply: false
+---
+Civigo-Gov: Project Overview (Officer/Admin Web App)
+Civigo-Gov is a desktop-first Next.js application for government officers and administrators to manage citizen appointments, documents, and operational workflows across departments in Civigo’s unified services platform, secured end-to-end with Supabase Auth and Row-Level Security (RLS), and integrated with Resend for reliable email notifications using server-side actions in the App Router.
+
+Purpose and Goals
+Provide officers with fast, reliable tools to view, filter, and act on appointments, review documents, and communicate outcomes to citizens.
+
+Enforce strong access controls: officers only access department-scoped data; admins can manage global configurations and users via Supabase RLS and server-side enforcement.
+
+Automate notifications for confirmations and reminders via server actions and scheduled jobs (Supabase pg_cron + pg_net calling Edge Functions) to reduce no-shows and improve throughput.
+
+Architecture (High-Level)
+Frontend: Next.js (App Router) with server components by default; client components only for interactivity; Tailwind for UI.
+
+Auth & Sessions: Supabase Auth with @supabase/ssr for cookie-based SSR sessions; client uses anon key, server uses secure context; legacy auth-helpers are deprecated.
+
+Data: Supabase Postgres exposed through PostgREST; tables include departments, services, slots, appointments, documents, profiles, audit_log, notification_log.
+
+Storage: Supabase Storage with signed URLs for officer document previews to maintain least privilege and short-lived access.
+
+Email: Resend via Next.js Server Actions/Route Handlers for confirmations, corrections, and status updates; API key lives server-side only.
+
+Scheduling: pg_cron + pg_net to invoke an Edge Function every N minutes for T-24h reminders (respects user prefs) with idempotency tracked in notification_log.
+
+Core Features
+Authentication, Roles, and RBAC
+
+Officer and admin sign-in via Supabase Auth; sessions stored in cookies using @supabase/ssr utilities.
+
+Middleware and server actions enforce role and department scope; never expose service role keys to the client.
+
+Appointment Operations
+
+Appointments list with filters: date ranges, status (Booked, Needs Docs, Confirmed, Completed, No-Show), service, branch/department.
+
+Appointment detail: citizen info (minimum necessary), slot details, audit trail, and document previews via signed URLs.
+
+Actions: request correction (email citizen), confirm, mark attended/no-show, reschedule/cancel per policy; all mutations as server actions with validation and audit logging.
+
+Document Review
+
+View uploaded documents (PNG/JPG/PDF) through signed URLs; enforce MIME and size policies server-side; log access for audit.
+
+Request re-upload or additional documents; send templated messages via Resend Server Actions.
+
+Notifications and Reminders
+
+Immediate emails for status transitions or correction requests from server actions using Resend; keep RESEND_API_KEY on server only.
+
+Scheduled T-24h reminders via Edge Function invoked by pg_cron + pg_net; use Vault or env for tokens; monitor cron jobs and function logs; idempotency via notification_log.
+
+Admin Tools
+
+Manage departments, services, branches, slots, and officer accounts; bulk slot creation for high-demand services; guard with admin role checks.
+
+Operational analytics: daily volumes, no-show rate, capacity utilization, and turnaround times (aggregate queries with indexes on service_id/start_time).
