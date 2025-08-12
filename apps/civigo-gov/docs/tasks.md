@@ -28,12 +28,12 @@
 ## Data fetching (SSR, RLS-safe; no service-role)
 
 - [x] Helper requireOfficer() in src/utils/supabase/server.ts (or auth-guard util).
-- [ ] Query officer assignments (active) for current user.
+- [x] Query officer assignments (active) for current user.
 - [ ] Query paginated appointments (default: today → +7d), with service and citizen fields needed for table.
 
 ## UI/UX (shadcn + sonner)
 
-- [ ] Topbar with active department badge and logout.
+- [x] Topbar with active department badge and logout.
 - [ ] Table with columns: reference_code, citizen (masked), service, appointment_at, status.
 - [ ] Empty-state card.
 
@@ -63,3 +63,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer): add requireOfficer() SSR guard helper
 - feat(gov-officer): scaffold officer route group (layout, page, actions, components) with SSR guard shell
 - fix(gov-guards): redirect officers hitting /admin to /officer; unauthenticated to /sign-in
+- feat(gov-officer): show active department in officer topbar; fetch assignments SSR (RLS)
