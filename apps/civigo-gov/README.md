@@ -5,7 +5,7 @@
 - Guard lives at `src/app/(protected)/admin/layout.tsx`.
 - Uses Supabase SSR (`@supabase/ssr`) to read session via cookies.
 - Loads `public.profiles` for the current user and requires `role === 'admin'`.
-- Redirects unauthenticated users to `/(auth)/sign-in` and non-admins to `/`.
+- Redirects unauthenticated users to `/(auth)/sign-in` and officers to `/officer`.
 
 ## Required Environment Variables
 
@@ -33,6 +33,22 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 - `/(protected)/admin` – dashboard placeholder
 - `/(protected)/admin/departments` – CRUD for departments
 - `/(protected)/admin/officers` – list officers and manage department assignments
+
+## Officer Dashboard
+
+- Guard lives at `src/app/(protected)/officer/layout.tsx`.
+- Uses Supabase SSR (`@supabase/ssr`) via `getProfile()` to require `role === 'officer'`.
+- Redirects unauthenticated users to `/(auth)/sign-in` and admins to `/admin`.
+- Landing route: `/(protected)/officer` (server component) shows a paginated 7‑day window of appointments (RLS-scoped).
+- Topbar shows the officer's active department (based on `public.officer_assignments`).
+- Client interactivity uses shadcn/ui and sonner; Toaster is mounted in root layout.
+
+### Redirect behavior (shared sign-in)
+
+- Shared sign-in at `/(auth)/sign-in` fetches `public.profiles.role` after session:
+  - `admin` → `/admin`
+  - `officer` → `/officer`
+  - other → toast error and stay on page
 
 ## Server Actions
 
