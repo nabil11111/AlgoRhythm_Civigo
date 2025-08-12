@@ -30,6 +30,7 @@ export async function createOfficerProfile(
           "Configure SUPABASE_SERVICE_ROLE_KEY on the server to create officer profiles by email.",
       };
     }
+    // Resolve the auth user by listing and matching email (Admin API v2 has getUserById, not by email)
     const list = await sr.auth.admin.listUsers({ page: 1, perPage: 200 });
     if (list.error)
       return {
@@ -37,27 +38,58 @@ export async function createOfficerProfile(
         error: "auth_admin_error",
         message: list.error.message,
       };
-    const target = list.data.users.find(
-      (u) => u.email?.toLowerCase() === parsed.email.toLowerCase()
-    );
+    let target =
+      list.data.users.find(
+        (u) => u.email?.toLowerCase() === parsed.email.toLowerCase()
+      ) ?? null;
     if (!target) {
-      return {
-        ok: false,
-        error: "auth_user_not_found",
-        message:
-          "No auth user found for this email. Create the user in Supabase Auth first.",
-      };
+      // Create auth user on the fly
+      const created = await sr.auth.admin.createUser({
+        email: parsed.email,
+        email_confirm: true,
+        user_metadata: { full_name: parsed.full_name },
+      });
+      if (created.error)
+        return {
+          ok: false,
+          error: "auth_create_error",
+          message: created.error.message,
+        };
+      target = created.data.user ?? null;
+      if (!target)
+        return {
+          ok: false,
+          error: "auth_create_error",
+          message: "User creation returned no user",
+        };
+      // Optional: set app role metadata for future JWTs
+      await sr.auth.admin.updateUserById(target.id, {
+        app_metadata: { role: "officer" },
+      });
     }
-    // Prefer service-role client for privileged insert to bypass RLS safely on the server
+    // Prefer service-role client for privileged insert to bypass RLS safely on the server.
     const client = sr ?? (await getServerClient());
+    // If a profiles row already exists (by email), return it to avoid unique violations
+    const existing = await client
+      .from("profiles")
+      .select("id")
+      .eq("email", parsed.email)
+      .maybeSingle();
+    if (existing.data?.id) {
+      revalidatePath("/admin/officers");
+      return { ok: true, data: { id: existing.data.id } };
+    }
     const { data, error } = await client
       .from("profiles")
-      .insert({
-        id: target.id,
-        full_name: parsed.full_name,
-        email: parsed.email,
-        role: "officer",
-      })
+      .upsert(
+        {
+          id: target.id,
+          full_name: parsed.full_name,
+          email: parsed.email,
+          role: "officer",
+        },
+        { onConflict: "id" }
+      )
       .select("id")
       .single();
     if (error) return { ok: false, error: "db_error", message: error.message };

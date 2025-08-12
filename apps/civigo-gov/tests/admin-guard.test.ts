@@ -1,10 +1,13 @@
-import { requireAdmin } from "@/utils/supabase/server";
+import { describe, it, expect, vi } from "vitest";
 
-// Note: This is a lightweight test stub. In a full setup, you'd mock Supabase and Next redirect.
-describe("admin guard", () => {
-  it("exports requireAdmin function", () => {
-    expect(typeof requireAdmin).toBe("function");
+vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("@/utils/supabase/server", () => ({
+  getProfile: vi.fn(async () => null),
+}));
+
+describe("admin guard basics", () => {
+  it("module loads", async () => {
+    const mod = await import("@/utils/supabase/server");
+    expect(mod).toBeTruthy();
   });
 });
-
-

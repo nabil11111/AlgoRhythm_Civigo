@@ -42,8 +42,21 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 ## UI
 
 - Desktop-first layout with Tailwind.
-- shadcn/ui components recommended (Dialog/Form/Table/etc.). For MVP, basic inputs/buttons are used; can be upgraded easily.
+- shadcn/ui components used for Dialog/Form/Table/etc.
+
+### UI components (shadcn/ui)
+
+- Generated components under `src/components/ui`:
+  `button, input, label, select, dialog, table, form, badge, switch, toast, toaster, dropdown-menu, card`.
+- Toaster is mounted in `src/app/layout.tsx`.
+
+## Pagination
+
+- Defaults: `page=1`, `pageSize=20`, max page size `50`.
+- Helpers in `src/lib/pagination.ts` and pager controls on `/admin/departments` and `/admin/officers`.
 
 ## Tests
 
-- `tests/admin-guard.test.ts` – ensures guard helper is present; expand to full integration with Next test runner later.
+- Example tests under `apps/civigo-gov/tests/*` using Vitest with simple module mocks.
+- Suggested dev deps: `vitest @testing-library/react @testing-library/jest-dom jsdom whatwg-fetch`.
+- Run with: `npx vitest`.
