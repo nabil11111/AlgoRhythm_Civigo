@@ -44,13 +44,13 @@
 
 ## Tests
 
-- [ ] tests/officer-guard.test.ts (unauthenticated → sign-in; admin → /admin; officer → OK).
-- [ ] tests/sign-in-redirect.test.ts (role-based redirect).
+- [x] tests/officer-guard.test.ts (unauthenticated → sign-in; admin → /admin; officer → OK).
+- [x] tests/sign-in-redirect.test.ts (role-based redirect).
 - [ ] tests/pagination.test.ts (optional).
 
 ## Docs
 
-- [ ] Update apps/civigo-gov/README.md with Officer Dashboard section and redirects.
+- [x] Update apps/civigo-gov/README.md with Officer Dashboard section and redirects.
 
 ## Important operating rule
 
@@ -65,3 +65,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - fix(gov-guards): redirect officers hitting /admin to /officer; unauthenticated to /sign-in
 - feat(gov-officer): show active department in officer topbar; fetch assignments SSR (RLS)
 - feat(gov-officer): SSR-load paginated appointments (7d window) for officer landing; render shadcn table
+- test(gov-officer): add officer guard and sign-in module tests; docs: add Officer Dashboard section and redirects
