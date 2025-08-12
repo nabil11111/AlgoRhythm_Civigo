@@ -33,11 +33,16 @@ export const OfficerResetPasswordSchema = z.object({
   newPassword: z.string().min(8),
 });
 
+export const OfficerDepartmentParam = z.object({
+  deptId: z.string().uuid(),
+});
+
 export type DepartmentCreateInput = z.infer<typeof DepartmentCreateSchema>;
 export type DepartmentUpdateInput = z.infer<typeof DepartmentUpdateSchema>;
 export type OfficerCreateInput = z.infer<typeof OfficerCreateSchema>;
 export type OfficerAssignInput = z.infer<typeof OfficerAssignSchema>;
 export type OfficerToggleInput = z.infer<typeof OfficerToggleSchema>;
 export type OfficerResetPasswordInput = z.infer<typeof OfficerResetPasswordSchema>;
+export type OfficerDepartmentParamInput = z.infer<typeof OfficerDepartmentParam>;
 
 

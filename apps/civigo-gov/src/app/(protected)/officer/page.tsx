@@ -1,51 +1,28 @@
+import { redirect } from "next/navigation";
 import { getServerClient } from "@/utils/supabase/server";
-import AppointmentsTable from "./_components/AppointmentsTable";
-import { parsePagination, type Pagination } from "@/lib/pagination";
+import DepartmentsList, { type DepartmentItem } from "./_components/DepartmentsList";
+import { officerStrings } from "@/lib/strings/officer-dashboard";
 
-type PageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
-
-export default async function OfficerHome({ searchParams }: PageProps) {
-  const pagination = parsePagination({
-    page: asString(searchParams?.page),
-    pageSize: asString(searchParams?.pageSize),
-  });
-
+export default async function OfficerHome() {
   const supabase = await getServerClient();
-  const now = new Date();
-  const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const fromIso = now.toISOString();
-  const toIso = sevenDays.toISOString();
+  const { data: rows } = await supabase
+    .from("officer_assignments")
+    .select("department_id, departments:department_id(id, code, name)")
+    .eq("active", true);
 
-  const { data: appts } = await supabase
-    .from("appointments")
-    .select("id, reference_code, appointment_at, status, service:services(name)")
-    .gte("appointment_at", fromIso)
-    .lt("appointment_at", toIso)
-    .order("appointment_at", { ascending: true })
-    .range(pagination.offset, pagination.offset + pagination.pageSize - 1);
+  const departments: DepartmentItem[] = (rows ?? [])
+    .map((r: any) => r.departments)
+    .filter(Boolean)
+    .map((d: any) => ({ id: d.id as string, code: d.code as string, name: d.name as string }));
 
-  const rows = (appts ?? []).map((a: any) => ({
-    id: a.id as string,
-    reference_code: a.reference_code as string,
-    citizen_name: null as string | null, // Hidden by RLS; do not query profiles
-    service_name: (a.service?.name as string) ?? "—",
-    appointment_at: a.appointment_at as string,
-    status: a.status as string,
-  }));
+  if (departments.length === 1) {
+    redirect(`/officer/departments/${departments[0].id}`);
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Officer</h1>
-      <AppointmentsTable rows={rows} />
+      <h1 className="text-2xl font-semibold">{officerStrings.landingTitle}</h1>
+      <DepartmentsList departments={departments} />
     </div>
   );
 }
-
-function asString(value: string | string[] | undefined): string | undefined {
-  if (Array.isArray(value)) return value[0];
-  return value;
-}
-
-

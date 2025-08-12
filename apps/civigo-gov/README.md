@@ -43,6 +43,13 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 - Topbar shows the officer's active department (based on `public.officer_assignments`).
 - Client interactivity uses shadcn/ui and sonner; Toaster is mounted in root layout.
 
+### Department chooser
+
+- `/(protected)/officer` lists active departments (SSR, joins via `officer_assignments` → `departments`).
+- If only one active department, it auto-redirects to `/officer/departments/[deptId]`.
+- `/officer/departments/[deptId]` is SSR-guarded for role=officer AND active assignment to `[deptId]`.
+- Department page shows department header and a paginated appointments table scoped to services in that department.
+
 ### Redirect behavior (shared sign-in)
 
 - Shared sign-in at `/(auth)/sign-in` fetches `public.profiles.role` after session:
