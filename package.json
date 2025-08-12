@@ -1,0 +1,10 @@
+{
+ "name": "civigo-monorepo",
+ "private": true,
+ "scripts": {
+ "supabase:start": "cd supabase && supabase start",
+ "supabase:stop": "cd supabase && supabase stop",
+ "web:citizen": "cd apps/civigo-citizen && npm run dev",
+ "web:gov": "cd apps/civigo-gov && npm run dev"
+ }
+}
