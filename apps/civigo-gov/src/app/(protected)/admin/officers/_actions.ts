@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getServerClient, getServiceRoleClient } from "@/utils/supabase/server";
 import { mapPostgresError } from "@/lib/db/errors";
-import { OfficerResetPasswordSchema, type OfficerResetPasswordInput } from "@/lib/validation";
+import {
+  OfficerResetPasswordSchema,
+  type OfficerResetPasswordInput,
+} from "@/lib/validation";
 import {
   OfficerCreateSchema,
   OfficerAssignSchema,
@@ -72,11 +75,13 @@ export async function createOfficerProfile(
     }
     // If existing and temp password supplied, update it
     if (target && parsed.temporaryPassword) {
-      await sr.auth.admin.updateUserById(target.id, { password: parsed.temporaryPassword });
+      await sr.auth.admin.updateUserById(target.id, {
+        password: parsed.temporaryPassword,
+      });
     }
 
-    // Prefer SSR client for DB writes
-    const client = await getServerClient();
+    // Use service-role client for DB writes to bypass RLS during creation
+    const client = sr;
     // If a profiles row already exists (by email), return it to avoid unique violations
     const existing = await client
       .from("profiles")
@@ -173,13 +178,23 @@ export async function toggleOfficerAssignment(
   }
 }
 
-export async function resetOfficerPassword(input: OfficerResetPasswordInput): Promise<ActionResult<{ user_id: string }>> {
+export async function resetOfficerPassword(
+  input: OfficerResetPasswordInput
+): Promise<ActionResult<{ user_id: string }>> {
   try {
     const parsed = OfficerResetPasswordSchema.parse(input);
     const sr = getServiceRoleClient();
-    if (!sr) return { ok: false, error: "service_role_missing", message: "Configure SUPABASE_SERVICE_ROLE_KEY" };
-    const { error } = await sr.auth.admin.updateUserById(parsed.user_id, { password: parsed.newPassword });
-    if (error) return { ok: false, error: "auth_update_error", message: error.message };
+    if (!sr)
+      return {
+        ok: false,
+        error: "service_role_missing",
+        message: "Configure SUPABASE_SERVICE_ROLE_KEY",
+      };
+    const { error } = await sr.auth.admin.updateUserById(parsed.user_id, {
+      password: parsed.newPassword,
+    });
+    if (error)
+      return { ok: false, error: "auth_update_error", message: error.message };
     revalidatePath("/admin/officers");
     return { ok: true, data: { user_id: parsed.user_id } };
   } catch (e) {
