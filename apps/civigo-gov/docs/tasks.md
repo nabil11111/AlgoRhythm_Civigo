@@ -18,12 +18,12 @@
 
 ## Officer route group (scaffold)
 
-- [ ] Create app/(protected)/officer/layout.tsx with SSR guard (role === 'officer'); redirect unauthenticated → /(auth)/sign-in; admin → /admin.
-- [ ] Create app/(protected)/officer/page.tsx (landing).
-- [ ] Create app/(protected)/officer/_actions.ts (placeholder; no mutations yet).
-- [ ] Create app/(protected)/officer/_components/DepartmentHeader.tsx (Server).
-- [ ] Create app/(protected)/officer/_components/AppointmentsTable.tsx (Server; shadcn Table).
-- [ ] Create app/(protected)/officer/_components/ToastBridge.tsx (Client; sonner).
+- [x] Create app/(protected)/officer/layout.tsx with SSR guard (role === 'officer'); redirect unauthenticated → /(auth)/sign-in; admin → /admin.
+- [x] Create app/(protected)/officer/page.tsx (landing).
+- [x] Create app/(protected)/officer/_actions.ts (placeholder; no mutations yet).
+- [x] Create app/(protected)/officer/_components/DepartmentHeader.tsx (Server).
+- [x] Create app/(protected)/officer/_components/AppointmentsTable.tsx (Server; shadcn Table).
+- [x] Create app/(protected)/officer/_components/ToastBridge.tsx (Client; sonner).
 
 ## Data fetching (SSR, RLS-safe; no service-role)
 
@@ -61,3 +61,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - docs(gov-officer): add living task board for Officer/Department Dashboard
 - feat(gov-officer): sign-in redirects by role (admin→/admin, officer→/officer) with toasts on error/unauthorized
 - feat(gov-officer): add requireOfficer() SSR guard helper
+- feat(gov-officer): scaffold officer route group (layout, page, actions, components) with SSR guard shell
