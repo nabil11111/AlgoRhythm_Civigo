@@ -1,6 +1,11 @@
 export const officersStrings = {
   title: "Officers",
   addOfficer: "Add Officer Profile",
+  tempPassword: "Temporary password (optional)",
+  confirmPassword: "Confirm password",
+  resetPassword: "Reset password",
+  newPassword: "New password",
+  confirmNewPassword: "Confirm new password",
   assignDepartment: "Assign Department",
   fullName: "Full name",
   email: "Email",
@@ -17,6 +22,7 @@ export const officersStrings = {
     unique: "Already exists",
     referential: "Invalid reference",
     insufficient: "Not allowed",
+    mismatch: "Passwords do not match",
   },
 };
 

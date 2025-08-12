@@ -60,3 +60,10 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 - Example tests under `apps/civigo-gov/tests/*` using Vitest with simple module mocks.
 - Suggested dev deps: `vitest @testing-library/react @testing-library/jest-dom jsdom whatwg-fetch`.
 - Run with: `npx vitest`.
+
+## Admin-side password management (Officers)
+
+- When creating an officer, admins can set an optional temporary password in the "Add Officer Profile" dialog.
+- If the email does not exist in Supabase Auth, the user is created with `email_confirm: true` and the temporary password.
+- If the auth user already exists, admins can reset the password from the Officers list via the "Reset password" action.
+- Security: Temporary passwords are not logged or echoed. Share securely and rotate promptly.

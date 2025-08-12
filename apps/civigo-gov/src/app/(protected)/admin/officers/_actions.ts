@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getServerClient, getServiceRoleClient } from "@/utils/supabase/server";
+import { mapPostgresError } from "@/lib/db/errors";
+import { OfficerResetPasswordSchema, type OfficerResetPasswordInput } from "@/lib/validation";
 import {
   OfficerCreateSchema,
   OfficerAssignSchema,
@@ -47,6 +49,7 @@ export async function createOfficerProfile(
       const created = await sr.auth.admin.createUser({
         email: parsed.email,
         email_confirm: true,
+        password: parsed.temporaryPassword || undefined,
         user_metadata: { full_name: parsed.full_name },
       });
       if (created.error)
@@ -67,8 +70,13 @@ export async function createOfficerProfile(
         app_metadata: { role: "officer" },
       });
     }
-    // Prefer service-role client for privileged insert to bypass RLS safely on the server.
-    const client = sr ?? (await getServerClient());
+    // If existing and temp password supplied, update it
+    if (target && parsed.temporaryPassword) {
+      await sr.auth.admin.updateUserById(target.id, { password: parsed.temporaryPassword });
+    }
+
+    // Prefer SSR client for DB writes
+    const client = await getServerClient();
     // If a profiles row already exists (by email), return it to avoid unique violations
     const existing = await client
       .from("profiles")
@@ -92,7 +100,10 @@ export async function createOfficerProfile(
       )
       .select("id")
       .single();
-    if (error) return { ok: false, error: "db_error", message: error.message };
+    if (error) {
+      const fe = mapPostgresError(error);
+      return { ok: false, error: fe.code, message: fe.message };
+    }
     revalidatePath("/admin/officers");
     return { ok: true, data: { id: data.id } };
   } catch (e) {
@@ -106,13 +117,16 @@ export async function assignOfficerToDepartment(
 ): Promise<ActionResult<{ officer_id: string; department_id: string }>> {
   try {
     const parsed = OfficerAssignSchema.parse(input);
-    const client = getServiceRoleClient() ?? (await getServerClient());
+    const client = await getServerClient();
     const { error } = await client.from("officer_assignments").insert({
       officer_id: parsed.officer_id,
       department_id: parsed.department_id,
       active: true,
     });
-    if (error) return { ok: false, error: "db_error", message: error.message };
+    if (error) {
+      const fe = mapPostgresError(error);
+      return { ok: false, error: fe.code, message: fe.message };
+    }
     revalidatePath("/admin/officers");
     return {
       ok: true,
@@ -134,13 +148,16 @@ export async function toggleOfficerAssignment(
 > {
   try {
     const parsed = OfficerToggleSchema.parse(input);
-    const client = getServiceRoleClient() ?? (await getServerClient());
+    const client = await getServerClient();
     const { error } = await client
       .from("officer_assignments")
       .update({ active: parsed.active })
       .eq("officer_id", parsed.officer_id)
       .eq("department_id", parsed.department_id);
-    if (error) return { ok: false, error: "db_error", message: error.message };
+    if (error) {
+      const fe = mapPostgresError(error);
+      return { ok: false, error: fe.code, message: fe.message };
+    }
     revalidatePath("/admin/officers");
     return {
       ok: true,
@@ -150,6 +167,21 @@ export async function toggleOfficerAssignment(
         active: parsed.active,
       },
     };
+  } catch (e) {
+    const err = e as { message?: string };
+    return { ok: false, error: "invalid", message: err?.message };
+  }
+}
+
+export async function resetOfficerPassword(input: OfficerResetPasswordInput): Promise<ActionResult<{ user_id: string }>> {
+  try {
+    const parsed = OfficerResetPasswordSchema.parse(input);
+    const sr = getServiceRoleClient();
+    if (!sr) return { ok: false, error: "service_role_missing", message: "Configure SUPABASE_SERVICE_ROLE_KEY" };
+    const { error } = await sr.auth.admin.updateUserById(parsed.user_id, { password: parsed.newPassword });
+    if (error) return { ok: false, error: "auth_update_error", message: error.message };
+    revalidatePath("/admin/officers");
+    return { ok: true, data: { user_id: parsed.user_id } };
   } catch (e) {
     const err = e as { message?: string };
     return { ok: false, error: "invalid", message: err?.message };

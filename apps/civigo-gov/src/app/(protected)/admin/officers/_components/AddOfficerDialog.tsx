@@ -16,7 +16,7 @@ export function AddOfficerDialog() {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof OfficerCreateSchema>>({
     resolver: zodResolver(OfficerCreateSchema),
-    defaultValues: { full_name: "", email: "" },
+    defaultValues: { full_name: "", email: "", temporaryPassword: undefined },
   });
   async function onSubmit(values: z.infer<typeof OfficerCreateSchema>) {
     const res = await createOfficerProfile(values);
@@ -35,6 +35,9 @@ export function AddOfficerDialog() {
             )}/>
             <FormField name="email" render={({ field }) => (
               <FormItem><FormLabel>{S.email}</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+            )}/>
+            <FormField name="temporaryPassword" render={({ field }) => (
+              <FormItem><FormLabel>{S.tempPassword}</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
             <Button type="submit">{S.addOfficer}</Button>
           </form>

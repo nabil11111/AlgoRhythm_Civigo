@@ -4,7 +4,10 @@
  */
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient as createSupabaseClient,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 
 type Profile = {
   id: string;
@@ -23,13 +26,17 @@ export async function getServerClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
   }
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
-        return cookieStore.getAll().map((c) => ({ name: c.name, value: c.value }));
+        return cookieStore
+          .getAll()
+          .map((c) => ({ name: c.name, value: c.value }));
       },
       setAll(cookies) {
         // In Server Components, Next.js prohibits mutating cookies.
@@ -60,7 +67,9 @@ export async function getProfile(): Promise<Profile | null> {
   if (!user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, role, full_name, email, nic, verified_status, phone, created_at")
+    .select(
+      "id, role, full_name, email, nic, verified_status, phone, created_at"
+    )
     .eq("id", user.id)
     .single();
   if (error) return null;
@@ -90,5 +99,3 @@ export async function requireAdmin() {
   }
   return { ok: true as const, profile };
 }
-
-

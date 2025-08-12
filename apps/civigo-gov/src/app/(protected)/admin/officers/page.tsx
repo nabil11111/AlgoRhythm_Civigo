@@ -3,6 +3,7 @@ import { parsePagination, prevPageHref, nextPageHref } from "@/lib/pagination";
 import { AddOfficerDialog } from "./_components/AddOfficerDialog";
 import { AssignDepartmentDialog } from "./_components/AssignDepartmentDialog";
 import { ActiveSwitch } from "./_components/ActiveSwitch";
+import { ResetPasswordDialog } from "./_components/ResetPasswordDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -89,7 +90,7 @@ export default async function OfficersPage({ searchParams }:{ searchParams?: Pro
           {Object.values(map).map((o) => (
             <tr key={o.id}>
               <td className="p-2 border">{o.full_name}</td>
-              <td className="p-2 border">{o.email}</td>
+              <td className="p-2 border">{o.email} <span className="ml-2 inline-block"><ResetPasswordDialog userId={o.id} /></span></td>
               <td className="p-2 border">
                 <div className="flex flex-wrap gap-1">
                   {o.assignments.map((a) => (
