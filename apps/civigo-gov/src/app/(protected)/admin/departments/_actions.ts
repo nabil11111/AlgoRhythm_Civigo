@@ -2,11 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { getServerClient } from "@/utils/supabase/server";
-import { DepartmentCreateSchema, DepartmentUpdateSchema, type DepartmentCreateInput, type DepartmentUpdateInput } from "@/lib/validation";
+import {
+  DepartmentCreateSchema,
+  DepartmentUpdateSchema,
+  type DepartmentCreateInput,
+  type DepartmentUpdateInput,
+} from "@/lib/validation";
 
-type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string; message?: string };
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; message?: string };
 
-export async function createDepartment(input: DepartmentCreateInput): Promise<ActionResult<{ id: string }>> {
+export async function createDepartment(
+  input: DepartmentCreateInput
+): Promise<ActionResult<{ id: string }>> {
   try {
     const parsed = DepartmentCreateSchema.parse(input);
     const supabase = await getServerClient();
@@ -25,7 +34,9 @@ export async function createDepartment(input: DepartmentCreateInput): Promise<Ac
   }
 }
 
-export async function updateDepartment(input: DepartmentUpdateInput): Promise<ActionResult<{ id: string }>> {
+export async function updateDepartment(
+  input: DepartmentUpdateInput
+): Promise<ActionResult<{ id: string }>> {
   try {
     const parsed = DepartmentUpdateSchema.parse(input);
     const supabase = await getServerClient();
@@ -45,7 +56,9 @@ export async function updateDepartment(input: DepartmentUpdateInput): Promise<Ac
   }
 }
 
-export async function deleteDepartment(input: { id: string }): Promise<ActionResult<{ id: string }>> {
+export async function deleteDepartment(input: {
+  id: string;
+}): Promise<ActionResult<{ id: string }>> {
   try {
     const { id } = input;
     if (!id) return { ok: false, error: "invalid", message: "id required" };
@@ -55,13 +68,15 @@ export async function deleteDepartment(input: { id: string }): Promise<ActionRes
       .from("services")
       .select("id", { count: "exact", head: true })
       .eq("department_id", id);
-    if ((svcCount ?? 0) > 0) return { ok: false, error: "department_has_dependencies" };
+    if ((svcCount ?? 0) > 0)
+      return { ok: false, error: "department_has_dependencies" };
 
     const { count: asgCount } = await supabase
       .from("officer_assignments")
       .select("id", { count: "exact", head: true })
       .eq("department_id", id);
-    if ((asgCount ?? 0) > 0) return { ok: false, error: "department_has_dependencies" };
+    if ((asgCount ?? 0) > 0)
+      return { ok: false, error: "department_has_dependencies" };
 
     const { data, error } = await supabase
       .from("departments")
@@ -78,5 +93,3 @@ export async function deleteDepartment(input: { id: string }): Promise<ActionRes
     return { ok: false, error: "invalid", message };
   }
 }
-
-
