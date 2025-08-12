@@ -20,14 +20,14 @@
 
 - [ ] Create app/(protected)/officer/layout.tsx with SSR guard (role === 'officer'); redirect unauthenticated → /(auth)/sign-in; admin → /admin.
 - [ ] Create app/(protected)/officer/page.tsx (landing).
-- [ ] Create app/(protected)/officer/\_actions.ts (placeholder; no mutations yet).
-- [ ] Create app/(protected)/officer/\_components/DepartmentHeader.tsx (Server).
-- [ ] Create app/(protected)/officer/\_components/AppointmentsTable.tsx (Server; shadcn Table).
-- [ ] Create app/(protected)/officer/\_components/ToastBridge.tsx (Client; sonner).
+- [ ] Create app/(protected)/officer/_actions.ts (placeholder; no mutations yet).
+- [ ] Create app/(protected)/officer/_components/DepartmentHeader.tsx (Server).
+- [ ] Create app/(protected)/officer/_components/AppointmentsTable.tsx (Server; shadcn Table).
+- [ ] Create app/(protected)/officer/_components/ToastBridge.tsx (Client; sonner).
 
 ## Data fetching (SSR, RLS-safe; no service-role)
 
-- [ ] Helper requireOfficer() in src/utils/supabase/server.ts (or auth-guard util).
+- [x] Helper requireOfficer() in src/utils/supabase/server.ts (or auth-guard util).
 - [ ] Query officer assignments (active) for current user.
 - [ ] Query paginated appointments (default: today → +7d), with service and citizen fields needed for table.
 
@@ -60,3 +60,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 
 - docs(gov-officer): add living task board for Officer/Department Dashboard
 - feat(gov-officer): sign-in redirects by role (admin→/admin, officer→/officer) with toasts on error/unauthorized
+- feat(gov-officer): add requireOfficer() SSR guard helper
