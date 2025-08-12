@@ -20,10 +20,10 @@
 
 - [x] Create app/(protected)/officer/layout.tsx with SSR guard (role === 'officer'); redirect unauthenticated → /(auth)/sign-in; admin → /admin.
 - [x] Create app/(protected)/officer/page.tsx (landing).
-- [x] Create app/(protected)/officer/\_actions.ts (placeholder; no mutations yet).
-- [x] Create app/(protected)/officer/\_components/DepartmentHeader.tsx (Server).
-- [x] Create app/(protected)/officer/\_components/AppointmentsTable.tsx (Server; shadcn Table).
-- [x] Create app/(protected)/officer/\_components/ToastBridge.tsx (Client; sonner).
+- [x] Create app/(protected)/officer/_actions.ts (placeholder; no mutations yet).
+- [x] Create app/(protected)/officer/_components/DepartmentHeader.tsx (Server).
+- [x] Create app/(protected)/officer/_components/AppointmentsTable.tsx (Server; shadcn Table).
+- [x] Create app/(protected)/officer/_components/ToastBridge.tsx (Client; sonner).
 
 ## Data fetching (SSR, RLS-safe; no service-role)
 
@@ -42,15 +42,32 @@
 - [x] Visiting /admin as officer redirects to /officer (adjust admin guard).
 - [x] Visiting /officer as admin redirects to /admin.
 
-## Tests
+## Officer Department Chooser and Page
 
-- [x] tests/officer-guard.test.ts (unauthenticated → sign-in; admin → /admin; officer → OK).
-- [x] tests/sign-in-redirect.test.ts (role-based redirect).
-- [ ] tests/pagination.test.ts (optional).
+### Landing: list departments
+- [ ] Fetch active assignments + departments (SSR, RLS-safe)
+- [ ] If exactly one department, redirect to /officer/departments/[id]
+- [ ] Render DepartmentsList grid with Card, Badge, Button “Open”
 
-## Docs
+### Department page route
+- [ ] Create app/(protected)/officer/departments/[deptId]/page.tsx
+- [ ] Validate deptId with Zod; unassigned/invalid → redirect /officer
+- [ ] Fetch department info (code, name)
+- [ ] Fetch paginated appointments scoped to department (SSR, RLS-safe)
+- [ ] Render DepartmentHeader (code/name) and AppointmentsTable
+- [ ] Optional: ToastBridge for notices
 
-- [x] Update apps/civigo-gov/README.md with Officer Dashboard section and redirects.
+### Utils and strings
+- [ ] Add OfficerDepartmentParam in src/lib/validation.ts
+- [ ] Add src/lib/strings/officer-dashboard.ts (headings, labels, empty states, errors)
+- [ ] (Optional) Add utils/auth-guard.ts with requireOfficerForDepartment
+
+### Tests
+- [ ] tests/officer-department-guard.test.ts (unassigned → /officer; assigned → OK)
+- [ ] tests/officer-landing.test.ts (one → redirect; many → list)
+
+### Docs
+- [ ] Update README with department chooser flow, routes, RLS scope
 
 ## Important operating rule
 
@@ -65,5 +82,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - fix(gov-guards): redirect officers hitting /admin to /officer; unauthenticated to /sign-in
 - feat(gov-officer): show active department in officer topbar; fetch assignments SSR (RLS)
 - feat(gov-officer): SSR-load paginated appointments (7d window) for officer landing; render shadcn table
-- docs(gov-officer): mark SSR guards as source of truth (implemented via officer/admin layouts)
 - test(gov-officer): add officer guard and sign-in module tests; docs: add Officer Dashboard section and redirects
