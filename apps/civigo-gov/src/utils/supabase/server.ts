@@ -32,8 +32,15 @@ export async function getServerClient() {
         return cookieStore.getAll().map((c) => ({ name: c.name, value: c.value }));
       },
       setAll(cookies) {
-        for (const { name, value, options } of cookies) {
-          cookieStore.set({ name, value, ...options });
+        // In Server Components, Next.js prohibits mutating cookies.
+        // Supabase may attempt to refresh session cookies during RSC render.
+        // Swallow the mutation here; real mutations occur in Server Actions/Route Handlers.
+        try {
+          for (const { name, value, options } of cookies) {
+            cookieStore.set({ name, value, ...options });
+          }
+        } catch {
+          // no-op: ignore cookie mutations outside Server Actions
         }
       },
     },
