@@ -29,13 +29,13 @@
 
 - [x] Helper requireOfficer() in src/utils/supabase/server.ts (or auth-guard util).
 - [x] Query officer assignments (active) for current user.
-- [ ] Query paginated appointments (default: today → +7d), with service and citizen fields needed for table.
+- [x] Query paginated appointments (default: today → +7d), with service and citizen fields needed for table.
 
 ## UI/UX (shadcn + sonner)
 
 - [x] Topbar with active department badge and logout.
-- [ ] Table with columns: reference_code, citizen (masked), service, appointment_at, status.
-- [ ] Empty-state card.
+- [x] Table with columns: reference_code, citizen (masked), service, appointment_at, status.
+- [x] Empty-state card.
 
 ## Routing and guards symmetry
 
@@ -64,3 +64,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer): scaffold officer route group (layout, page, actions, components) with SSR guard shell
 - fix(gov-guards): redirect officers hitting /admin to /officer; unauthenticated to /sign-in
 - feat(gov-officer): show active department in officer topbar; fetch assignments SSR (RLS)
+- feat(gov-officer): SSR-load paginated appointments (7d window) for officer landing; render shadcn table
