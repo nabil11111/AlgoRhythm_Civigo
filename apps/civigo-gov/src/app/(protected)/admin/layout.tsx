@@ -13,7 +13,10 @@ export default async function AdminLayout({
     redirect("/sign-in");
   }
   if (profile.role !== "admin") {
-    redirect("/");
+    if (profile.role === "officer") {
+      redirect("/officer");
+    }
+    redirect("/sign-in");
   }
 
   return (
