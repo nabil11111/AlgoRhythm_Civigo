@@ -1,9 +1,11 @@
 import { getServerClient, getServiceRoleClient } from "@/utils/supabase/server";
-import {
-  createOfficerProfile,
-  assignOfficerToDepartment,
-  toggleOfficerAssignment,
-} from "./_actions";
+import { parsePagination, prevPageHref, nextPageHref } from "@/lib/pagination";
+import { AddOfficerDialog } from "./_components/AddOfficerDialog";
+import { AssignDepartmentDialog } from "./_components/AssignDepartmentDialog";
+import { ActiveSwitch } from "./_components/ActiveSwitch";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 type OfficerRow = {
   id: string;
@@ -17,14 +19,17 @@ type OfficerRow = {
   }[];
 };
 
-export default async function OfficersPage() {
+export default async function OfficersPage({ searchParams }:{ searchParams?: Promise<{ page?: string; pageSize?: string }> }) {
+  const sp = (await searchParams) ?? {};
+  const p = parsePagination(sp);
   const supabase = getServiceRoleClient() ?? (await getServerClient());
 
   const { data: officers } = await supabase
     .from("profiles")
     .select("id, full_name, email")
     .eq("role", "officer")
-    .order("full_name", { ascending: true });
+    .order("full_name", { ascending: true })
+    .range(p.offset, p.offset + p.pageSize - 1);
 
   const { data: assignments } = await supabase
     .from("officer_assignments")
@@ -68,41 +73,10 @@ export default async function OfficersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Officers</h1>
-        <form
-          action={async (formData: FormData) => {
-            "use server";
-            const full_name = String(formData.get("full_name") || "");
-            const email = String(formData.get("email") || "");
-            const res = await createOfficerProfile({ full_name, email });
-            if (!res.ok) {
-              // Surface error in HTML stream (simple fallback); can be replaced by toasts later
-              // eslint-disable-next-line no-console
-              console.error(
-                "createOfficerProfile error:",
-                res.error,
-                res.message
-              );
-            }
-          }}
-          className="flex gap-2"
-        >
-          <input
-            name="full_name"
-            placeholder="Full name"
-            className="border rounded p-2"
-            required
-          />
-          <input
-            name="email"
-            placeholder="Email"
-            className="border rounded p-2"
-            required
-          />
-          <button className="border rounded px-3 py-2">Add Officer</button>
-        </form>
+        <AddOfficerDialog />
       </div>
-
-      <table className="w-full border text-sm">
+      <Card className="p-0 overflow-hidden">
+      <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-50 text-left">
             <th className="p-2 border">Name</th>
@@ -119,63 +93,20 @@ export default async function OfficersPage() {
               <td className="p-2 border">
                 <div className="flex flex-wrap gap-1">
                   {o.assignments.map((a) => (
-                    <span
-                      key={a.department_id}
-                      className={`px-2 py-1 rounded text-xs ${
-                        a.active ? "bg-green-100" : "bg-gray-100"
-                      }`}
-                    >
-                      {a.code}
-                    </span>
+                    <Badge key={a.department_id} variant={a.active ? "default" : "secondary"}>{a.code}</Badge>
                   ))}
                 </div>
               </td>
               <td className="p-2 border">
                 <div className="flex gap-2 items-center">
-                  <form
-                    action={async (formData: FormData) => {
-                      "use server";
-                      const officer_id = o.id;
-                      const department_id = String(
-                        formData.get("department_id")
-                      );
-                      await assignOfficerToDepartment({
-                        officer_id,
-                        department_id,
-                      });
-                    }}
-                    className="flex gap-2"
-                  >
-                    <select name="department_id" className="border rounded p-1">
-                      {(departments ?? []).map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.code} — {d.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button className="border rounded px-2 py-1">Assign</button>
-                  </form>
+                  <AssignDepartmentDialog officerId={o.id} departments={departments ?? []} />
                 </div>
                 <div className="flex gap-2 mt-2">
                   {o.assignments.map((a) => (
-                    <form
-                      key={a.department_id}
-                      action={async () => {
-                        "use server";
-                        await toggleOfficerAssignment({
-                          officer_id: o.id,
-                          department_id: a.department_id,
-                          active: !a.active,
-                        });
-                      }}
-                    >
-                      <button
-                        className="border rounded px-2 py-1"
-                        type="submit"
-                      >
-                        {a.active ? "Deactivate" : "Activate"} {a.code}
-                      </button>
-                    </form>
+                    <div key={a.department_id} className="flex items-center gap-2">
+                      <span className="text-xs">{a.code}</span>
+                      <ActiveSwitch officerId={o.id} departmentId={a.department_id} active={a.active} />
+                    </div>
                   ))}
                 </div>
               </td>
@@ -183,6 +114,11 @@ export default async function OfficersPage() {
           ))}
         </tbody>
       </table>
+      </Card>
+      <div className="flex items-center justify-between">
+        <Button variant="outline" asChild><a href={prevPageHref("/admin/officers", p)}>Previous</a></Button>
+        <Button variant="outline" asChild><a href={nextPageHref("/admin/officers", p)}>Next</a></Button>
+      </div>
     </div>
   );
 }
