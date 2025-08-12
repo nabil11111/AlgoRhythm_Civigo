@@ -39,8 +39,8 @@
 
 ## Routing and guards symmetry
 
-- [ ] Visiting /admin as officer redirects to /officer (adjust admin guard).
-- [ ] Visiting /officer as admin redirects to /admin.
+- [x] Visiting /admin as officer redirects to /officer (adjust admin guard).
+- [x] Visiting /officer as admin redirects to /admin.
 
 ## Tests
 
@@ -62,3 +62,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer): sign-in redirects by role (admin→/admin, officer→/officer) with toasts on error/unauthorized
 - feat(gov-officer): add requireOfficer() SSR guard helper
 - feat(gov-officer): scaffold officer route group (layout, page, actions, components) with SSR guard shell
+- fix(gov-guards): redirect officers hitting /admin to /officer; unauthenticated to /sign-in
