@@ -99,3 +99,11 @@ export async function requireAdmin() {
   }
   return { ok: true as const, profile };
 }
+
+export async function requireOfficer() {
+  const profile = await getProfile();
+  if (!profile || profile.role !== "officer") {
+    return { ok: false as const, error: "forbidden" };
+  }
+  return { ok: true as const, profile };
+}
