@@ -30,7 +30,7 @@ export default function SignInPage() {
         .single();
       const role = profile?.role as string | undefined;
       if (role === "admin") {
-        router.replace("/(protected)/admin");
+        router.replace("/admin");
       } else {
         router.replace("/");
       }

@@ -16,7 +16,7 @@ export async function createOfficerProfile(input: OfficerCreateInput): Promise<A
       .select("id")
       .single();
     if (error) return { ok: false, error: "db_error", message: error.message };
-    revalidatePath("/(protected)/admin/officers");
+    revalidatePath("/admin/officers");
     return { ok: true, data: { id: data.id } };
   } catch (e) {
     const err = e as { message?: string };
@@ -32,7 +32,7 @@ export async function assignOfficerToDepartment(input: OfficerAssignInput): Prom
       .from("officer_assignments")
       .insert({ officer_id: parsed.officer_id, department_id: parsed.department_id, active: true });
     if (error) return { ok: false, error: "db_error", message: error.message };
-    revalidatePath("/(protected)/admin/officers");
+    revalidatePath("/admin/officers");
     return { ok: true, data: { officer_id: parsed.officer_id, department_id: parsed.department_id } };
   } catch (e) {
     const err = e as { message?: string };
@@ -50,7 +50,7 @@ export async function toggleOfficerAssignment(input: OfficerToggleInput): Promis
       .eq("officer_id", parsed.officer_id)
       .eq("department_id", parsed.department_id);
     if (error) return { ok: false, error: "db_error", message: error.message };
-    revalidatePath("/(protected)/admin/officers");
+    revalidatePath("/admin/officers");
     return { ok: true, data: { officer_id: parsed.officer_id, department_id: parsed.department_id, active: parsed.active } };
   } catch (e) {
     const err = e as { message?: string };

@@ -5,7 +5,7 @@ import { getProfile } from "@/utils/supabase/server";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile();
   if (!profile) {
-    redirect("/(auth)/sign-in");
+    redirect("/sign-in");
   }
   if (profile.role !== "admin") {
     redirect("/");
@@ -16,9 +16,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <aside className="border-r p-4 space-y-4">
         <div className="text-lg font-semibold">Civigo Admin</div>
         <nav className="grid gap-2 text-sm">
-          <Link href="/\(protected\)/admin" className="hover:underline">Dashboard</Link>
-          <Link href="/\(protected\)/admin/departments" className="hover:underline">Departments</Link>
-          <Link href="/\(protected\)/admin/officers" className="hover:underline">Officers</Link>
+          <Link href="/admin" className="hover:underline">Dashboard</Link>
+          <Link href="/admin/departments" className="hover:underline">Departments</Link>
+          <Link href="/admin/officers" className="hover:underline">Officers</Link>
         </nav>
       </aside>
       <main className="p-6">{children}</main>

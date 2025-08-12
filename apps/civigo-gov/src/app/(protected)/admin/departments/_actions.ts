@@ -16,7 +16,7 @@ export async function createDepartment(input: DepartmentCreateInput): Promise<Ac
       .select("id")
       .single();
     if (error) return { ok: false, error: "db_error", message: error.message };
-    revalidatePath("/(protected)/admin/departments");
+    revalidatePath("/admin/departments");
     return { ok: true, data: { id: data.id } };
   } catch (e) {
     const err = e as { message?: string };
@@ -36,7 +36,7 @@ export async function updateDepartment(input: DepartmentUpdateInput): Promise<Ac
       .select("id")
       .single();
     if (error) return { ok: false, error: "db_error", message: error.message };
-    revalidatePath("/(protected)/admin/departments");
+    revalidatePath("/admin/departments");
     return { ok: true, data: { id: data.id } };
   } catch (e) {
     const err = e as { message?: string };
@@ -70,7 +70,7 @@ export async function deleteDepartment(input: { id: string }): Promise<ActionRes
       .select("id")
       .single();
     if (error) return { ok: false, error: "db_error", message: error.message };
-    revalidatePath("/(protected)/admin/departments");
+    revalidatePath("/admin/departments");
     return { ok: true, data: { id: data.id } };
   } catch (e) {
     const err = e as { message?: string };
