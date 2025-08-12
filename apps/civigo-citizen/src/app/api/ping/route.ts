@@ -1,0 +1,1 @@
+export async function GET() { return new Response(process.env.NEXT_PUBLIC_SUPABASE_URL || "missing", { status: 200 }); }
