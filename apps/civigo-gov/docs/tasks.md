@@ -45,29 +45,29 @@
 ## Officer Department Chooser and Page
 
 ### Landing: list departments
-- [ ] Fetch active assignments + departments (SSR, RLS-safe)
-- [ ] If exactly one department, redirect to /officer/departments/[id]
-- [ ] Render DepartmentsList grid with Card, Badge, Button “Open”
+- [x] Fetch active assignments + departments (SSR, RLS-safe)
+- [x] If exactly one department, redirect to /officer/departments/[id]
+- [x] Render DepartmentsList grid with Card, Badge, Button “Open”
 
 ### Department page route
-- [ ] Create app/(protected)/officer/departments/[deptId]/page.tsx
-- [ ] Validate deptId with Zod; unassigned/invalid → redirect /officer
-- [ ] Fetch department info (code, name)
-- [ ] Fetch paginated appointments scoped to department (SSR, RLS-safe)
-- [ ] Render DepartmentHeader (code/name) and AppointmentsTable
+- [x] Create app/(protected)/officer/departments/[deptId]/page.tsx
+- [x] Validate deptId with Zod; unassigned/invalid → redirect /officer
+- [x] Fetch department info (code, name)
+- [x] Fetch paginated appointments scoped to department (SSR, RLS-safe)
+- [x] Render DepartmentHeader (code/name) and AppointmentsTable
 - [ ] Optional: ToastBridge for notices
 
 ### Utils and strings
-- [ ] Add OfficerDepartmentParam in src/lib/validation.ts
-- [ ] Add src/lib/strings/officer-dashboard.ts (headings, labels, empty states, errors)
+- [x] Add OfficerDepartmentParam in src/lib/validation.ts
+- [x] Add src/lib/strings/officer-dashboard.ts (headings, labels, empty states, errors)
 - [ ] (Optional) Add utils/auth-guard.ts with requireOfficerForDepartment
 
 ### Tests
-- [ ] tests/officer-department-guard.test.ts (unassigned → /officer; assigned → OK)
-- [ ] tests/officer-landing.test.ts (one → redirect; many → list)
+- [x] tests/officer-department-guard.test.ts (unassigned → /officer; assigned → OK)
+- [x] tests/officer-landing.test.ts (one → redirect; many → list)
 
 ### Docs
-- [ ] Update README with department chooser flow, routes, RLS scope
+- [x] Update README with department chooser flow, routes, RLS scope
 
 ## Important operating rule
 
@@ -83,3 +83,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer): show active department in officer topbar; fetch assignments SSR (RLS)
 - feat(gov-officer): SSR-load paginated appointments (7d window) for officer landing; render shadcn table
 - test(gov-officer): add officer guard and sign-in module tests; docs: add Officer Dashboard section and redirects
+- feat(gov-officer): department chooser and per-department dashboard route
