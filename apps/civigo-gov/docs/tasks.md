@@ -14,16 +14,16 @@
 ## Auth and redirects
 
 - [x] Reuse /(auth)/sign-in for admins and officers; post-login redirect by role (admin → /admin, officer → /officer).
-- [ ] Keep SSR guards as the source of truth.
+- [x] Keep SSR guards as the source of truth.
 
 ## Officer route group (scaffold)
 
 - [x] Create app/(protected)/officer/layout.tsx with SSR guard (role === 'officer'); redirect unauthenticated → /(auth)/sign-in; admin → /admin.
 - [x] Create app/(protected)/officer/page.tsx (landing).
-- [x] Create app/(protected)/officer/_actions.ts (placeholder; no mutations yet).
-- [x] Create app/(protected)/officer/_components/DepartmentHeader.tsx (Server).
-- [x] Create app/(protected)/officer/_components/AppointmentsTable.tsx (Server; shadcn Table).
-- [x] Create app/(protected)/officer/_components/ToastBridge.tsx (Client; sonner).
+- [x] Create app/(protected)/officer/\_actions.ts (placeholder; no mutations yet).
+- [x] Create app/(protected)/officer/\_components/DepartmentHeader.tsx (Server).
+- [x] Create app/(protected)/officer/\_components/AppointmentsTable.tsx (Server; shadcn Table).
+- [x] Create app/(protected)/officer/\_components/ToastBridge.tsx (Client; sonner).
 
 ## Data fetching (SSR, RLS-safe; no service-role)
 
@@ -65,4 +65,5 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - fix(gov-guards): redirect officers hitting /admin to /officer; unauthenticated to /sign-in
 - feat(gov-officer): show active department in officer topbar; fetch assignments SSR (RLS)
 - feat(gov-officer): SSR-load paginated appointments (7d window) for officer landing; render shadcn table
+- docs(gov-officer): mark SSR guards as source of truth (implemented via officer/admin layouts)
 - test(gov-officer): add officer guard and sign-in module tests; docs: add Officer Dashboard section and redirects
