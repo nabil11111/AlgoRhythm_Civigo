@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getBrowserClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -31,13 +32,23 @@ export default function SignInPage() {
       const role = profile?.role as string | undefined;
       if (role === "admin") {
         router.replace("/admin");
+        return;
+      }
+      if (role === "officer") {
+        router.replace("/officer");
+        return;
       } else {
-        router.replace("/");
+        const message =
+          "You are not authorized for this portal. Please contact support.";
+        toast.error(message);
+        setError(message);
+        return;
       }
     } catch (err) {
       const message =
         (err as { message?: string })?.message ?? "Sign-in failed";
       setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
