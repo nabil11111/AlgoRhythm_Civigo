@@ -9,7 +9,7 @@ type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string; messa
 export async function createOfficerProfile(input: OfficerCreateInput): Promise<ActionResult<{ id: string }>> {
   try {
     const parsed = OfficerCreateSchema.parse(input);
-    const supabase = getServerClient();
+    const supabase = await getServerClient();
     const { data, error } = await supabase
       .from("profiles")
       .insert({ full_name: parsed.full_name, email: parsed.email, role: "officer" })
@@ -18,30 +18,32 @@ export async function createOfficerProfile(input: OfficerCreateInput): Promise<A
     if (error) return { ok: false, error: "db_error", message: error.message };
     revalidatePath("/(protected)/admin/officers");
     return { ok: true, data: { id: data.id } };
-  } catch (e: any) {
-    return { ok: false, error: "invalid", message: e?.message };
+  } catch (e) {
+    const err = e as { message?: string };
+    return { ok: false, error: "invalid", message: err?.message };
   }
 }
 
 export async function assignOfficerToDepartment(input: OfficerAssignInput): Promise<ActionResult<{ officer_id: string; department_id: string }>> {
   try {
     const parsed = OfficerAssignSchema.parse(input);
-    const supabase = getServerClient();
+    const supabase = await getServerClient();
     const { error } = await supabase
       .from("officer_assignments")
       .insert({ officer_id: parsed.officer_id, department_id: parsed.department_id, active: true });
     if (error) return { ok: false, error: "db_error", message: error.message };
     revalidatePath("/(protected)/admin/officers");
     return { ok: true, data: { officer_id: parsed.officer_id, department_id: parsed.department_id } };
-  } catch (e: any) {
-    return { ok: false, error: "invalid", message: e?.message };
+  } catch (e) {
+    const err = e as { message?: string };
+    return { ok: false, error: "invalid", message: err?.message };
   }
 }
 
 export async function toggleOfficerAssignment(input: OfficerToggleInput): Promise<ActionResult<{ officer_id: string; department_id: string; active: boolean }>> {
   try {
     const parsed = OfficerToggleSchema.parse(input);
-    const supabase = getServerClient();
+    const supabase = await getServerClient();
     const { error } = await supabase
       .from("officer_assignments")
       .update({ active: parsed.active })
@@ -50,8 +52,9 @@ export async function toggleOfficerAssignment(input: OfficerToggleInput): Promis
     if (error) return { ok: false, error: "db_error", message: error.message };
     revalidatePath("/(protected)/admin/officers");
     return { ok: true, data: { officer_id: parsed.officer_id, department_id: parsed.department_id, active: parsed.active } };
-  } catch (e: any) {
-    return { ok: false, error: "invalid", message: e?.message };
+  } catch (e) {
+    const err = e as { message?: string };
+    return { ok: false, error: "invalid", message: err?.message };
   }
 }
 

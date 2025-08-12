@@ -1,12 +1,13 @@
 import { getServerClient } from "@/utils/supabase/server";
 import { createDepartment, updateDepartment, deleteDepartment } from "./_actions";
 
-export default async function DepartmentsPage({ searchParams }: { searchParams: { page?: string; pageSize?: string } }) {
-  const page = Math.max(1, Number(searchParams?.page ?? 1));
-  const pageSize = Math.min(50, Math.max(1, Number(searchParams?.pageSize ?? 20)));
+export default async function DepartmentsPage({ searchParams }: { searchParams?: Promise<{ page?: string; pageSize?: string }> }) {
+  const sp = (await searchParams) ?? {};
+  const page = Math.max(1, Number(sp.page ?? 1));
+  const pageSize = Math.min(50, Math.max(1, Number(sp.pageSize ?? 20)));
   const offset = (page - 1) * pageSize;
 
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: rows } = await supabase
     .from("departments")
     .select("id, code, name")

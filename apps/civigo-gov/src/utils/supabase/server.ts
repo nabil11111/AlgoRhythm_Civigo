@@ -1,5 +1,7 @@
-"use server";
-
+/**
+ * Server utilities only — no Server Actions here.
+ * Do NOT add 'use server' to this file.
+ */
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -15,8 +17,8 @@ type Profile = {
   created_at: string;
 };
 
-export function getServerClient() {
-  const cookieStore = cookies();
+export async function getServerClient() {
+  const cookieStore = await cookies();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -26,27 +28,26 @@ export function getServerClient() {
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
+      getAll() {
+        return cookieStore.getAll().map((c) => ({ name: c.name, value: c.value }));
       },
-      set(name: string, value: string, options: any) {
-        cookieStore.set({ name, value, ...options });
-      },
-      remove(name: string, options: any) {
-        cookieStore.set({ name, value: "", expires: new Date(0), ...options });
+      setAll(cookies) {
+        for (const { name, value, options } of cookies) {
+          cookieStore.set({ name, value, ...options });
+        }
       },
     },
   });
 }
 
 export async function getUser() {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data } = await supabase.auth.getUser();
   return data.user ?? null;
 }
 
 export async function getProfile(): Promise<Profile | null> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: auth } = await supabase.auth.getUser();
   const user = auth.user;
   if (!user) return null;
@@ -64,6 +65,9 @@ export async function getProfile(): Promise<Profile | null> {
  * Falls back to standard SSR client if no service role key is configured.
  */
 export function getServiceRoleClient(): SupabaseClient | null {
+  if (typeof window !== "undefined") {
+    throw new Error("getServiceRoleClient cannot be called in the browser");
+  }
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) return null;

@@ -9,7 +9,7 @@ type OfficerRow = {
 };
 
 export default async function OfficersPage() {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data: officers } = await supabase
     .from("profiles")
@@ -25,10 +25,12 @@ export default async function OfficersPage() {
   for (const o of officers ?? []) {
     map[o.id] = { id: o.id, full_name: o.full_name, email: o.email, assignments: [] };
   }
-  for (const a of (assignments as any) ?? []) {
+  type AssignmentRow = { officer_id: string; department_id: string; active: boolean; departments: { code: string; name: string } | null };
+  const assignmentsTyped = (assignments ?? []) as unknown as AssignmentRow[];
+  for (const a of assignmentsTyped) {
     const row = map[a.officer_id];
     if (!row) continue;
-    row.assignments.push({ department_id: a.department_id, code: a.departments.code, name: a.departments.name, active: a.active });
+    row.assignments.push({ department_id: a.department_id, code: a.departments?.code ?? "", name: a.departments?.name ?? "", active: a.active });
   }
 
   const { data: departments } = await supabase.from("departments").select("id, code, name").order("code");
