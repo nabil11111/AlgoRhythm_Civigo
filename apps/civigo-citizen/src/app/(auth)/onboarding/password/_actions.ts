@@ -15,8 +15,8 @@ export async function submitPassword(prev: { ok: boolean; error?: string } | nul
   const parsed = passwordSchema.safeParse({ password: formData.get('password'), confirm: formData.get('confirm') });
   if (!parsed.success) return { ok: false, error: 'invalid' } as const;
 
-  // Store nothing sensitive in DB here; defer user creation to finalize step
-  // We may rely on session-bound state only; nothing to persist.
+  // Transiently store password in a secure cookie to be consumed in finalize step
+  (await cookies()).set('onboarding_password', String(formData.get('password') || ''), { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 10 * 60 });
 
   revalidatePath('/onboarding/nic-photos');
   return { ok: true } as const;

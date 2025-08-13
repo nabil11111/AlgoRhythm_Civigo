@@ -17,8 +17,10 @@ export async function submitNames(prev: { ok: boolean; error?: string } | null, 
   const parsed = namesSchema.safeParse({ first_name: formData.get('first_name'), last_name: formData.get('last_name') });
   if (!parsed.success) return { ok: false, error: 'invalid' } as const;
 
-  // Store in identity_verifications as metadata extension fields if needed later; for now, keep minimal
-  await supabase.from('identity_verifications').update({}).eq('user_temp_id', tempId);
+  // Transiently store names in a secure cookie (encrypted storage can be added later)
+  const payload = JSON.stringify({ first_name: parsed.data.first_name, last_name: parsed.data.last_name });
+  // Keep PII in httpOnly cookie, short-lived
+  (await cookies()).set('onboarding_names', payload, { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 15 * 60 });
 
   revalidatePath('/onboarding/password');
   return { ok: true } as const;

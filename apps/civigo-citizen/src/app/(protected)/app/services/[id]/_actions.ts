@@ -83,6 +83,7 @@ export async function createAppointmentFromSlot(
         citizen_id: profile.id,
         service_id: slot.service_id,
         appointment_at: slot.slot_at,
+        citizen_gov_id: profile.gov_id ?? null,
       })
       .select("id, reference_code")
       .single();

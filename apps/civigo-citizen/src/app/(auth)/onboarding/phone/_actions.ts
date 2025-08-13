@@ -27,6 +27,26 @@ export async function sendOtp(prev: { ok: boolean; error?: string } | null, form
   const otpHash = crypto.createHash('sha256').update(code).digest('hex');
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
+  // Basic rate limit: 1/min and 5/hour
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: c1 } = await supabase
+    .from('phone_verification_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_temp_id', tempId)
+    .eq('phone', phone)
+    .gte('created_at', oneMinuteAgo);
+  if ((c1 ?? 0) > 0) return { ok: false, error: 'rate_limited_minute' } as const;
+  const { count: c2 } = await supabase
+    .from('phone_verification_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_temp_id', tempId)
+    .eq('phone', phone)
+    .gte('created_at', oneHourAgo);
+  if ((c2 ?? 0) >= 5) return { ok: false, error: 'rate_limited_hour' } as const;
+
+  await supabase.from('phone_verification_events').insert({ user_temp_id: tempId, phone });
+
   await supabase.from('phone_verifications').upsert({
     user_temp_id: tempId,
     phone,

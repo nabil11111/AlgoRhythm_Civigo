@@ -22,11 +22,18 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 - [x] Route group: /(auth)/onboarding/\*
 - [x] Step 1: Enter NIC (Zod validate both formats; server check uniqueness; store as temp onboarding state)
 - [~] Step 2: Phone number → Send OTP (mock) → Verify OTP (mock, server-stored hashed OTP with expiry)
+  - [x] Add phone_verification_events for rate limit tracking.
+  - [x] Enforce 1/minute and 5/hour rate limiting by onboarding_temp_id+phone.
+  - [ ] Wire shadcn/ui and sonner toasts for UX.
 - [~] Step 3: Names (first_name, last_name)
+  - [x] Transiently store names in httpOnly cookie.
 - [~] Step 4: Create password + confirm (defer auth user creation)
+  - [x] Transiently store password in httpOnly cookie.
 - [~] Step 5: Upload NIC photos (front/back) to nic-media (server-signed URLs)
+  - [ ] Server action returning signed upload URLs and persisting paths.
 - [~] Step 6: Facial scan (mock) upload; mark identity_verifications.status='pending'
 - [~] Step 7: Finalize: server action issues gov_id via generate_gov_id(nic), creates auth user, writes profiles with gov_id, links any prepared artifacts; redirect to /(auth)/sign-in or /app
+  - [x] Create auth user via admin; update profile with gov_id, nic, full_name; clear temp cookies.
 
 ## Permissions and linking
 
@@ -62,3 +69,4 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 - docs(citizen): add onboarding tasks tracker
 - feat(db): add gov_id to profiles, verification tables, storage policies, and gov_id columns on appointments/documents
 - feat(citizen/onboarding): scaffold routes and server action stubs for NIC → phone → names → password → NIC photos → face → finalize
+- feat(citizen/onboarding): OTP rate-limit; transient names/password; finalize creates auth user and sets gov_id
