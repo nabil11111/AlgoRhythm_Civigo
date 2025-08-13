@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getServerClient, getProfile } from "@/utils/supabase/server";
 import { OfficerDepartmentParam } from "@/lib/validation";
 import DepartmentHeader from "../../_components/DepartmentHeader";
