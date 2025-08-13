@@ -1,12 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/utils/supabase/server", async (orig) => {
-  const actual = await (orig as any)();
-  return {
-    ...actual,
-    getProfile: vi.fn(async () => null),
-  };
-});
+vi.mock("@/utils/supabase/server", () => ({
+  getProfile: vi.fn(async () => null),
+}));
 
 describe("requireOfficer helper", () => {
   beforeEach(async () => {

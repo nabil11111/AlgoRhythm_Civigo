@@ -14,5 +14,3 @@ describe("server utils module", () => {
     expect(typeof mod.getServerClient).toBe("function");
   });
 });
-
-

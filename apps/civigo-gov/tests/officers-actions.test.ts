@@ -5,12 +5,20 @@ vi.mock("@/utils/supabase/server", () => ({
   getServiceRoleClient: () => ({
     auth: {
       admin: {
-        listUsers: async () => ({ data: { users: [{ id: "u1", email: "o@ex.com" }] } }),
-        createUser: async () => ({ data: { user: { id: "u1" } } }),
+        listUsers: async () => ({ data: { users: [{ id: "11111111-1111-1111-1111-111111111111", email: "o@ex.com" }] } }),
+        createUser: async () => ({ data: { user: { id: "11111111-1111-1111-1111-111111111111" } } }),
         updateUserById: async () => ({ data: {} }),
       },
     },
-    from: () => ({ upsert: () => ({ select: () => ({ single: async () => ({ data: { id: "u1" } }) }) }) }),
+    from: (table: string) => {
+      if (table === "profiles") {
+        return { upsert: () => ({ select: () => ({ single: async () => ({ data: { id: "11111111-1111-1111-1111-111111111111" } }) }) }) } as any;
+      }
+      if (table === "officer_assignments") {
+        return { insert: async () => ({ error: null }) } as any;
+      }
+      return {} as any;
+    },
   }),
   getServerClient: async () => ({ from: () => ({ insert: async () => ({ error: null }) }) }),
 }));
@@ -21,8 +29,8 @@ describe("officers actions", () => {
       "@/app/(protected)/admin/officers/_actions"
     );
     const res = await assignOfficerToDepartment({
-      officer_id: "u1",
-      department_id: "d1",
+      officer_id: "11111111-1111-1111-1111-111111111111",
+      department_id: "22222222-2222-2222-2222-222222222222",
     });
     expect(res.ok).toBe(true);
   });
@@ -33,7 +41,7 @@ describe("officers actions", () => {
   });
   it("resetOfficerPassword updates via Admin API", async () => {
     const { resetOfficerPassword } = await import("@/app/(protected)/admin/officers/_actions");
-    const res = await resetOfficerPassword({ user_id: "u1", newPassword: "newpassword123" });
+    const res = await resetOfficerPassword({ user_id: "11111111-1111-1111-1111-111111111111", newPassword: "newpassword123" });
     expect(res.ok).toBe(true);
   });
   it("duplicate assignment maps to unique_violation", async () => {
@@ -43,7 +51,7 @@ describe("officers actions", () => {
       getServiceRoleClient: () => null,
     }));
     const { assignOfficerToDepartment } = await import("@/app/(protected)/admin/officers/_actions");
-    const res = await assignOfficerToDepartment({ officer_id: "u1", department_id: "d1" });
+    const res = await assignOfficerToDepartment({ officer_id: "11111111-1111-1111-1111-111111111111", department_id: "22222222-2222-2222-2222-222222222222" });
     expect(res.ok).toBe(false);
     expect(res.error).toBe("unique_violation");
   });
