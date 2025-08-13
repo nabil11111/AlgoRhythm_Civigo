@@ -34,8 +34,15 @@ export default async function DepartmentServicesPage({ params, searchParams }: P
   const { data: rows } = await query;
 
   const base = `/app/departments/${id}`;
-  const prevHref = prevPageHref(base, { page, pageSize, offset });
-  const nextHref = nextPageHref(base, { page, pageSize, offset });
+  function withParams(next: { page?: number }) {
+    const spx = new URLSearchParams();
+    spx.set("page", String(next.page ?? page));
+    spx.set("pageSize", String(pageSize));
+    if (q) spx.set("q", q);
+    return `${base}?${spx.toString()}`;
+  }
+  const prevHref = withParams({ page: Math.max(1, page - 1) });
+  const nextHref = withParams({ page: page + 1 });
 
   return (
     <div className="space-y-4">
