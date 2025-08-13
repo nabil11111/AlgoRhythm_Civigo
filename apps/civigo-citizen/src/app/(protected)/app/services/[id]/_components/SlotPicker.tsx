@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useOptimistic, useState } from "react";
+import { useEffect, useMemo, useOptimistic, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import type { BookSlotState } from "../_actions";
@@ -19,6 +19,7 @@ export function SlotPicker({
   const router = useRouter();
   const search = useSearchParams();
   const [selected, setSelected] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const [state, action] = useOptimistic<BookSlotState, FormData>({ ok: undefined }, async (prev, formData) => {
     return await bookSlotAction(prev, formData);
   });
@@ -53,27 +54,30 @@ export function SlotPicker({
     const sp = new URLSearchParams(search.toString());
     sp.set("from", from);
     sp.set("to", to);
-    router.replace(`?${sp.toString()}`);
+    startTransition(() => router.replace(`?${sp.toString()}`));
   }
 
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <button className="border rounded px-2 py-1" onClick={() => changeRange("today")}>Today</button>
-        <button className="border rounded px-2 py-1" onClick={() => changeRange("7")}>Next 7 days</button>
-        <button className="border rounded px-2 py-1" onClick={() => changeRange("14")}>Next 14 days</button>
+        <button className="border rounded px-2 py-1" onClick={() => changeRange("today")} aria-busy={isPending}>Today</button>
+        <button className="border rounded px-2 py-1" onClick={() => changeRange("7")} aria-busy={isPending}>Next 7 days</button>
+        <button className="border rounded px-2 py-1" onClick={() => changeRange("14")} aria-busy={isPending}>Next 14 days</button>
       </div>
 
       <form action={action} aria-live="polite">
         <input type="hidden" name="slot_id" value={selected ?? ""} />
         <div className="space-y-4">
           {grouped.length === 0 && (
-            <div className="text-sm text-gray-500">No slots available for this range.</div>
+            <div className="text-sm text-gray-500" role="status" aria-live="polite">No slots available for this range.</div>
           )}
           {grouped.map(([day, list]) => (
             <div key={day}>
               <div className="text-sm font-medium mb-2">{day}</div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {list.length === 0 && (
+                  <div className="text-xs text-gray-500">No slots</div>
+                )}
                 {list.map((s) => (
                   <button
                     key={s.id}
@@ -91,7 +95,7 @@ export function SlotPicker({
           ))}
         </div>
         <div className="mt-3">
-          <button className="bg-black text-white rounded px-3 py-2 disabled:opacity-50" disabled={!selected}>
+          <button className="bg-black text-white rounded px-3 py-2 disabled:opacity-50" disabled={!selected} aria-busy={isPending}>
             {citizenBooking.confirmCta}
           </button>
         </div>

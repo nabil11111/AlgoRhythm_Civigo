@@ -32,6 +32,11 @@ Booking flow (RPC-first):
 - If the RPC is unavailable, enable fallback via `CITIZEN_BOOKING_FALLBACK_ENABLED=true` to use a guarded insert with active/capacity checks.
 - On success, `revalidatePath('/app/appointments')` and redirect to `/app/appointments/[id]`.
 
+Appointments filters:
+
+- `/app/appointments?status=upcoming|past` to filter by time relative to now; default shows all.
+- Pagination persists across filters; filter changes reset page to 1.
+
 Search guidance:
 
 - For multi-column search, use PostgREST `or` with `ilike` (e.g., `or(code.ilike.%q%,name.ilike.%q%)`).
