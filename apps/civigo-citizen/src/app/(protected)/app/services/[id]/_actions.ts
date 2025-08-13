@@ -26,6 +26,7 @@ export async function createAppointmentFromSlot(
     const { data: rpcResult, error: rpcError } = await supabase
       .rpc("book_appointment_slot", {
         p_slot_id: input.slot_id,
+        p_citizen_id: profile.id,
         p_notes: input.notes ?? null,
       })
       .maybeSingle();
@@ -33,7 +34,7 @@ export async function createAppointmentFromSlot(
     const FALLBACK_ENABLED = process.env.CITIZEN_BOOKING_FALLBACK_ENABLED === "true";
 
     if (!rpcError && rpcResult) {
-      const appointmentId = (rpcResult as any).id as string;
+      const appointmentId = (rpcResult as any).appointment_id as string ?? (rpcResult as any).id as string;
       revalidatePath("/app/appointments");
       redirect(`/app/appointments/${appointmentId}`);
     }

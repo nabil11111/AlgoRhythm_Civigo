@@ -31,6 +31,11 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
       <div>Service: {service?.name}</div>
       <div>Time: {new Date(appt.appointment_at).toLocaleString()}</div>
       <div>Status: {appt.status}</div>
+      <div>
+        <button className="underline text-sm" type="button" disabled>
+          Add to calendar (coming soon)
+        </button>
+      </div>
       <div className="mt-4 text-sm text-gray-600">Documents: (coming soon)</div>
     </div>
   );
