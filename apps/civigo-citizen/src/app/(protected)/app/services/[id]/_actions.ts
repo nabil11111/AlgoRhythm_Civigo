@@ -79,7 +79,7 @@ export async function createAppointmentFromSlot(
     }
 
     revalidatePath("/app/appointments");
-    return { ok: true, data: { id: appt.id, reference_code: appt.reference_code } } as const;
+    redirect(`/app/appointments/${appt.id}`);
   } catch (e) {
     const mapped = mapPostgresError(e);
     return { ok: false, error: mapped.code, message: mapped.message } as const;
