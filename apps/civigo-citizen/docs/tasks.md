@@ -10,23 +10,23 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 
 ## Database and RLS
 
-- [ ] Migration: profiles.gov_id (text, unique, indexed); add generate_gov_id(nic text) SQL function stub.
-- [ ] Migration: identity_verifications (user_temp_id, nic, nic_front_path, nic_back_path, face_capture_path, status, score, created_at, reviewed_by, reviewed_at).
-- [ ] Migration: phone_verifications (user_temp_id, phone, otp_hash, expires_at, verified_at).
-- [ ] Storage: nic-media bucket (private); RLS/policies: owner and admin read; officers no read (facial captures never exposed to officers).
-- [ ] Appointments/documents: add citizen_gov_id/owner_gov_id columns; indexes; backfill plan stub.
+- [x] Migration: profiles.gov_id (text, unique, indexed); add generate_gov_id(nic text) SQL function stub.
+- [x] Migration: identity_verifications (user_temp_id, nic, nic_front_path, nic_back_path, face_capture_path, status, score, created_at, reviewed_by, reviewed_at).
+- [x] Migration: phone_verifications (user_temp_id, phone, otp_hash, expires_at, verified_at).
+- [x] Storage: nic-media bucket (private); RLS/policies: owner and admin read; officers no read (facial captures never exposed to officers).
+- [x] Appointments/documents: add citizen_gov_id/owner_gov_id columns; indexes; backfill plan stub.
 - [ ] RLS: identity_verifications owner read/write, admin full; officers none. phone_verifications owner-only; admin read.
 
 ## Onboarding routes and actions
 
-- [ ] Route group: /(auth)/onboarding/*
-- [ ] Step 1: Enter NIC (Zod validate both formats; server check uniqueness; store as temp onboarding state)
-- [ ] Step 2: Phone number → Send OTP (mock) → Verify OTP (mock, server-stored hashed OTP with expiry)
-- [ ] Step 3: Names (first_name, last_name)
-- [ ] Step 4: Create password + confirm (defer auth user creation)
-- [ ] Step 5: Upload NIC photos (front/back) to nic-media (server-signed URLs)
-- [ ] Step 6: Facial scan (mock) upload; mark identity_verifications.status='pending'
-- [ ] Step 7: Finalize: server action issues gov_id via generate_gov_id(nic), creates auth user, writes profiles with gov_id, links any prepared artifacts; redirect to /(auth)/sign-in or /app
+- [x] Route group: /(auth)/onboarding/*
+- [x] Step 1: Enter NIC (Zod validate both formats; server check uniqueness; store as temp onboarding state)
+- [~] Step 2: Phone number → Send OTP (mock) → Verify OTP (mock, server-stored hashed OTP with expiry)
+- [~] Step 3: Names (first_name, last_name)
+- [~] Step 4: Create password + confirm (defer auth user creation)
+- [~] Step 5: Upload NIC photos (front/back) to nic-media (server-signed URLs)
+- [~] Step 6: Facial scan (mock) upload; mark identity_verifications.status='pending'
+- [~] Step 7: Finalize: server action issues gov_id via generate_gov_id(nic), creates auth user, writes profiles with gov_id, links any prepared artifacts; redirect to /(auth)/sign-in or /app
 
 ## Permissions and linking
 
@@ -60,5 +60,7 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 ## Changelog
 
 - docs(citizen): add onboarding tasks tracker
+- feat(db): add gov_id to profiles, verification tables, storage policies, and gov_id columns on appointments/documents
+- feat(citizen/onboarding): scaffold routes and server action stubs for NIC → phone → names → password → NIC photos → face → finalize
 
 
