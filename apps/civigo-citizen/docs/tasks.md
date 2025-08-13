@@ -19,7 +19,7 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 
 ## Onboarding routes and actions
 
-- [x] Route group: /(auth)/onboarding/*
+- [x] Route group: /(auth)/onboarding/\*
 - [x] Step 1: Enter NIC (Zod validate both formats; server check uniqueness; store as temp onboarding state)
 - [~] Step 2: Phone number → Send OTP (mock) → Verify OTP (mock, server-stored hashed OTP with expiry)
 - [~] Step 3: Names (first_name, last_name)
@@ -62,5 +62,3 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 - docs(citizen): add onboarding tasks tracker
 - feat(db): add gov_id to profiles, verification tables, storage policies, and gov_id columns on appointments/documents
 - feat(citizen/onboarding): scaffold routes and server action stubs for NIC → phone → names → password → NIC photos → face → finalize
-
-
