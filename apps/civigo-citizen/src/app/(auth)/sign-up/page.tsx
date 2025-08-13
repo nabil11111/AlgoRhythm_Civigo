@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getBrowserClient } from "@/utils/supabase/client";
 import { z } from "zod";
+import { citizenAuth } from "@/lib/strings/citizen-auth";
 import { useRouter } from "next/navigation";
 
 const SignUpSchema = z.object({
@@ -21,17 +22,17 @@ export default function SignUpPage() {
     e.preventDefault();
     const parsed = SignUpSchema.safeParse({ email, password });
     if (!parsed.success) {
-      toast.error("Please enter a valid email and password");
+      toast.error(citizenAuth.errors.invalid);
       return;
     }
     startTransition(async () => {
       const supabase = getBrowserClient();
       const { error } = await supabase.auth.signUp(parsed.data);
       if (error) {
-        toast.error("Sign-up failed. Try a different email.");
+        toast.error(citizenAuth.errors.signUpFailed);
         return;
       }
-      toast.success("Account created. You can sign in now.");
+      toast.success(citizenAuth.success.accountCreated);
       router.replace("/sign-in");
     });
   }

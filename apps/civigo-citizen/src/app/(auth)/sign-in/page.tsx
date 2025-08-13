@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getBrowserClient } from "@/utils/supabase/client";
 import { z } from "zod";
+import { citizenAuth } from "@/lib/strings/citizen-auth";
 import { useRouter } from "next/navigation";
 
 const SignInSchema = z.object({
@@ -21,14 +22,14 @@ export default function SignInPage() {
     e.preventDefault();
     const parsed = SignInSchema.safeParse({ email, password });
     if (!parsed.success) {
-      toast.error("Please enter a valid email and password");
+      toast.error(citizenAuth.errors.invalid);
       return;
     }
     startTransition(async () => {
       const supabase = getBrowserClient();
       const { error } = await supabase.auth.signInWithPassword(parsed.data);
       if (error) {
-        toast.error("Sign-in failed. Please check your credentials.");
+        toast.error(citizenAuth.errors.failed);
         return;
       }
       // Fetch profile role
@@ -41,7 +42,7 @@ export default function SignInPage() {
           .eq("id", userId)
           .maybeSingle();
         if (profile?.role !== "citizen") {
-          toast.error("This portal is for citizens");
+          toast.error(citizenAuth.errors.notCitizen);
           return;
         }
       }

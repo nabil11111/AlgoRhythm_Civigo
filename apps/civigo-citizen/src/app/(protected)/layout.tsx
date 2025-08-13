@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getProfile, getServerClient } from "@/utils/supabase/server";
+import { signOut } from "./_actions";
 
 export default async function ProtectedLayout({
   children,
@@ -23,7 +24,7 @@ export default async function ProtectedLayout({
         <Link href="/app" className="font-semibold">Civigo</Link>
         <nav className="flex items-center gap-4">
           <Link href="/app/appointments" className="underline">My Appointments</Link>
-          <form action={signOutAction}>
+          <form action={signOut}>
             <button className="text-sm underline" type="submit">Sign out</button>
           </form>
         </nav>
@@ -32,12 +33,4 @@ export default async function ProtectedLayout({
     </div>
   );
 }
-
-async function signOutAction() {
-  "use server";
-  const supabase = await getServerClient();
-  await supabase.auth.signOut();
-  redirect("/sign-in");
-}
-
 
