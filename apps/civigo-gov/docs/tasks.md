@@ -94,7 +94,7 @@
 
 ### Services page UI wiring
 - [x] Wire dialogs into services page (New button, actions column)
-- [ ] Toolbar search (client or GET form) and pagination controls (Prev/Next, page size)
+- [x] Toolbar search (client or GET form) and pagination controls (Prev/Next, page size)
 
 ### Validation and strings
 - [x] Add ServiceCreate/ServiceUpdate/ServiceDelete to src/lib/validation.ts
@@ -110,20 +110,20 @@
 
 ## Services RLS hardening
 
-- [ ] Migration: enable RLS on public.services
-- [ ] Policies: officer CRUD where active assignment exists for services.department_id; admin full access
+- [x] Migration: enable RLS on public.services
+- [x] Policies: officer CRUD where active assignment exists for services.department_id; admin full access
 - [ ] Verify officer services CRUD under RLS; failing cases surface insufficient_privilege
 - [ ] Update tests to assert RLS behavior (non-assigned mutation blocked)
 
 ## Officer appointment lifecycle (SSR-only)
 
-- [ ] Actions file: _actions.ts under /officer/departments/[deptId]/dashboard or per-dept page folder
-- [ ] markCheckedIn({ id }) with Zod and SSR client; revalidatePath(/officer/departments/${deptId})
-- [ ] markStarted({ id })
-- [ ] markCompleted({ id })
-- [ ] markCancelled({ id })
-- [ ] markNoShow({ id, value })
-- [ ] UI: add Actions column with client islands to call actions; disable invalid transitions
+- [x] Actions file: _actions.ts under /officer/departments/[deptId]/dashboard or per-dept page folder
+- [x] markCheckedIn({ id }) with Zod and SSR client; revalidatePath(/officer/departments/${deptId})
+- [x] markStarted({ id })
+- [x] markCompleted({ id })
+- [x] markCancelled({ id })
+- [x] markNoShow({ id, value })
+- [x] UI: add Actions column with client islands to call actions; disable invalid transitions
 - [ ] Tests: officer-appointments-actions.test.ts (happy paths + invalid transition error)
 - [ ] Docs: README updates for services RLS and appointment actions
 
@@ -145,3 +145,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer/services): add services SSR list, actions, guard, strings, validation, nav link
 - feat(gov-officer/services): client dialogs and integration on services page
 - chore(gov-officer/services): add Services RLS + appointment lifecycle tasks
+- feat(gov-officer/services): add toolbar search & pagination controls on services page

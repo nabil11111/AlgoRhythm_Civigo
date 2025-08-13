@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getProfile, getServerClient } from "@/utils/supabase/server";
 import { OfficerDepartmentParam } from "@/lib/validation";
-import { parsePagination } from "@/lib/pagination";
+import { parsePagination, nextPageHref, prevPageHref } from "@/lib/pagination";
 import { officerServices } from "@/lib/strings/officer-services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,36 @@ export default async function ServicesPage({
         <CreateServiceDialog deptId={deptId} />
       </div>
 
+      <form className="flex items-center gap-2" action="" method="get">
+        <input
+          type="text"
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="Search code or name"
+          className="border rounded px-3 py-2 text-sm"
+        />
+        <select
+          name="pageSize"
+          defaultValue={String(pagination.pageSize)}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+        <Button type="submit" variant="outline" className="text-sm">
+          Apply
+        </Button>
+        {q ? (
+          <a
+            href={`?page=1&pageSize=${pagination.pageSize}`}
+            className="text-sm underline ml-2"
+          >
+            Clear
+          </a>
+        ) : null}
+      </form>
+
       {!services || services.length === 0 ? (
         <Card>
           <CardHeader>
@@ -106,14 +136,52 @@ export default async function ServicesPage({
                     <TableCell>{s.name}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <EditServiceDialog deptId={deptId} service={{ id: s.id, code: s.code, name: s.name }} />
-                        <ConfirmDeleteDialog deptId={deptId} service={{ id: s.id, code: s.code }} />
+                        <EditServiceDialog
+                          deptId={deptId}
+                          service={{ id: s.id, code: s.code, name: s.name }}
+                        />
+                        <ConfirmDeleteDialog
+                          deptId={deptId}
+                          service={{ id: s.id, code: s.code }}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            <div className="flex items-center justify-between mt-4">
+              <a
+                href={prevPageHref(``, pagination)}
+                className="text-sm underline"
+                onClick={(e) => {
+                  // Preserve q when navigating
+                  const sp = new URLSearchParams({
+                    page: String(Math.max(1, pagination.page - 1)),
+                    pageSize: String(pagination.pageSize),
+                  });
+                  if (q) sp.set("q", q);
+                  (e.currentTarget as HTMLAnchorElement).href = `?${sp.toString()}`;
+                }}
+              >
+                Previous
+              </a>
+              <span className="text-xs text-muted-foreground">Page {pagination.page}</span>
+              <a
+                href={nextPageHref(``, pagination)}
+                className="text-sm underline"
+                onClick={(e) => {
+                  const sp = new URLSearchParams({
+                    page: String(pagination.page + 1),
+                    pageSize: String(pagination.pageSize),
+                  });
+                  if (q) sp.set("q", q);
+                  (e.currentTarget as HTMLAnchorElement).href = `?${sp.toString()}`;
+                }}
+              >
+                Next
+              </a>
+            </div>
           </CardContent>
         </Card>
       )}
