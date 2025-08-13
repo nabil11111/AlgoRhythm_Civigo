@@ -12,7 +12,7 @@ vi.mock("@/utils/supabase/server", () => ({
     },
     from: () => ({ upsert: () => ({ select: () => ({ single: async () => ({ data: { id: "u1" } }) }) }) }),
   }),
-  getServerClient: async () => ({ from: () => ({}) }),
+  getServerClient: async () => ({ from: () => ({ insert: async () => ({ error: null }) }) }),
 }));
 
 describe("officers actions", () => {
