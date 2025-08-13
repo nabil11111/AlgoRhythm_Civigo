@@ -5,7 +5,17 @@ import { parsePagination } from "@/lib/pagination";
 import { officerServices } from "@/lib/strings/officer-services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import CreateServiceDialog from "./_components/CreateServiceDialog";
+import EditServiceDialog from "./_components/EditServiceDialog";
+import ConfirmDeleteDialog from "./_components/ConfirmDeleteDialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import Link from "next/link";
 
 type PageProps = {
@@ -13,9 +23,13 @@ type PageProps = {
   searchParams?: { [key: string]: string | string[] | undefined };
 };
 
-export default async function ServicesPage({ params, searchParams }: PageProps) {
+export default async function ServicesPage({
+  params,
+  searchParams,
+}: PageProps) {
   const parsed = OfficerDepartmentParam.safeParse({ deptId: params.deptId });
   if (!parsed.success) redirect("/officer");
+  const deptId = parsed.data.deptId;
 
   const profile = await getProfile();
   if (!profile || profile.role !== "officer") redirect("/sign-in");
@@ -55,9 +69,7 @@ export default async function ServicesPage({ params, searchParams }: PageProps) 
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{officerServices.title}</h1>
-        <Button asChild>
-          <Link href="#create-service">{officerServices.newService}</Link>
-        </Button>
+        <CreateServiceDialog deptId={deptId} />
       </div>
 
       {!services || services.length === 0 ? (
@@ -88,16 +100,14 @@ export default async function ServicesPage({ params, searchParams }: PageProps) 
               <TableBody>
                 {services.map((s) => (
                   <TableRow key={s.id}>
-                    <TableCell className="font-mono text-xs">{s.code}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {s.code}
+                    </TableCell>
                     <TableCell>{s.name}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" asChild>
-                          <Link href={`#edit-${s.id}`}>Edit</Link>
-                        </Button>
-                        <Button size="sm" variant="destructive" asChild>
-                          <Link href={`#delete-${s.id}`}>Delete</Link>
-                        </Button>
+                        <EditServiceDialog deptId={deptId} service={{ id: s.id, code: s.code, name: s.name }} />
+                        <ConfirmDeleteDialog deptId={deptId} service={{ id: s.id, code: s.code }} />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -115,5 +125,3 @@ function asString(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];
   return value;
 }
-
-
