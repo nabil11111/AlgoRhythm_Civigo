@@ -14,38 +14,53 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { createSlot } from "../_actions";
+import { updateSlot } from "../_actions";
 
-const CreateSchema = z.object({
+const UpdateSchema = z.object({
+  id: z.string().uuid(),
   serviceId: z.string().uuid(),
   slot_at: z.string().min(1),
   duration_minutes: z.coerce.number().int().min(5).max(240),
   capacity: z.coerce.number().int().min(1).max(100),
 });
 
-export default function CreateSlotDialog({ serviceId }: { serviceId: string }) {
+export default function EditSlotDialog({
+  serviceId,
+  slot,
+}: {
+  serviceId: string;
+  slot: {
+    id: string;
+    slot_at: string;
+    duration_minutes: number;
+    capacity: number;
+  };
+}) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState({
-    slot_at: "",
-    duration_minutes: 15,
-    capacity: 1,
+    slot_at: slot.slot_at,
+    duration_minutes: slot.duration_minutes,
+    capacity: slot.capacity,
   });
 
   function onSubmit() {
     startTransition(async () => {
-      const parsed = CreateSchema.safeParse({ serviceId, ...form });
+      const parsed = UpdateSchema.safeParse({
+        id: slot.id,
+        serviceId,
+        ...form,
+      });
       if (!parsed.success) {
         toast.error("Invalid inputs");
         return;
       }
-      const res = await createSlot(parsed.data);
+      const res = await updateSlot(parsed.data);
       if (res.ok) {
-        toast.success("Slot created");
+        toast.success("Slot updated");
         setOpen(false);
-        setForm({ slot_at: "", duration_minutes: 15, capacity: 1 });
       } else {
-        toast.error(res.message || "Failed to create slot");
+        toast.error(res.message || "Failed to update slot");
       }
     });
   }
@@ -53,11 +68,13 @@ export default function CreateSlotDialog({ serviceId }: { serviceId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">New Slot</Button>
+        <Button size="sm" variant="outline">
+          Edit
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Slot</DialogTitle>
+          <DialogTitle>Edit Slot</DialogTitle>
         </DialogHeader>
         <div className="grid gap-3">
           <label className="text-sm">When (ISO)</label>
@@ -66,7 +83,6 @@ export default function CreateSlotDialog({ serviceId }: { serviceId: string }) {
             onChange={(e) =>
               setForm((f) => ({ ...f, slot_at: e.target.value }))
             }
-            placeholder="2025-08-13T09:30:00.000Z"
           />
           <label className="text-sm">Duration (minutes)</label>
           <Input
@@ -99,7 +115,7 @@ export default function CreateSlotDialog({ serviceId }: { serviceId: string }) {
             </Button>
           </DialogClose>
           <Button onClick={onSubmit} disabled={isPending}>
-            {isPending ? "Creating..." : "Create"}
+            {isPending ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

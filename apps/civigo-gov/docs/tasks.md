@@ -77,35 +77,42 @@
 ## Officer Services under department
 
 ### Route and list (SSR, RLS-safe)
+
 - [x] Create /officer/departments/[deptId]/services page.tsx with SSR guard (officer + active assignment)
 - [x] List services for deptId with pagination
 - [x] Search (?q=) on code/name (server-side or filter)
 - [x] Empty-state Card
 
 ### Server Actions (SSR only)
-- [x] _actions.ts with createService, updateService, deleteService
+
+- [x] \_actions.ts with createService, updateService, deleteService
 - [x] Zod validation; typed results; map Postgres errors
 - [x] revalidatePath(/officer/departments/[deptId]/services) on success
 
 ### Components (client islands)
+
 - [x] CreateServiceDialog (shadcn Dialog + Form + Zod + toasts)
 - [x] EditServiceDialog
 - [x] ConfirmDeleteDialog
 
 ### Services page UI wiring
+
 - [x] Wire dialogs into services page (New button, actions column)
 - [x] Toolbar search (client or GET form) and pagination controls (Prev/Next, page size)
 
 ### Validation and strings
+
 - [x] Add ServiceCreate/ServiceUpdate/ServiceDelete to src/lib/validation.ts
 - [x] Add src/lib/strings/officer-services.ts
 
 ### Tests
+
 - [ ] tests/officer-services-actions.test.ts (happy path, unique violation, privilege errors)
 - [ ] tests/officer-services-guard.test.ts (unauthorized → /officer)
 - [ ] tests/officer-services-ui.test.ts (create/edit/delete happy and error toasts)
 
 ### Docs
+
 - [ ] Update README: services route, RLS scope, pagination/search, UI usage
 
 ## Services RLS hardening
@@ -117,7 +124,7 @@
 
 ## Officer appointment lifecycle (SSR-only)
 
-- [x] Actions file: _actions.ts under /officer/departments/[deptId]/dashboard or per-dept page folder
+- [x] Actions file: \_actions.ts under /officer/departments/[deptId]/dashboard or per-dept page folder
 - [x] markCheckedIn({ id }) with Zod and SSR client; revalidatePath(/officer/departments/${deptId})
 - [x] markStarted({ id })
 - [x] markCompleted({ id })
@@ -130,6 +137,7 @@
 ## Officer Slots (per-service) — New
 
 ### Database
+
 - [x] Migration: create public.service_slots table with (id, service_id, slot_at, duration_minutes, capacity, active, created_by, created_at) and unique(service_id, slot_at)
 - [x] Indexes: (service_id), (slot_at desc), (service_id, slot_at)
 - [x] appointments.slot_id uuid referencing public.service_slots(id) on delete set null
@@ -137,28 +145,33 @@
 - [x] Policies: admin full; officer CRUD where active assignment exists for the slot’s service.department_id
 
 ### Routes and UI (SSR)
+
 - [x] /officer/departments/[deptId]/services/[serviceId]/slots page.tsx with SSR guards (dept + service belongs to dept)
-- [~] Toolbar: date range (default today → +14d), pagination; optional q (future)
+- [x] Toolbar: date range (default today → +14d), pagination; optional q (future)
 - [x] Table: slot_at, duration, capacity, booked_count, active; actions: Edit, Activate/Deactivate, Delete
 - [x] Empty-state Card
 
 ### Server Actions (SSR-only)
-- [x] _actions.ts with createSlot, updateSlot, toggleSlotActive, deleteSlot
+
+- [x] \_actions.ts with createSlot, updateSlot, toggleSlotActive, deleteSlot
 - [x] Zod validation; map Postgres errors; revalidatePath(/officer/departments/${deptId}/services/${serviceId}/slots)
 
 ### Components (client islands)
+
 - [x] CreateSlotDialog (slot_at, duration_minutes, capacity)
 - [x] EditSlotDialog
 - [x] ConfirmToggleActiveDialog
 - [x] ConfirmDeleteDialog
 
 ### Tests
+
 - [ ] RLS: non-assigned officer mutations return insufficient_privilege
 - [ ] Actions: happy-path typed results; unique(service_id, slot_at) → unique_violation
 - [ ] Guards: unauthorized/wrong-role/wrong-dept redirect
 - [ ] UI: dialogs happy/error paths
 
 ### Docs
+
 - [ ] README: slots routes, RLS scope, booked_count logic, revalidation behavior
 
 ## Important operating rule
@@ -181,3 +194,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - chore(gov-officer/services): add Services RLS + appointment lifecycle tasks
 - feat(gov-officer/services): add toolbar search & pagination controls on services page
 - feat(gov-officer/slots): add service_slots migration + SSR slots page, actions, and create dialog
+- feat(gov-officer/slots): add date range filter and wire edit/toggle/delete dialogs
