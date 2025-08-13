@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getProfile, getServerClient } from "@/utils/supabase/server";
 import { OfficerDepartmentParam } from "@/lib/validation";
-import { parsePagination, nextPageHref, prevPageHref } from "@/lib/pagination";
+import { parsePagination } from "@/lib/pagination";
 import { officerServices } from "@/lib/strings/officer-services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,15 +19,14 @@ import {
 import Link from "next/link";
 
 type PageProps = {
-  params: { deptId: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
+  params: Promise<{ deptId: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function ServicesPage({
-  params,
-  searchParams,
-}: PageProps) {
-  const parsed = OfficerDepartmentParam.safeParse({ deptId: params.deptId });
+export default async function ServicesPage({ params, searchParams }: PageProps) {
+  const p = await params;
+  const sp = await searchParams;
+  const parsed = OfficerDepartmentParam.safeParse({ deptId: p.deptId });
   if (!parsed.success) redirect("/officer");
   const deptId = parsed.data.deptId;
 
@@ -45,10 +44,10 @@ export default async function ServicesPage({
   if (!assignment) redirect("/officer");
 
   const pagination = parsePagination({
-    page: asString(searchParams?.page),
-    pageSize: asString(searchParams?.pageSize),
+    page: asString(sp?.page),
+    pageSize: asString(sp?.pageSize),
   });
-  const q = asString(searchParams?.q)?.trim();
+  const q = asString(sp?.q)?.trim();
 
   let query = supabase
     .from("services")
@@ -151,36 +150,29 @@ export default async function ServicesPage({
               </TableBody>
             </Table>
             <div className="flex items-center justify-between mt-4">
-              <a
-                href={prevPageHref(``, pagination)}
-                className="text-sm underline"
-                onClick={(e) => {
-                  // Preserve q when navigating
-                  const sp = new URLSearchParams({
-                    page: String(Math.max(1, pagination.page - 1)),
-                    pageSize: String(pagination.pageSize),
-                  });
-                  if (q) sp.set("q", q);
-                  (e.currentTarget as HTMLAnchorElement).href = `?${sp.toString()}`;
-                }}
-              >
-                Previous
-              </a>
-              <span className="text-xs text-muted-foreground">Page {pagination.page}</span>
-              <a
-                href={nextPageHref(``, pagination)}
-                className="text-sm underline"
-                onClick={(e) => {
-                  const sp = new URLSearchParams({
-                    page: String(pagination.page + 1),
-                    pageSize: String(pagination.pageSize),
-                  });
-                  if (q) sp.set("q", q);
-                  (e.currentTarget as HTMLAnchorElement).href = `?${sp.toString()}`;
-                }}
-              >
-                Next
-              </a>
+              {(() => {
+                const prevQS = new URLSearchParams({
+                  page: String(Math.max(1, pagination.page - 1)),
+                  pageSize: String(pagination.pageSize),
+                });
+                if (q) prevQS.set("q", q);
+                const nextQS = new URLSearchParams({
+                  page: String(pagination.page + 1),
+                  pageSize: String(pagination.pageSize),
+                });
+                if (q) nextQS.set("q", q);
+                return (
+                  <>
+                    <Link href={`?${prevQS.toString()}`} className="text-sm underline">
+                      Previous
+                    </Link>
+                    <span className="text-xs text-muted-foreground">Page {pagination.page}</span>
+                    <Link href={`?${nextQS.toString()}`} className="text-sm underline">
+                      Next
+                    </Link>
+                  </>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>
