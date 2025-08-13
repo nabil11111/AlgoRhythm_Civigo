@@ -10,7 +10,10 @@ type PageProps = {
   searchParams?: { [key: string]: string | string[] | undefined };
 };
 
-export default async function DepartmentPage({ params, searchParams }: PageProps) {
+export default async function DepartmentPage({
+  params,
+  searchParams,
+}: PageProps) {
   const parsed = OfficerDepartmentParam.safeParse({ deptId: params.deptId });
   if (!parsed.success) {
     redirect("/officer");
@@ -72,6 +75,14 @@ export default async function DepartmentPage({ params, searchParams }: PageProps
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <DepartmentHeader departmentName={`${dept.name} (${dept.code})`} />
+        <div className="ml-auto">
+          <Link
+            href={`/officer/departments/${parsed.data.deptId}/services`}
+            className="underline text-sm"
+          >
+            Services
+          </Link>
+        </div>
       </div>
       <AppointmentsTable rows={rows} />
     </div>
@@ -82,5 +93,3 @@ function asString(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];
   return value;
 }
-
-

@@ -45,11 +45,13 @@
 ## Officer Department Chooser and Page
 
 ### Landing: list departments
+
 - [x] Fetch active assignments + departments (SSR, RLS-safe)
 - [x] If exactly one department, redirect to /officer/departments/[id]
 - [x] Render DepartmentsList grid with Card, Badge, Button “Open”
 
 ### Department page route
+
 - [x] Create app/(protected)/officer/departments/[deptId]/page.tsx
 - [x] Validate deptId with Zod; unassigned/invalid → redirect /officer
 - [x] Fetch department info (code, name)
@@ -58,16 +60,51 @@
 - [ ] Optional: ToastBridge for notices
 
 ### Utils and strings
+
 - [x] Add OfficerDepartmentParam in src/lib/validation.ts
 - [x] Add src/lib/strings/officer-dashboard.ts (headings, labels, empty states, errors)
 - [ ] (Optional) Add utils/auth-guard.ts with requireOfficerForDepartment
 
 ### Tests
+
 - [x] tests/officer-department-guard.test.ts (unassigned → /officer; assigned → OK)
 - [x] tests/officer-landing.test.ts (one → redirect; many → list)
 
 ### Docs
+
 - [x] Update README with department chooser flow, routes, RLS scope
+
+## Officer Services under department
+
+### Route and list (SSR, RLS-safe)
+- [ ] Create /officer/departments/[deptId]/services page.tsx with SSR guard (officer + active assignment)
+- [ ] List services for deptId with pagination
+- [ ] Search (?q=) on code/name (server-side or filter)
+- [ ] Empty-state Card
+
+### Server Actions (SSR only)
+- [ ] _actions.ts with createService, updateService, deleteService
+- [ ] Zod validation; typed results; map Postgres errors
+- [ ] revalidatePath(/officer/departments/[deptId]/services) on success
+
+### Components (client islands)
+- [ ] CreateServiceDialog (shadcn Dialog + Form + Zod + toasts)
+- [ ] EditServiceDialog
+- [ ] ConfirmDeleteDialog
+
+### Department page nav
+- [ ] Add Services tab/link on /officer/departments/[deptId]/page.tsx
+
+### Validation and strings
+- [ ] Add ServiceCreate/ServiceUpdate/ServiceDelete to src/lib/validation.ts
+- [ ] Add src/lib/strings/officer-services.ts
+
+### Tests
+- [ ] tests/officer-services-actions.test.ts (happy path, unique violation, privilege errors)
+- [ ] tests/officer-services-guard.test.ts (unauthorized → /officer)
+
+### Docs
+- [ ] Update README: services route, RLS scope, pagination/search
 
 ## Important operating rule
 
@@ -84,3 +121,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer): SSR-load paginated appointments (7d window) for officer landing; render shadcn table
 - test(gov-officer): add officer guard and sign-in module tests; docs: add Officer Dashboard section and redirects
 - feat(gov-officer): department chooser and per-department dashboard route
+- chore(gov-officer/services): add services tasks section (approved plan)
