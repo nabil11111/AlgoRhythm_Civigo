@@ -130,27 +130,27 @@
 ## Officer Slots (per-service) — New
 
 ### Database
-- [ ] Migration: create public.service_slots table with (id, service_id, slot_at, duration_minutes, capacity, active, created_by, created_at) and unique(service_id, slot_at)
-- [ ] Indexes: (service_id), (slot_at desc), (service_id, slot_at)
-- [ ] appointments.slot_id uuid referencing public.service_slots(id) on delete set null
-- [ ] Enable RLS on service_slots
-- [ ] Policies: admin full; officer CRUD where active assignment exists for the slot’s service.department_id
+- [x] Migration: create public.service_slots table with (id, service_id, slot_at, duration_minutes, capacity, active, created_by, created_at) and unique(service_id, slot_at)
+- [x] Indexes: (service_id), (slot_at desc), (service_id, slot_at)
+- [x] appointments.slot_id uuid referencing public.service_slots(id) on delete set null
+- [x] Enable RLS on service_slots
+- [x] Policies: admin full; officer CRUD where active assignment exists for the slot’s service.department_id
 
 ### Routes and UI (SSR)
-- [ ] /officer/departments/[deptId]/services/[serviceId]/slots page.tsx with SSR guards (dept + service belongs to dept)
-- [ ] Toolbar: date range (default today → +14d), pagination; optional q (future)
-- [ ] Table: slot_at, duration, capacity, booked_count, active; actions: Edit, Activate/Deactivate, Delete
-- [ ] Empty-state Card
+- [x] /officer/departments/[deptId]/services/[serviceId]/slots page.tsx with SSR guards (dept + service belongs to dept)
+- [~] Toolbar: date range (default today → +14d), pagination; optional q (future)
+- [x] Table: slot_at, duration, capacity, booked_count, active; actions: Edit, Activate/Deactivate, Delete
+- [x] Empty-state Card
 
 ### Server Actions (SSR-only)
-- [ ] _actions.ts with createSlot, updateSlot, toggleSlotActive, deleteSlot
-- [ ] Zod validation; map Postgres errors; revalidatePath(/officer/departments/${deptId}/services/${serviceId}/slots)
+- [x] _actions.ts with createSlot, updateSlot, toggleSlotActive, deleteSlot
+- [x] Zod validation; map Postgres errors; revalidatePath(/officer/departments/${deptId}/services/${serviceId}/slots)
 
 ### Components (client islands)
-- [ ] CreateSlotDialog (slot_at, duration_minutes, capacity)
-- [ ] EditSlotDialog
-- [ ] ConfirmToggleActiveDialog
-- [ ] ConfirmDeleteDialog
+- [x] CreateSlotDialog (slot_at, duration_minutes, capacity)
+- [x] EditSlotDialog
+- [x] ConfirmToggleActiveDialog
+- [x] ConfirmDeleteDialog
 
 ### Tests
 - [ ] RLS: non-assigned officer mutations return insufficient_privilege
@@ -180,4 +180,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer/services): client dialogs and integration on services page
 - chore(gov-officer/services): add Services RLS + appointment lifecycle tasks
 - feat(gov-officer/services): add toolbar search & pagination controls on services page
-- chore(gov-officer/slots): add Officer Slots tasks (migrations, routes, actions, UI, tests, docs)
+- feat(gov-officer/slots): add service_slots migration + SSR slots page, actions, and create dialog
