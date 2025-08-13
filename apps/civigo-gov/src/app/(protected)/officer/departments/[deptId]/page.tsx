@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getServerClient, getProfile } from "@/utils/supabase/server";
 import { OfficerDepartmentParam } from "@/lib/validation";
 import DepartmentHeader from "../../_components/DepartmentHeader";
+import { Button } from "@/components/ui/button";
+import { markCheckedIn, markStarted, markCompleted, markCancelled, markNoShow } from "./_actions";
 import AppointmentsTable from "../../_components/AppointmentsTable";
 import { parsePagination } from "@/lib/pagination";
 
@@ -85,7 +87,48 @@ export default async function DepartmentPage({
           </Link>
         </div>
       </div>
-      <AppointmentsTable rows={rows} />
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left">
+              <th className="py-2">Reference</th>
+              <th className="py-2">Service</th>
+              <th className="py-2">When</th>
+              <th className="py-2">Status</th>
+              <th className="py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-t">
+                <td className="py-2 font-mono text-xs">{r.reference_code}</td>
+                <td className="py-2">{r.service_name}</td>
+                <td className="py-2">{new Date(r.appointment_at).toLocaleString()}</td>
+                <td className="py-2">{r.status}</td>
+                <td className="py-2">
+                  <div className="flex gap-2">
+                    <form action={async () => { 'use server'; await markCheckedIn({ id: r.id, deptId: parsed.data.deptId }); }}>
+                      <Button size="sm" variant="outline">Check-in</Button>
+                    </form>
+                    <form action={async () => { 'use server'; await markStarted({ id: r.id, deptId: parsed.data.deptId }); }}>
+                      <Button size="sm" variant="outline">Start</Button>
+                    </form>
+                    <form action={async () => { 'use server'; await markCompleted({ id: r.id, deptId: parsed.data.deptId }); }}>
+                      <Button size="sm" variant="outline">Complete</Button>
+                    </form>
+                    <form action={async () => { 'use server'; await markCancelled({ id: r.id, deptId: parsed.data.deptId }); }}>
+                      <Button size="sm" variant="destructive">Cancel</Button>
+                    </form>
+                    <form action={async () => { 'use server'; await markNoShow({ id: r.id, deptId: parsed.data.deptId, value: true }); }}>
+                      <Button size="sm" variant="outline">No-show</Button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
