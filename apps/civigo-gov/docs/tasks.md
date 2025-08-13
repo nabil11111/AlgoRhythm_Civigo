@@ -88,12 +88,12 @@
 - [x] revalidatePath(/officer/departments/[deptId]/services) on success
 
 ### Components (client islands)
-- [ ] CreateServiceDialog (shadcn Dialog + Form + Zod + toasts)
-- [ ] EditServiceDialog
-- [ ] ConfirmDeleteDialog
+- [x] CreateServiceDialog (shadcn Dialog + Form + Zod + toasts)
+- [x] EditServiceDialog
+- [x] ConfirmDeleteDialog
 
 ### Services page UI wiring
-- [ ] Wire dialogs into services page (New button, actions column)
+- [x] Wire dialogs into services page (New button, actions column)
 - [ ] Toolbar search (client or GET form) and pagination controls (Prev/Next, page size)
 
 ### Validation and strings
@@ -124,3 +124,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - test(gov-officer): add officer guard and sign-in module tests; docs: add Officer Dashboard section and redirects
 - feat(gov-officer): department chooser and per-department dashboard route
 - feat(gov-officer/services): add services SSR list, actions, guard, strings, validation, nav link
+- feat(gov-officer/services): client dialogs and integration on services page
