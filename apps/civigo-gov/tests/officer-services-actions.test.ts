@@ -32,7 +32,7 @@ describe("services actions", () => {
     const { createService } = await import(
       "@/app/(protected)/officer/departments/[deptId]/services/_actions"
     );
-    const res = await createService({ deptId: "d1", code: "X", name: "Name" });
+    const res = await createService({ deptId: "22222222-2222-2222-2222-222222222222", code: "X", name: "Name" });
     expect(res.ok).toBe(true);
   });
 });
