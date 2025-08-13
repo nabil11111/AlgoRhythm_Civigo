@@ -7,10 +7,10 @@ describe("createAppointmentFromSlot action", () => {
   });
 
   it("RPC failure codes → friendly messages (placeholder)", async () => {
-    expect(mapRpcBookingError({ message: "slot inactive" })).toBe("slot_inactive");
-    expect(mapRpcBookingError({ message: "slot full" })).toBe("slot_full");
-    expect(mapRpcBookingError({ message: "slot in the past" })).toBe("slot_past");
-    expect(mapRpcBookingError({ code: "PGRST204", message: "function does not exist" })).toBe("rpc_not_available");
+    expect(await mapRpcBookingError({ message: "slot inactive" })).toBe("slot_inactive");
+    expect(await mapRpcBookingError({ message: "slot full" })).toBe("slot_full");
+    expect(await mapRpcBookingError({ message: "slot in the past" })).toBe("slot_past");
+    expect(await mapRpcBookingError({ code: "PGRST204", message: "function does not exist" })).toBe("rpc_not_available");
   });
 
   it("Fallback checks capacity/active and maps errors (placeholder)", async () => {

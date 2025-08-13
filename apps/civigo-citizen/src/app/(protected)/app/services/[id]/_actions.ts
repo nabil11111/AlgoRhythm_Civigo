@@ -101,22 +101,23 @@ export async function createAppointmentFromSlot(
 }
 
 // Exported for tests
-export function mapRpcBookingError(err: { code?: string; message?: string; details?: string } | null | undefined):
+export async function mapRpcBookingError(err: { code?: string; message?: string; details?: string } | null | undefined): Promise<
   | "slot_inactive"
   | "slot_full"
   | "slot_past"
   | "rpc_not_available"
-  | "unknown" {
+  | "unknown"
+> {
   if (!err) return "unknown";
   const c = (err.code || "").toUpperCase();
   const m = (err.message || "").toLowerCase();
   const d = (err.details || "").toLowerCase();
   // PostgREST function missing codes/messages vary
-  if (c === "PGRST204" || m.includes("does not exist") || m.includes("unknown function") || d.includes("function") && d.includes("does not exist")) {
+  if (c === "PGRST204" || m.includes("does not exist") || m.includes("unknown function") || (d.includes("function") && d.includes("does not exist"))) {
     return "rpc_not_available";
   }
   if (m.includes("slot inactive") || d.includes("slot inactive")) return "slot_inactive";
-  if (m.includes("slot full") || d.includes("slot full") || m.includes("capacity") && m.includes("exceeded")) return "slot_full";
+  if (m.includes("slot full") || d.includes("slot full") || (m.includes("capacity") && m.includes("exceeded"))) return "slot_full";
   if (m.includes("slot past") || d.includes("in the past") || m.includes("in the past")) return "slot_past";
   return "unknown";
 }
