@@ -127,6 +127,40 @@
 - [ ] Tests: officer-appointments-actions.test.ts (happy paths + invalid transition error)
 - [ ] Docs: README updates for services RLS and appointment actions
 
+## Officer Slots (per-service) — New
+
+### Database
+- [ ] Migration: create public.service_slots table with (id, service_id, slot_at, duration_minutes, capacity, active, created_by, created_at) and unique(service_id, slot_at)
+- [ ] Indexes: (service_id), (slot_at desc), (service_id, slot_at)
+- [ ] appointments.slot_id uuid referencing public.service_slots(id) on delete set null
+- [ ] Enable RLS on service_slots
+- [ ] Policies: admin full; officer CRUD where active assignment exists for the slot’s service.department_id
+
+### Routes and UI (SSR)
+- [ ] /officer/departments/[deptId]/services/[serviceId]/slots page.tsx with SSR guards (dept + service belongs to dept)
+- [ ] Toolbar: date range (default today → +14d), pagination; optional q (future)
+- [ ] Table: slot_at, duration, capacity, booked_count, active; actions: Edit, Activate/Deactivate, Delete
+- [ ] Empty-state Card
+
+### Server Actions (SSR-only)
+- [ ] _actions.ts with createSlot, updateSlot, toggleSlotActive, deleteSlot
+- [ ] Zod validation; map Postgres errors; revalidatePath(/officer/departments/${deptId}/services/${serviceId}/slots)
+
+### Components (client islands)
+- [ ] CreateSlotDialog (slot_at, duration_minutes, capacity)
+- [ ] EditSlotDialog
+- [ ] ConfirmToggleActiveDialog
+- [ ] ConfirmDeleteDialog
+
+### Tests
+- [ ] RLS: non-assigned officer mutations return insufficient_privilege
+- [ ] Actions: happy-path typed results; unique(service_id, slot_at) → unique_violation
+- [ ] Guards: unauthorized/wrong-role/wrong-dept redirect
+- [ ] UI: dialogs happy/error paths
+
+### Docs
+- [ ] README: slots routes, RLS scope, booked_count logic, revalidation behavior
+
 ## Important operating rule
 
 After each change and commit in this task, update apps/civigo-gov/docs/tasks.md: check items done, add discovered subtasks, and append a Changelog bullet with the commit subject.
@@ -146,3 +180,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer/services): client dialogs and integration on services page
 - chore(gov-officer/services): add Services RLS + appointment lifecycle tasks
 - feat(gov-officer/services): add toolbar search & pagination controls on services page
+- chore(gov-officer/slots): add Officer Slots tasks (migrations, routes, actions, UI, tests, docs)
