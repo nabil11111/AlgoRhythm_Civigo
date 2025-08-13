@@ -31,11 +31,12 @@ describe("requireOfficer helper", () => {
 
   it("returns ok for officer", async () => {
     const mod = await import("@/utils/supabase/server");
-    (mod.getProfile as any).mockResolvedValueOnce({ id: "u2", role: "officer" });
+    (mod.getProfile as any).mockResolvedValueOnce({
+      id: "u2",
+      role: "officer",
+    });
     const res = await mod.requireOfficer();
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.profile.role).toBe("officer");
   });
 });
-
-

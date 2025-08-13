@@ -9,7 +9,13 @@ vi.mock("@/utils/supabase/server", async (orig) => {
     ...actual,
     getServerClient: vi.fn(async () => ({
       from: () => ({
-        select: () => ({ eq: () => ({ data: [{ departments: { id: "d1", code: "IMMIG", name: "Immigration" } }] }) }),
+        select: () => ({
+          eq: () => ({
+            data: [
+              { departments: { id: "d1", code: "IMMIG", name: "Immigration" } },
+            ],
+          }),
+        }),
       }),
     })),
   };
@@ -25,5 +31,3 @@ describe("officer landing", () => {
     expect(mod).toBeTruthy();
   });
 });
-
-

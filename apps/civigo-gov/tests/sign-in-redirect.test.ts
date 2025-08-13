@@ -6,5 +6,3 @@ describe("sign-in page export", () => {
     expect(mod).toBeTruthy();
   });
 });
-
-

@@ -28,5 +28,3 @@ describe("officer dept guard", () => {
     expect(true).toBe(true);
   });
 });
-
-

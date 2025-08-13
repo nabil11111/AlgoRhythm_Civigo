@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 describe("server utils module", () => {
-  const filePath = path.join(process.cwd(), "apps/civigo-gov/src/utils/supabase/server.ts");
+  const filePath = path.join(process.cwd(), "src/utils/supabase/server.ts");
 
   it("does not contain 'use server' directive", () => {
     const contents = fs.readFileSync(filePath, "utf8");

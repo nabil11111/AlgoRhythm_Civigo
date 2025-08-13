@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/utils/supabase/server", async (orig) => {
   const actual = await (orig as any)();
   return {
@@ -7,10 +8,14 @@ vi.mock("@/utils/supabase/server", async (orig) => {
     getProfile: vi.fn(async () => ({ id: "u1", role: "officer" })),
     getServerClient: vi.fn(async () => ({
       from: () => ({
-        insert: () => ({ select: () => ({ single: async () => ({ data: { id: "s1" } }) }) }),
+        insert: () => ({
+          select: () => ({ single: async () => ({ data: { id: "s1" } }) }),
+        }),
         update: () => ({ eq: () => ({ eq: () => ({ error: null }) }) }),
         delete: () => ({ eq: () => ({ eq: () => ({ error: null }) }) }),
-        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: "oa1" } }) }) }),
+        select: () => ({
+          eq: () => ({ maybeSingle: async () => ({ data: { id: "oa1" } }) }),
+        }),
       }),
     })),
   };
@@ -25,5 +30,3 @@ describe("services actions", () => {
     expect(res.ok).toBe(true);
   });
 });
-
-

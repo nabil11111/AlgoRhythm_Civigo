@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/utils/supabase/server", () => ({
   getServiceRoleClient: () => ({
     auth: {
