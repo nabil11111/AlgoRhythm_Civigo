@@ -43,7 +43,9 @@ export default function AppointmentsTable({
       <TableBody>
         {rows.map((r) => (
           <TableRow key={r.id}>
-            <TableCell className="font-mono text-xs">{r.reference_code}</TableCell>
+            <TableCell className="font-mono text-xs">
+              {r.reference_code}
+            </TableCell>
             <TableCell>{maskName(r.citizen_name)}</TableCell>
             <TableCell>{r.service_name}</TableCell>
             <TableCell>{new Date(r.appointment_at).toLocaleString()}</TableCell>
@@ -59,8 +61,8 @@ function maskName(name: string | null) {
   if (!name) return "—";
   const parts = name.split(" ");
   return parts
-    .map((p) => (p.length > 1 ? `${p[0]}${"*".repeat(Math.max(1, p.length - 1))}` : p))
+    .map((p) =>
+      p.length > 1 ? `${p[0]}${"*".repeat(Math.max(1, p.length - 1))}` : p
+    )
     .join(" ");
 }
-
-

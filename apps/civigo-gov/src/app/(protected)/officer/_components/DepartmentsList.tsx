@@ -1,11 +1,22 @@
 import Link from "next/link";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export type DepartmentItem = { id: string; code: string; name: string };
 
-export default function DepartmentsList({ departments }: { departments: DepartmentItem[] }) {
+export default function DepartmentsList({
+  departments,
+}: {
+  departments: DepartmentItem[];
+}) {
   if (!departments.length) {
     return (
       <div className="border rounded p-6 text-sm text-gray-600">
@@ -35,5 +46,3 @@ export default function DepartmentsList({ departments }: { departments: Departme
     </div>
   );
 }
-
-

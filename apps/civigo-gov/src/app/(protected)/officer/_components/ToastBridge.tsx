@@ -3,7 +3,13 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-export default function ToastBridge({ message, type }: { message?: string; type?: "success" | "error" }) {
+export default function ToastBridge({
+  message,
+  type,
+}: {
+  message?: string;
+  type?: "success" | "error";
+}) {
   useEffect(() => {
     if (!message) return;
     if (type === "success") toast.success(message);
@@ -11,5 +17,3 @@ export default function ToastBridge({ message, type }: { message?: string; type?
   }, [message, type]);
   return null;
 }
-
-

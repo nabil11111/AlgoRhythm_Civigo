@@ -3,11 +3,13 @@ import { getProfile, getServerClient } from "@/utils/supabase/server";
 import { OfficerDepartmentParam } from "@/lib/validation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CreateSlotDialog from "./_components/CreateSlotDialog";
+import CreateSlotsBatchDialog from "./_components/CreateSlotsBatchDialog";
 import EditSlotDialog from "./_components/EditSlotDialog";
 import ConfirmToggleActiveDialog from "./_components/ConfirmToggleActiveDialog";
 import ConfirmDeleteDialog from "./_components/ConfirmDeleteDialog";
 import { parsePagination } from "@/lib/pagination";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type PageProps = {
   params: Promise<{ deptId: string; serviceId: string }>;
@@ -51,7 +53,9 @@ export default async function SlotsPage({ params, searchParams }: PageProps) {
   const toParam = asString(sp?.to);
   const now = new Date();
   const defaultFrom = now.toISOString();
-  const defaultTo = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  const defaultTo = new Date(
+    now.getTime() + 14 * 24 * 60 * 60 * 1000
+  ).toISOString();
   const fromIso = fromParam && fromParam.length > 0 ? fromParam : defaultFrom;
   const toIso = toParam && toParam.length > 0 ? toParam : defaultTo;
 
@@ -87,7 +91,10 @@ export default async function SlotsPage({ params, searchParams }: PageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Slots for {service?.name}</h1>
-        <CreateSlotDialog serviceId={p.serviceId} />
+        <div className="flex gap-2">
+          <CreateSlotsBatchDialog serviceId={p.serviceId} />
+          <CreateSlotDialog serviceId={p.serviceId} />
+        </div>
       </div>
       <form className="flex items-center gap-2" action="" method="get">
         <input
@@ -178,6 +185,41 @@ export default async function SlotsPage({ params, searchParams }: PageProps) {
                 ))}
               </tbody>
             </table>
+            <div className="flex items-center justify-between mt-4">
+              {(() => {
+                const prevQS = new URLSearchParams({
+                  page: String(Math.max(1, pagination.page - 1)),
+                  pageSize: String(pagination.pageSize),
+                });
+                if (fromParam) prevQS.set("from", fromParam);
+                if (toParam) prevQS.set("to", toParam);
+                const nextQS = new URLSearchParams({
+                  page: String(pagination.page + 1),
+                  pageSize: String(pagination.pageSize),
+                });
+                if (fromParam) nextQS.set("from", fromParam);
+                if (toParam) nextQS.set("to", toParam);
+                return (
+                  <>
+                    <Link
+                      href={`?${prevQS.toString()}`}
+                      className="text-sm underline"
+                    >
+                      Previous
+                    </Link>
+                    <span className="text-xs text-muted-foreground">
+                      Page {pagination.page}
+                    </span>
+                    <Link
+                      href={`?${nextQS.toString()}`}
+                      className="text-sm underline"
+                    >
+                      Next
+                    </Link>
+                  </>
+                );
+              })()}
+            </div>
           </CardContent>
         </Card>
       )}

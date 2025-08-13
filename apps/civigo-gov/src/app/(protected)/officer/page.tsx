@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getServerClient } from "@/utils/supabase/server";
-import DepartmentsList, { type DepartmentItem } from "./_components/DepartmentsList";
+import DepartmentsList, {
+  type DepartmentItem,
+} from "./_components/DepartmentsList";
 import { officerStrings } from "@/lib/strings/officer-dashboard";
 
 export default async function OfficerHome() {
@@ -13,7 +15,11 @@ export default async function OfficerHome() {
   const departments: DepartmentItem[] = (rows ?? [])
     .map((r: any) => r.departments)
     .filter(Boolean)
-    .map((d: any) => ({ id: d.id as string, code: d.code as string, name: d.name as string }));
+    .map((d: any) => ({
+      id: d.id as string,
+      code: d.code as string,
+      name: d.name as string,
+    }));
 
   if (departments.length === 1) {
     redirect(`/officer/departments/${departments[0].id}`);

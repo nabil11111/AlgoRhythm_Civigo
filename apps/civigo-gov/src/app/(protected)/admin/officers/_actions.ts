@@ -122,7 +122,8 @@ export async function assignOfficerToDepartment(
 ): Promise<ActionResult<{ officer_id: string; department_id: string }>> {
   try {
     const parsed = OfficerAssignSchema.parse(input);
-    const client = await getServerClient();
+    const sr = getServiceRoleClient();
+    const client = sr ?? (await getServerClient());
     const { error } = await client.from("officer_assignments").insert({
       officer_id: parsed.officer_id,
       department_id: parsed.department_id,
@@ -153,7 +154,8 @@ export async function toggleOfficerAssignment(
 > {
   try {
     const parsed = OfficerToggleSchema.parse(input);
-    const client = await getServerClient();
+    const sr = getServiceRoleClient();
+    const client = sr ?? (await getServerClient());
     const { error } = await client
       .from("officer_assignments")
       .update({ active: parsed.active })

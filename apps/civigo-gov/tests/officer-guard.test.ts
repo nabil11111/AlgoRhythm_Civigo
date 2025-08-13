@@ -5,7 +5,8 @@ vi.mock("@/utils/supabase/server", () => ({
   requireOfficer: vi.fn(async () => {
     const { getProfile } = await import("@/utils/supabase/server");
     const p = await (getProfile as unknown as () => Promise<any>)();
-    if (!p || p.role !== "officer") return { ok: false as const, error: "forbidden" };
+    if (!p || p.role !== "officer")
+      return { ok: false as const, error: "forbidden" };
     return { ok: true as const, profile: p };
   }),
 }));

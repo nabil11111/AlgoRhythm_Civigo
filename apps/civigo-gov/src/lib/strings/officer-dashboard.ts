@@ -5,5 +5,3 @@ export const officerStrings = {
   invalidDepartment: "Invalid department.",
   notAssigned: "You are not assigned to this department.",
 };
-
-

@@ -23,7 +23,10 @@ type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function ServicesPage({ params, searchParams }: PageProps) {
+export default async function ServicesPage({
+  params,
+  searchParams,
+}: PageProps) {
   const p = await params;
   const sp = await searchParams;
   const parsed = OfficerDepartmentParam.safeParse({ deptId: p.deptId });
@@ -123,7 +126,7 @@ export default async function ServicesPage({ params, searchParams }: PageProps) 
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead className="w-[120px]">Actions</TableHead>
+                  <TableHead className="w-[220px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -135,6 +138,13 @@ export default async function ServicesPage({ params, searchParams }: PageProps) 
                     <TableCell>{s.name}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link
+                            href={`/officer/departments/${deptId}/services/${s.id}/slots`}
+                          >
+                            Slots
+                          </Link>
+                        </Button>
                         <EditServiceDialog
                           deptId={deptId}
                           service={{ id: s.id, code: s.code, name: s.name }}
@@ -163,11 +173,19 @@ export default async function ServicesPage({ params, searchParams }: PageProps) 
                 if (q) nextQS.set("q", q);
                 return (
                   <>
-                    <Link href={`?${prevQS.toString()}`} className="text-sm underline">
+                    <Link
+                      href={`?${prevQS.toString()}`}
+                      className="text-sm underline"
+                    >
                       Previous
                     </Link>
-                    <span className="text-xs text-muted-foreground">Page {pagination.page}</span>
-                    <Link href={`?${nextQS.toString()}`} className="text-sm underline">
+                    <span className="text-xs text-muted-foreground">
+                      Page {pagination.page}
+                    </span>
+                    <Link
+                      href={`?${nextQS.toString()}`}
+                      className="text-sm underline"
+                    >
                       Next
                     </Link>
                   </>

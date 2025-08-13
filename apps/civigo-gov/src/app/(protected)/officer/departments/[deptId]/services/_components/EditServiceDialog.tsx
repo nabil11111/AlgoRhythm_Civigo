@@ -23,17 +23,15 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  ServiceUpdateSchema,
-  type ServiceUpdateInput,
-} from "@/lib/validation";
+import { ServiceUpdateSchema, type ServiceUpdateInput } from "@/lib/validation";
 import { officerServices } from "@/lib/strings/officer-services";
 import { updateService } from "../_actions";
 
 function mapError(code?: string): string {
   if (code === "unique_violation") return officerServices.errors.unique;
   if (code === "foreign_key_violation") return officerServices.errors.conflict;
-  if (code === "insufficient_privilege") return officerServices.errors.notAllowed;
+  if (code === "insufficient_privilege")
+    return officerServices.errors.notAllowed;
   return officerServices.errors.unknown;
 }
 
@@ -124,5 +122,3 @@ export default function EditServiceDialog({
     </Dialog>
   );
 }
-
-

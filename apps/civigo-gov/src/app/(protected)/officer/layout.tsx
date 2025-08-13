@@ -26,7 +26,9 @@ export default async function OfficerLayout({
     .select("department_id")
     .eq("officer_id", profile.id)
     .eq("active", true);
-  const departmentIds = (assignments ?? []).map((a: { department_id: string }) => a.department_id);
+  const departmentIds = (assignments ?? []).map(
+    (a: { department_id: string }) => a.department_id
+  );
   let departmentName: string | null = null;
   if (departmentIds.length === 1) {
     const { data: dept } = await supabase
@@ -58,5 +60,3 @@ export default async function OfficerLayout({
     </div>
   );
 }
-
-

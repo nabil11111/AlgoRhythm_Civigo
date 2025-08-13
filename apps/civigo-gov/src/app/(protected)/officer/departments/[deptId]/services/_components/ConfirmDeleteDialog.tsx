@@ -18,7 +18,8 @@ import { deleteService } from "../_actions";
 function mapError(code?: string): string {
   if (code === "unique_violation") return officerServices.errors.unique;
   if (code === "foreign_key_violation") return officerServices.errors.conflict;
-  if (code === "insufficient_privilege") return officerServices.errors.notAllowed;
+  if (code === "insufficient_privilege")
+    return officerServices.errors.notAllowed;
   return officerServices.errors.unknown;
 }
 
@@ -56,7 +57,8 @@ export default function ConfirmDeleteDialog({
           <DialogTitle>{officerServices.deleteService}</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Are you sure you want to delete service <span className="font-mono">{service.code}</span>?
+          Are you sure you want to delete service{" "}
+          <span className="font-mono">{service.code}</span>?
         </p>
         <DialogFooter>
           <DialogClose asChild>
@@ -64,7 +66,11 @@ export default function ConfirmDeleteDialog({
               Cancel
             </Button>
           </DialogClose>
-          <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isPending}
+          >
             {isPending ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
@@ -72,5 +78,3 @@ export default function ConfirmDeleteDialog({
     </Dialog>
   );
 }
-
-

@@ -20,10 +20,10 @@
 
 - [x] Create app/(protected)/officer/layout.tsx with SSR guard (role === 'officer'); redirect unauthenticated → /(auth)/sign-in; admin → /admin.
 - [x] Create app/(protected)/officer/page.tsx (landing).
-- [x] Create app/(protected)/officer/_actions.ts (placeholder; no mutations yet).
-- [x] Create app/(protected)/officer/_components/DepartmentHeader.tsx (Server).
-- [x] Create app/(protected)/officer/_components/AppointmentsTable.tsx (Server; shadcn Table).
-- [x] Create app/(protected)/officer/_components/ToastBridge.tsx (Client; sonner).
+- [x] Create app/(protected)/officer/\_actions.ts (placeholder; no mutations yet).
+- [x] Create app/(protected)/officer/\_components/DepartmentHeader.tsx (Server).
+- [x] Create app/(protected)/officer/\_components/AppointmentsTable.tsx (Server; shadcn Table).
+- [x] Create app/(protected)/officer/\_components/ToastBridge.tsx (Client; sonner).
 
 ## Data fetching (SSR, RLS-safe; no service-role)
 

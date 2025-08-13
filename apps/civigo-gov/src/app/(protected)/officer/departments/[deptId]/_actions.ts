@@ -5,14 +5,21 @@ import { getProfile, getServerClient } from "@/utils/supabase/server";
 import { z } from "zod";
 import { mapPostgresError } from "@/lib/db/errors";
 
-type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string; message?: string };
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; message?: string };
 
 const IdSchema = z.object({ id: z.string().uuid(), deptId: z.string().uuid() });
-const NoShowSchema = z.object({ id: z.string().uuid(), deptId: z.string().uuid(), value: z.boolean() });
+const NoShowSchema = z.object({
+  id: z.string().uuid(),
+  deptId: z.string().uuid(),
+  value: z.boolean(),
+});
 
 async function ensureOfficerDept(deptId: string) {
   const profile = await getProfile();
-  if (!profile || profile.role !== "officer") return { ok: false as const, error: "forbidden" };
+  if (!profile || profile.role !== "officer")
+    return { ok: false as const, error: "forbidden" };
   const supabase = await getServerClient();
   const { data: assignment } = await supabase
     .from("officer_assignments")
@@ -25,7 +32,10 @@ async function ensureOfficerDept(deptId: string) {
   return { ok: true as const, profile };
 }
 
-export async function markCheckedIn(input: { id: string; deptId: string }): Promise<ActionResult<{ id: string }>> {
+export async function markCheckedIn(input: {
+  id: string;
+  deptId: string;
+}): Promise<ActionResult<{ id: string }>> {
   const parsed = IdSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const guard = await ensureOfficerDept(parsed.data.deptId);
@@ -44,7 +54,10 @@ export async function markCheckedIn(input: { id: string; deptId: string }): Prom
   return { ok: true, data: { id: parsed.data.id } };
 }
 
-export async function markStarted(input: { id: string; deptId: string }): Promise<ActionResult<{ id: string }>> {
+export async function markStarted(input: {
+  id: string;
+  deptId: string;
+}): Promise<ActionResult<{ id: string }>> {
   const parsed = IdSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const guard = await ensureOfficerDept(parsed.data.deptId);
@@ -63,7 +76,10 @@ export async function markStarted(input: { id: string; deptId: string }): Promis
   return { ok: true, data: { id: parsed.data.id } };
 }
 
-export async function markCompleted(input: { id: string; deptId: string }): Promise<ActionResult<{ id: string }>> {
+export async function markCompleted(input: {
+  id: string;
+  deptId: string;
+}): Promise<ActionResult<{ id: string }>> {
   const parsed = IdSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const guard = await ensureOfficerDept(parsed.data.deptId);
@@ -82,7 +98,10 @@ export async function markCompleted(input: { id: string; deptId: string }): Prom
   return { ok: true, data: { id: parsed.data.id } };
 }
 
-export async function markCancelled(input: { id: string; deptId: string }): Promise<ActionResult<{ id: string }>> {
+export async function markCancelled(input: {
+  id: string;
+  deptId: string;
+}): Promise<ActionResult<{ id: string }>> {
   const parsed = IdSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const guard = await ensureOfficerDept(parsed.data.deptId);
@@ -101,7 +120,11 @@ export async function markCancelled(input: { id: string; deptId: string }): Prom
   return { ok: true, data: { id: parsed.data.id } };
 }
 
-export async function markNoShow(input: { id: string; deptId: string; value: boolean }): Promise<ActionResult<{ id: string }>> {
+export async function markNoShow(input: {
+  id: string;
+  deptId: string;
+  value: boolean;
+}): Promise<ActionResult<{ id: string }>> {
   const parsed = NoShowSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   const guard = await ensureOfficerDept(parsed.data.deptId);
@@ -119,5 +142,3 @@ export async function markNoShow(input: { id: string; deptId: string; value: boo
   revalidatePath(`/officer/departments/${parsed.data.deptId}`);
   return { ok: true, data: { id: parsed.data.id } };
 }
-
-

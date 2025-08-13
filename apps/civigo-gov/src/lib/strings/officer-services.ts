@@ -16,5 +16,3 @@ export const officerServices = {
     unknown: "Something went wrong.",
   },
 };
-
-

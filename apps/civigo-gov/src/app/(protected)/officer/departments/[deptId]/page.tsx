@@ -19,7 +19,10 @@ type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function DepartmentPage({ params, searchParams }: PageProps) {
+export default async function DepartmentPage({
+  params,
+  searchParams,
+}: PageProps) {
   const p = await params;
   const sp = await searchParams;
   const parsed = OfficerDepartmentParam.safeParse({ deptId: p.deptId });
