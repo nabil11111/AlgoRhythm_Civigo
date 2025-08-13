@@ -77,34 +77,36 @@
 ## Officer Services under department
 
 ### Route and list (SSR, RLS-safe)
-- [ ] Create /officer/departments/[deptId]/services page.tsx with SSR guard (officer + active assignment)
-- [ ] List services for deptId with pagination
-- [ ] Search (?q=) on code/name (server-side or filter)
-- [ ] Empty-state Card
+- [x] Create /officer/departments/[deptId]/services page.tsx with SSR guard (officer + active assignment)
+- [x] List services for deptId with pagination
+- [x] Search (?q=) on code/name (server-side or filter)
+- [x] Empty-state Card
 
 ### Server Actions (SSR only)
-- [ ] _actions.ts with createService, updateService, deleteService
-- [ ] Zod validation; typed results; map Postgres errors
-- [ ] revalidatePath(/officer/departments/[deptId]/services) on success
+- [x] _actions.ts with createService, updateService, deleteService
+- [x] Zod validation; typed results; map Postgres errors
+- [x] revalidatePath(/officer/departments/[deptId]/services) on success
 
 ### Components (client islands)
 - [ ] CreateServiceDialog (shadcn Dialog + Form + Zod + toasts)
 - [ ] EditServiceDialog
 - [ ] ConfirmDeleteDialog
 
-### Department page nav
-- [ ] Add Services tab/link on /officer/departments/[deptId]/page.tsx
+### Services page UI wiring
+- [ ] Wire dialogs into services page (New button, actions column)
+- [ ] Toolbar search (client or GET form) and pagination controls (Prev/Next, page size)
 
 ### Validation and strings
-- [ ] Add ServiceCreate/ServiceUpdate/ServiceDelete to src/lib/validation.ts
-- [ ] Add src/lib/strings/officer-services.ts
+- [x] Add ServiceCreate/ServiceUpdate/ServiceDelete to src/lib/validation.ts
+- [x] Add src/lib/strings/officer-services.ts
 
 ### Tests
 - [ ] tests/officer-services-actions.test.ts (happy path, unique violation, privilege errors)
 - [ ] tests/officer-services-guard.test.ts (unauthorized → /officer)
+- [ ] tests/officer-services-ui.test.ts (create/edit/delete happy and error toasts)
 
 ### Docs
-- [ ] Update README: services route, RLS scope, pagination/search
+- [ ] Update README: services route, RLS scope, pagination/search, UI usage
 
 ## Important operating rule
 
@@ -121,4 +123,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer): SSR-load paginated appointments (7d window) for officer landing; render shadcn table
 - test(gov-officer): add officer guard and sign-in module tests; docs: add Officer Dashboard section and redirects
 - feat(gov-officer): department chooser and per-department dashboard route
-- chore(gov-officer/services): add services tasks section (approved plan)
+- feat(gov-officer/services): add services SSR list, actions, guard, strings, validation, nav link
