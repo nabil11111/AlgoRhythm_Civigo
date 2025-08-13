@@ -108,6 +108,25 @@
 ### Docs
 - [ ] Update README: services route, RLS scope, pagination/search, UI usage
 
+## Services RLS hardening
+
+- [ ] Migration: enable RLS on public.services
+- [ ] Policies: officer CRUD where active assignment exists for services.department_id; admin full access
+- [ ] Verify officer services CRUD under RLS; failing cases surface insufficient_privilege
+- [ ] Update tests to assert RLS behavior (non-assigned mutation blocked)
+
+## Officer appointment lifecycle (SSR-only)
+
+- [ ] Actions file: _actions.ts under /officer/departments/[deptId]/dashboard or per-dept page folder
+- [ ] markCheckedIn({ id }) with Zod and SSR client; revalidatePath(/officer/departments/${deptId})
+- [ ] markStarted({ id })
+- [ ] markCompleted({ id })
+- [ ] markCancelled({ id })
+- [ ] markNoShow({ id, value })
+- [ ] UI: add Actions column with client islands to call actions; disable invalid transitions
+- [ ] Tests: officer-appointments-actions.test.ts (happy paths + invalid transition error)
+- [ ] Docs: README updates for services RLS and appointment actions
+
 ## Important operating rule
 
 After each change and commit in this task, update apps/civigo-gov/docs/tasks.md: check items done, add discovered subtasks, and append a Changelog bullet with the commit subject.
@@ -125,3 +144,4 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer): department chooser and per-department dashboard route
 - feat(gov-officer/services): add services SSR list, actions, guard, strings, validation, nav link
 - feat(gov-officer/services): client dialogs and integration on services page
+- chore(gov-officer/services): add Services RLS + appointment lifecycle tasks
