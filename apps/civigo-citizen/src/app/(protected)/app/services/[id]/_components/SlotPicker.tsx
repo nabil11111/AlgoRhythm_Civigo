@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useOptimistic, useState, useTransition } from "react";
+import { useEffect, useMemo, useActionState, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import type { BookSlotState } from "../_actions";
@@ -20,9 +20,7 @@ export function SlotPicker({
   const search = useSearchParams();
   const [selected, setSelected] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [state, action] = useOptimistic<BookSlotState, FormData>({ ok: undefined }, async (prev, formData) => {
-    return await bookSlotAction(prev, formData);
-  });
+  const [state, action] = useActionState<BookSlotState, FormData>(bookSlotAction, { ok: undefined });
 
   useEffect(() => {
     if (state.error) {
