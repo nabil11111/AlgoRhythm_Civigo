@@ -14,7 +14,7 @@ Standards:
 - SSR auth via `@supabase/ssr` with cookie adapter.
 - No service-role in browser; privileged ops in Server Actions.
 - Zod validation; shadcn/ui basics; `sonner` Toaster in root layout.
-- Use literal URLs in `revalidatePath`.
+- Use literal URLs in `revalidatePath` (for dynamic routes use concrete path like `/app/appointments`, not a route pattern; do not pass the type param when giving a specific path).
 
 RLS notes:
 
@@ -25,3 +25,14 @@ Setup:
 
 1) Add env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (and optionally `SUPABASE_SERVICE_ROLE_KEY` for server).
 2) Install and run: `npm i` then `npm run dev`.
+
+Booking flow (RPC-first):
+
+- Server Action `createAppointmentFromSlot` calls DB RPC `book_appointment_slot` for atomic capacity enforcement.
+- If the RPC is unavailable, enable fallback via `CITIZEN_BOOKING_FALLBACK_ENABLED=true` to use a guarded insert with active/capacity checks.
+- On success, `revalidatePath('/app/appointments')` and redirect to `/app/appointments/[id]`.
+
+Search guidance:
+
+- For multi-column search, use PostgREST `or` with `ilike` (e.g., `or(code.ilike.%q%,name.ilike.%q%)`).
+- Avoid chaining multiple `ilike` calls which would AND the conditions.

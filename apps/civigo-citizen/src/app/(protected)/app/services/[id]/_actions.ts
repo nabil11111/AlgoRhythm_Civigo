@@ -22,7 +22,7 @@ export async function createAppointmentFromSlot(
     const input = BookAppointmentSchema.parse(raw);
     const supabase = await getServerClient();
 
-    // Preferred: RPC for atomic capacity enforcement (placeholder if not present)
+    // Preferred: RPC for atomic capacity enforcement
     const { data: rpcResult, error: rpcError } = await supabase
       .rpc("book_appointment_slot", {
         p_slot_id: input.slot_id,
@@ -30,10 +30,23 @@ export async function createAppointmentFromSlot(
       })
       .maybeSingle();
 
+    const FALLBACK_ENABLED = process.env.CITIZEN_BOOKING_FALLBACK_ENABLED === "true";
+
     if (!rpcError && rpcResult) {
-      const appointmentId = rpcResult.id as string;
+      const appointmentId = (rpcResult as any).id as string;
       revalidatePath("/app/appointments");
       redirect(`/app/appointments/${appointmentId}`);
+    }
+    if (rpcError) {
+      const friendly = mapRpcBookingError(rpcError);
+      // If RPC is missing and fallback is not enabled, surface friendly unavailability
+      if (friendly === "rpc_not_available" && !FALLBACK_ENABLED) {
+        return { ok: false, error: "booking_unavailable" } as const;
+      }
+      if (friendly !== "rpc_not_available") {
+        return { ok: false, error: friendly } as const;
+      }
+      // else: rpc not available and fallback enabled → proceed to fallback
     }
 
     // Fallback: optimistic insert guarded by RLS and unique constraints
@@ -84,6 +97,44 @@ export async function createAppointmentFromSlot(
     const mapped = mapPostgresError(e);
     return { ok: false, error: mapped.code, message: mapped.message } as const;
   }
+}
+
+// Exported for tests
+export function mapRpcBookingError(err: { code?: string; message?: string; details?: string } | null | undefined):
+  | "slot_inactive"
+  | "slot_full"
+  | "slot_past"
+  | "rpc_not_available"
+  | "unknown" {
+  if (!err) return "unknown";
+  const c = (err.code || "").toUpperCase();
+  const m = (err.message || "").toLowerCase();
+  const d = (err.details || "").toLowerCase();
+  // PostgREST function missing codes/messages vary
+  if (c === "PGRST204" || m.includes("does not exist") || m.includes("unknown function") || d.includes("function") && d.includes("does not exist")) {
+    return "rpc_not_available";
+  }
+  if (m.includes("slot inactive") || d.includes("slot inactive")) return "slot_inactive";
+  if (m.includes("slot full") || d.includes("slot full") || m.includes("capacity") && m.includes("exceeded")) return "slot_full";
+  if (m.includes("slot past") || d.includes("in the past") || m.includes("in the past")) return "slot_past";
+  return "unknown";
+}
+
+export type BookSlotState = { ok?: boolean; error?: string };
+
+export async function bookSlotAction(
+  _prev: BookSlotState,
+  formData: FormData
+): Promise<BookSlotState> {
+  "use server";
+  const slot_id = String(formData.get("slot_id") || "");
+  if (!slot_id) return { error: "unknown" };
+  const result = await createAppointmentFromSlot({ slot_id });
+  if (!result.ok) {
+    return { error: result.error };
+  }
+  // On success we redirect inside createAppointmentFromSlot
+  return { ok: true };
 }
 
 
