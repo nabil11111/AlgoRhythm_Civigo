@@ -23,6 +23,19 @@ export default function SignInPage() {
       if (signInError) throw signInError;
       const userId = signInData.user?.id;
       if (!userId) throw new Error("Missing user after sign-in");
+      // Ensure session is established before querying RLS-protected tables
+      let sessionReady = false;
+      for (let i = 0; i < 5; i++) {
+        const { data: sess } = await supabase.auth.getSession();
+        if (sess.session) {
+          sessionReady = true;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 150));
+      }
+      if (!sessionReady) {
+        throw new Error("Session not ready; please try again");
+      }
       // Fetch role to route appropriately
       const { data: profile } = await supabase
         .from("profiles")
