@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { requireStepAllowed } from "../../_state";
 import BackClient from "./back.client";
-import { uploadNicPhoto } from "../_actions";
+import { uploadNicPhoto, saveNicPhotos } from "../_actions";
 
 export default async function NicBackPage() {
   await requireStepAllowed("nic-photos");
@@ -39,7 +39,7 @@ export default async function NicBackPage() {
       </div>
 
       <div className="mx-auto w-full max-w-[428px] px-4 mt-10 pb-40">
-        <BackClient uploadAction={uploadNicPhoto} />
+        <BackClient uploadAction={uploadNicPhoto} saveAction={saveNicPhotos} />
       </div>
       <div
         className="fixed inset-x-0 bottom-0 z-40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2"

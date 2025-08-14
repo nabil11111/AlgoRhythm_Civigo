@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation";
 
 export default function BackClient({
   uploadAction,
+  saveAction,
 }: {
   uploadAction: (
     prev: any,
     formData: FormData
   ) => Promise<{ ok: boolean; path?: string; error?: string }>;
+  saveAction: (prev: any, formData: FormData) => Promise<any>;
 }) {
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const [streamReady, setStreamReady] = React.useState(false);
@@ -107,7 +109,9 @@ export default function BackClient({
         const res = await uploadAction(null as any, fd);
         if (res?.ok && res.path) {
           setUploadPath(res.path);
-          try { localStorage.setItem('onb_nic_back_path', res.path); } catch {}
+          try {
+            localStorage.setItem("onb_nic_back_path", res.path);
+          } catch {}
           setPreviewUrl(URL.createObjectURL(file));
           toast.success("Captured");
         } else {
@@ -130,7 +134,9 @@ export default function BackClient({
       const res = await uploadAction(null as any, fd);
       if (res?.ok && res.path) {
         setUploadPath(res.path);
-        try { localStorage.setItem('onb_nic_back_path', res.path); } catch {}
+        try {
+          localStorage.setItem("onb_nic_back_path", res.path);
+        } catch {}
         setPreviewUrl(URL.createObjectURL(file));
         toast.success("Uploaded");
       } else toast.error("Upload failed");
@@ -265,12 +271,22 @@ export default function BackClient({
         </label>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
-        <a
-          href="/onboarding/face"
+        <button
+          type="button"
+          onClick={async () => {
+            if (!uploadPath) return;
+            const front = (() => { try { return localStorage.getItem('onb_nic_front_path') || '' } catch { return '' }})();
+            const back = uploadPath;
+            const fd = new FormData();
+            fd.set('front_path', front);
+            fd.set('back_path', back);
+            await saveAction(null as any, fd);
+          }}
           className="block w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-center text-[18px] font-medium"
+          disabled={!uploadPath}
         >
           Next
-        </a>
+        </button>
       </div>
     </div>
   );
