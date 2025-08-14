@@ -42,3 +42,4 @@ Changelog
 - chore(onboarding-ui): add ui-tasks.md tracker (seeded with screens/components and brand colors)
 - feat(onboarding-ui): tokens + ProgressHeader (mobile-first, primary #0052A5, secondary #009688)
 - feat(onboarding-ui): welcome (mobile-first)
+- fix(onboarding-ui): welcome colors + logo header
