@@ -16,9 +16,14 @@ alter table if exists public.phone_verification_events enable row level security
 grant select, insert on public.phone_verification_events to authenticated;
 
 drop policy if exists phone_events_owner_rw on public.phone_verification_events;
-create policy phone_events_owner_rw on public.phone_verification_events
-for select using (user_temp_id = auth.uid())
-with check (user_temp_id = auth.uid());
+drop policy if exists phone_events_owner_select on public.phone_verification_events;
+drop policy if exists phone_events_owner_insert on public.phone_verification_events;
+
+create policy phone_events_owner_select on public.phone_verification_events
+for select using (user_temp_id = auth.uid());
+
+create policy phone_events_owner_insert on public.phone_verification_events
+for insert with check (user_temp_id = auth.uid());
 
 drop policy if exists phone_events_admin_read on public.phone_verification_events;
 create policy phone_events_admin_read on public.phone_verification_events

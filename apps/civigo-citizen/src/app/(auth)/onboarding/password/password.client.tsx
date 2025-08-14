@@ -5,15 +5,20 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 
 export default function PasswordForm({
   submitAction,
 }: {
-  submitAction: (prev: any, formData: FormData) => Promise<{ ok: boolean; error?: string }>;
+  submitAction: (
+    prev: any,
+    formData: FormData
+  ) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const [password, setPassword] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  const router = useRouter();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,8 +28,11 @@ export default function PasswordForm({
       fd.set("password", password);
       fd.set("confirm", confirm);
       const res = await submitAction(null as any, fd);
-      if (res?.ok) toast.success("Saved");
-      else if (res?.error === 'invalid') toast.error("Invalid password");
+      if (res?.ok) {
+        toast.success("Saved");
+        router.push("/onboarding/nic-photos");
+        return;
+      } else if (res?.error === "invalid") toast.error("Invalid password");
       else toast.error("Could not save");
     } finally {
       setPending(false);
@@ -35,15 +43,27 @@ export default function PasswordForm({
     <form onSubmit={onSubmit} className="space-y-3" aria-busy={pending}>
       <div>
         <Label htmlFor="password">Create password</Label>
-        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={pending} />
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={pending}
+        />
       </div>
       <div>
         <Label htmlFor="confirm">Confirm password</Label>
-        <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} disabled={pending} />
+        <Input
+          id="confirm"
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          disabled={pending}
+        />
       </div>
-      <Button type="submit" disabled={pending}>{pending ? "Saving..." : "Continue"}</Button>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Saving..." : "Continue"}
+      </Button>
     </form>
   );
 }
-
-

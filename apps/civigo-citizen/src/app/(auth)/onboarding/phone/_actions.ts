@@ -47,12 +47,15 @@ export async function sendOtp(prev: { ok: boolean; error?: string } | null, form
 
   await supabase.from('phone_verification_events').insert({ user_temp_id: tempId, phone });
 
-  await supabase.from('phone_verifications').upsert({
+  // Replace any prior row for this temp user, then insert fresh
+  await supabase.from('phone_verifications').delete().eq('user_temp_id', tempId);
+  const { error: insErr } = await supabase.from('phone_verifications').insert({
     user_temp_id: tempId,
     phone,
     otp_hash: otpHash,
     expires_at: expiresAt,
-  }, { onConflict: 'user_temp_id' });
+  });
+  if (insErr) return { ok: false, error: 'store_failed' } as const;
 
   revalidatePath('/onboarding/phone');
   return { ok: true } as const;
@@ -76,6 +79,8 @@ export async function verifyOtp(prev: { ok: boolean; error?: string } | null, fo
     .from('phone_verifications')
     .select('otp_hash, expires_at')
     .eq('user_temp_id', tempId)
+    .order('expires_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (!pv) return { ok: false, error: 'not_sent' } as const;
 

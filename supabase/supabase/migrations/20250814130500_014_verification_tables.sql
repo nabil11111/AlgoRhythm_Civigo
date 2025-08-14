@@ -49,8 +49,18 @@ create policy idv_admin_all on public.identity_verifications
 for all using (public.current_app_role() = 'admin') with check (public.current_app_role() = 'admin');
 
 drop policy if exists phone_owner_rw on public.phone_verifications;
-create policy phone_owner_rw on public.phone_verifications
-for all using (user_temp_id = auth.uid()) with check (user_temp_id = auth.uid());
+drop policy if exists phone_owner_select on public.phone_verifications;
+drop policy if exists phone_owner_insert on public.phone_verifications;
+drop policy if exists phone_owner_update on public.phone_verifications;
+
+create policy phone_owner_select on public.phone_verifications
+for select using (user_temp_id = auth.uid());
+
+create policy phone_owner_insert on public.phone_verifications
+for insert with check (user_temp_id = auth.uid());
+
+create policy phone_owner_update on public.phone_verifications
+for update using (user_temp_id = auth.uid()) with check (user_temp_id = auth.uid());
 
 drop policy if exists phone_admin_read on public.phone_verifications;
 create policy phone_admin_read on public.phone_verifications
