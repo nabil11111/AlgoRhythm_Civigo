@@ -41,19 +41,30 @@ export default function NicForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3" aria-busy={pending}>
+    <form onSubmit={onSubmit} className="space-y-6" aria-busy={pending}>
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold text-[#4f4f4f]">Enter Your NIC Number</h2>
+      </div>
       <div>
-        <Label htmlFor="nic">NIC</Label>
+        <Label htmlFor="nic" className="sr-only">NIC</Label>
         <Input
           id="nic"
+          inputMode="numeric"
           value={nic}
           onChange={(e) => setNic(e.target.value)}
-          placeholder="123456789V or 199012341234"
+          placeholder="199877703646 or 123456789V"
           disabled={pending}
+          aria-describedby="nic-hint"
+          className="tracking-[0.35em] text-[28px] h-14 text-center placeholder:text-gray-400"
         />
+        <p id="nic-hint" className="mt-2 text-center text-xs text-gray-500">We’ll verify this with your GovID records</p>
       </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving..." : "Continue"}
+      <div className="flex items-center justify-center gap-10">
+        <button type="button" disabled={pending} className="h-12 w-12 rounded-md border-2 border-[var(--color-primary)] text-[#333] text-2xl">V</button>
+        <button type="button" disabled={pending} className="h-12 w-12 rounded-md border-2 border-[var(--color-primary)] text-[#333] text-2xl">X</button>
+      </div>
+      <Button type="submit" disabled={pending} className="w-full bg-[var(--color-primary)] text-white h-14 text-lg">
+        {pending ? "Saving..." : "Next"}
       </Button>
     </form>
   );
