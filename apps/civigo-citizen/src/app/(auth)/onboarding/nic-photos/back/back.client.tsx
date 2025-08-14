@@ -41,7 +41,10 @@ export default function BackClient({
         setCameraError(
           "Camera requires HTTPS or localhost. Use an HTTPS tunnel for mobile testing."
         );
-      else setCameraError("Unable to access camera. Please grant permission or use Upload.");
+      else
+        setCameraError(
+          "Unable to access camera. Please grant permission or use Upload."
+        );
     }
   }
 
@@ -121,12 +124,12 @@ export default function BackClient({
           <img
             src={previewUrl}
             alt="Back preview"
-            className="w-full h-[220px] object-cover"
+            className="w-full h-[320px] object-cover"
           />
         ) : (
           <video
             ref={videoRef}
-            className="w-full h-[220px] object-cover"
+            className="w-full h-[320px] object-cover"
             muted
             playsInline
             autoPlay
