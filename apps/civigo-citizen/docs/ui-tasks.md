@@ -1,0 +1,44 @@
+Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
+
+Overview and brand colors
+
+- primary: #0052A5
+- secondary: #009688
+
+Screens checklist (mobile-first, in order)
+
+- [ ] Welcome (welcome.png)
+- [ ] Start (start.png)
+- [ ] Login/Signup (login-signup.png) — Sign in path is NIC → password
+- [ ] NIC number (NICno.png)
+- [ ] Phone (Mobile Number.png) + Verification (verification.png)
+- [ ] Email (no PNG; match system)
+- [ ] First name (firstname.png)
+- [ ] Last name (lastname.png)
+- [ ] Create password (create password.png)
+- [ ] NIC photos — front (NIC font.png)
+- [ ] NIC photos — back (nic backpng)
+- [ ] Facial scan (facial scan.png)
+- [ ] PIN creation (Pin Creation.png) — visual-only if step not wired
+- [ ] Finalize — layout polish only
+
+Components checklist
+
+- [ ] Tokens (Tailwind v4 theme, primary #0052A5, secondary #009688)
+- [ ] ProgressHeader (compact stepper, mobile-optimized)
+- [ ] AuthShell (wrapper for margins and bottom CTA placement)
+- [ ] FormField (field + error spacing, a11y wiring)
+
+Notes
+
+- UI-only; do not change Server Actions, SSR guards, cookies, RLS, routing, or business logic.
+- Keep sign-in as NIC number → password on login-signup.
+- Inline Zod error text under fields; pending/disabled on submit; Sonner toasts (no PII).
+- Accessibility: labels, aria-describedby for errors, focus rings, keyboard nav; aria-live for OTP status.
+- Mobile-first: single-column, safe-area padding, ≥44x44 touch targets, 8–12px rhythm.
+
+Changelog
+
+- chore(onboarding-ui): add ui-tasks.md tracker (seeded with screens/components and brand colors)
+
+
