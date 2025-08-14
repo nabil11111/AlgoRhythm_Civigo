@@ -48,3 +48,4 @@ Changelog
 - fix(onboarding-ui): white background on onboarding layout to remove black edges
 - fix(onboarding-ui): add curved blue arc background + improved button styling to match welcome.png
 - fix(onboarding-ui): make welcome page responsive (full width) + correct blue curve direction
+- fix(onboarding-ui): extend blue curve higher, position buttons over blue area to match welcome.png

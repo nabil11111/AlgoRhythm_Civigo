@@ -6,11 +6,11 @@ export default function OnboardingWelcomePage() {
       {/* Curved blue arc background element */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="relative h-full w-full">
-          {/* Bottom curved blue arc matching design */}
+          {/* Bottom curved blue arc matching design - extends higher to cover button area */}
           <div
-            className="absolute inset-x-0 bottom-0 h-[45%] bg-[var(--color-primary)]"
+            className="absolute inset-x-0 bottom-0 h-[60%] bg-[var(--color-primary)]"
             style={{
-              clipPath: "ellipse(100% 60% at 50% 100%)",
+              clipPath: "ellipse(100% 70% at 50% 100%)",
             }}
           />
         </div>
@@ -43,21 +43,21 @@ export default function OnboardingWelcomePage() {
         <footer className="mx-auto w-full max-w-sm mt-auto pb-6 px-4 space-y-3 relative z-20">
           <a
             href="/onboarding/start"
-            className="block w-full rounded-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] bg-white/95 backdrop-blur-sm py-4 text-base font-medium text-center shadow-sm hover:bg-white transition-colors"
+            className="block w-full rounded-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] bg-white py-4 text-base font-medium text-center shadow-md hover:shadow-lg transition-shadow"
             aria-label="Select Sinhala language"
           >
             සිංහල
           </a>
           <a
             href="/onboarding/start"
-            className="block w-full rounded-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] bg-white/95 backdrop-blur-sm py-4 text-base font-medium text-center shadow-sm hover:bg-white transition-colors"
+            className="block w-full rounded-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] bg-white py-4 text-base font-medium text-center shadow-md hover:shadow-lg transition-shadow"
             aria-label="Select Tamil language"
           >
-            தமிழ்
+            தமிழ්
           </a>
           <a
             href="/onboarding/start"
-            className="block w-full rounded-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] bg-white/95 backdrop-blur-sm py-4 text-base font-medium text-center shadow-sm hover:bg-white transition-colors"
+            className="block w-full rounded-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] bg-white py-4 text-base font-medium text-center shadow-md hover:shadow-lg transition-shadow"
             aria-label="Select English language"
           >
             English
