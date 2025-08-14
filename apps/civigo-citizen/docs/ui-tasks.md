@@ -24,8 +24,8 @@ Screens checklist (mobile-first, in order)
 
 Components checklist
 
-- [ ] Tokens (Tailwind v4 theme, primary #0052A5, secondary #009688)
-- [ ] ProgressHeader (compact stepper, mobile-optimized)
+- [x] Tokens (Tailwind v4 theme, primary #0052A5, secondary #009688)
+- [x] ProgressHeader (compact stepper, mobile-optimized)
 - [ ] AuthShell (wrapper for margins and bottom CTA placement)
 - [ ] FormField (field + error spacing, a11y wiring)
 
@@ -40,5 +40,4 @@ Notes
 Changelog
 
 - chore(onboarding-ui): add ui-tasks.md tracker (seeded with screens/components and brand colors)
-
-
+- feat(onboarding-ui): tokens + ProgressHeader (mobile-first, primary #0052A5, secondary #009688)

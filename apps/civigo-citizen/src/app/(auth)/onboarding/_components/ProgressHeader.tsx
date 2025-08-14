@@ -22,17 +22,29 @@ const steps: { key: OnboardingStep; label: string }[] = [
 export function ProgressHeader({ current }: { current: OnboardingStep }) {
   return (
     <nav aria-label="Onboarding steps" className="mb-4">
-      <ol className="flex items-center gap-2 text-xs" aria-live="polite">
-        {steps.map((s, idx) => (
-          <li key={s.key} className="flex items-center gap-2">
-            <span
-              className={s.key === current ? "font-semibold" : "text-gray-500"}
-            >
-              {s.label}
-            </span>
-            {idx < steps.length - 1 && <span className="text-gray-400">→</span>}
-          </li>
-        ))}
+      <ol className="flex items-center gap-2 text-[11px]" aria-live="polite">
+        {steps.map((s, idx) => {
+          const isActive = s.key === current;
+          return (
+            <li key={s.key} className="flex items-center gap-2">
+              <span
+                className={[
+                  "inline-flex h-6 items-center rounded-full px-2",
+                  isActive
+                    ? "bg-[--color-primary] text-white"
+                    : "bg-gray-100 text-gray-700",
+                ].join(" ")}
+              >
+                {s.label}
+              </span>
+              {idx < steps.length - 1 && (
+                <span className="text-gray-400" aria-hidden>
+                  →
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </nav>
   );
