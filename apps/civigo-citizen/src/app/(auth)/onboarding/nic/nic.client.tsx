@@ -65,7 +65,7 @@ export default function NicForm({
   }, [nic]);
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8" aria-busy={pending}>
+    <form onSubmit={onSubmit} className="space-y-8 pb-28" aria-busy={pending}>
       <div className="text-center space-y-2">
         <h2 className="text-[24px] font-bold text-[#4f4f4f] leading-[26.4px]">
           Enter Your NIC Number
@@ -143,14 +143,16 @@ export default function NicForm({
         </button>
       </div>
 
-      <Button
-        variant="primary"
-        type="submit"
-        disabled={pending || !!errorText || !nic}
-        className="w-full rounded-md py-3.5 text-[18px] font-medium"
-      >
-        {pending ? "Saving..." : "Next"}
-      </Button>
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={pending || !!errorText || !nic}
+          className="w-full rounded-md py-3.5 text-[18px] font-medium"
+        >
+          {pending ? "Saving..." : "Next"}
+        </Button>
+      </div>
     </form>
   );
 }

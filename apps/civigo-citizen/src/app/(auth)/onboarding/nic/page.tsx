@@ -38,8 +38,15 @@ export default async function NicStepPage() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[360px] px-4 mt-10 pb-28">
+      <div className="mx-auto w-full max-w-[360px] px-4 mt-10 pb-40">
         <NicForm submitNicAction={submitNic} />
+      </div>
+
+      {/* Fixed bottom bar CTA matching design */}
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
+        <form action="#" onSubmit={(e) => e.preventDefault()} className="pointer-events-none">
+          {/* Button lives inside NicForm, this bar only provides the anchor background */}
+        </form>
       </div>
     </div>
   );
