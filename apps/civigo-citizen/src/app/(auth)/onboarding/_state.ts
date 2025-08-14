@@ -40,8 +40,14 @@ export async function getOnboardingState(): Promise<OnboardingState> {
         .select("nic_front_path, nic_back_path, face_capture_path")
         .eq("user_temp_id", tempId)
         .maybeSingle();
-      nicFrontPath = idv?.nic_front_path ?? cookieStore.get("onboarding_nic_front")?.value ?? null;
-      nicBackPath = idv?.nic_back_path ?? cookieStore.get("onboarding_nic_back")?.value ?? null;
+      nicFrontPath =
+        idv?.nic_front_path ??
+        cookieStore.get("onboarding_nic_front")?.value ??
+        null;
+      nicBackPath =
+        idv?.nic_back_path ??
+        cookieStore.get("onboarding_nic_back")?.value ??
+        null;
       facePath = idv?.face_capture_path ?? null;
     }
   }
@@ -65,8 +71,7 @@ export type StepKey =
   | "names"
   | "password"
   | "nic-photos"
-  | "face"
-  | "finalize";
+  | "face";
 
 export async function requireStepAllowed(step: StepKey) {
   const s = await getOnboardingState();
@@ -80,9 +85,5 @@ export async function requireStepAllowed(step: StepKey) {
   if (step === "nic-photos" && !s.hasPassword) redirect("/onboarding/password");
   if (step === "face" && (!s.nicFrontPath || !s.nicBackPath))
     redirect("/onboarding/nic-photos");
-  if (step === "finalize") {
-    if (!s.phoneVerified) redirect("/onboarding/phone");
-    if (!s.nicFrontPath || !s.nicBackPath) redirect("/onboarding/nic-photos");
-    if (!s.facePath) redirect("/onboarding/face");
-  }
+  // finalize removed
 }

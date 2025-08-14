@@ -5,8 +5,7 @@ export type OnboardingStep =
   | "names"
   | "password"
   | "nic-photos"
-  | "face"
-  | "finalize";
+  | "face";
 
 const steps: { key: OnboardingStep; label: string }[] = [
   { key: "nic", label: "NIC" },
@@ -16,7 +15,6 @@ const steps: { key: OnboardingStep; label: string }[] = [
   { key: "password", label: "Password" },
   { key: "nic-photos", label: "NIC Photos" },
   { key: "face", label: "Face" },
-  { key: "finalize", label: "Finalize" },
 ];
 
 export function ProgressHeader({ current }: { current: OnboardingStep }) {

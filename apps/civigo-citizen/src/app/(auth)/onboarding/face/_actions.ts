@@ -25,8 +25,9 @@ export async function saveFaceCapture(formData: FormData) {
     })
     .eq("user_temp_id", tempId);
 
-  revalidatePath("/onboarding/finalize");
-  redirect("/onboarding/finalize");
+  // Instead of a finalize page, redirect to home after success
+  revalidatePath("/");
+  redirect("/");
 }
 
 export async function uploadFaceCapture(
