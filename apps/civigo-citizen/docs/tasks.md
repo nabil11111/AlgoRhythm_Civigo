@@ -15,7 +15,7 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 - [x] Migration: phone_verifications (user_temp_id, phone, otp_hash, expires_at, verified_at).
 - [x] Storage: nic-media bucket (private); RLS/policies: owner and admin read; officers no read (facial captures never exposed to officers).
 - [x] Appointments/documents: add citizen_gov_id/owner_gov_id columns; indexes; backfill plan stub.
-- [ ] RLS: identity_verifications owner read/write, admin full; officers none. phone_verifications owner-only; admin read.
+- [x] RLS: identity_verifications owner read/write, admin full; officers none. phone_verifications owner-only; admin read.
 
 ## Onboarding routes and actions
 
@@ -70,3 +70,4 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 - feat(db): add gov_id to profiles, verification tables, storage policies, and gov_id columns on appointments/documents
 - feat(citizen/onboarding): scaffold routes and server action stubs for NIC → phone → names → password → NIC photos → face → finalize
 - feat(citizen/onboarding): OTP rate-limit; transient names/password; finalize creates auth user and sets gov_id
+- chore(db-rls): confirm/adjust RLS; document officer restrictions for facial captures
