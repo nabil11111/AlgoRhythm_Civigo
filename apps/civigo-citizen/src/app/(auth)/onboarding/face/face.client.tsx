@@ -7,7 +7,10 @@ export default function FaceClient({
   uploadAction,
   saveAction,
 }: {
-  uploadAction: (prev: any, formData: FormData) => Promise<{ ok: boolean; path?: string; error?: string }>;
+  uploadAction: (
+    prev: any,
+    formData: FormData
+  ) => Promise<{ ok: boolean; path?: string; error?: string }>;
   saveAction: (formData: FormData) => Promise<any>;
 }) {
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
@@ -20,7 +23,10 @@ export default function FaceClient({
   async function startCamera() {
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error("unavailable");
-      const media = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      const media = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false,
+      });
       const video = videoRef.current;
       if (video) {
         video.srcObject = media;
@@ -30,7 +36,8 @@ export default function FaceClient({
       }
     } catch (err) {
       setStreamReady(false);
-      if (!window.isSecureContext) setError("Camera requires HTTPS or localhost.");
+      if (!window.isSecureContext)
+        setError("Camera requires HTTPS or localhost.");
       else setError("Unable to access front camera. Please grant permission.");
     }
   }
@@ -58,7 +65,9 @@ export default function FaceClient({
       if (!blob) return;
       setPending(true);
       try {
-        const file = new File([blob], "face.jpg", { type: blob.type || "image/jpeg" });
+        const file = new File([blob], "face.jpg", {
+          type: blob.type || "image/jpeg",
+        });
         const fd = new FormData();
         fd.set("file", file);
         const res = await uploadAction(null as any, fd);
@@ -85,9 +94,19 @@ export default function FaceClient({
       <div className="rounded-full border-2 border-[var(--color-primary)] overflow-hidden w-[320px] h-[320px] mx-auto">
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={previewUrl} alt="Face preview" className="w-full h-full object-cover" />
+          <img
+            src={previewUrl}
+            alt="Face preview"
+            className="w-full h-full object-cover"
+          />
         ) : (
-          <video ref={videoRef} className="w-full h-full object-cover" muted playsInline autoPlay />
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+            autoPlay
+          />
         )}
       </div>
       {error && <p className="text-center text-xs text-gray-600">{error}</p>}
@@ -100,7 +119,13 @@ export default function FaceClient({
           aria-label={streamReady ? "Capture" : "Enable Camera"}
           className="inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white w-16 h-16 disabled:opacity-50"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden
+          >
             <path d="M9 3l2 2h2l2-2h2a3 3 0 013 3v12a3 3 0 01-3 3H5a3 3 0 01-3-3V6a3 3 0 013-3h4zm3 15a5 5 0 100-10 5 5 0 000 10zm0-2.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
           </svg>
         </button>
@@ -116,57 +141,6 @@ export default function FaceClient({
           Next
         </button>
       </div>
-    </div>
-  );
-}
-
-"use client";
-
-import * as React from "react";
-import { toast } from "sonner";
-
-export default function FaceUpload({
-  uploadAction,
-}: {
-  uploadAction: (
-    prev: any,
-    formData: FormData
-  ) => Promise<{ ok: boolean; path?: string; error?: string }>;
-}) {
-  const [path, setPath] = React.useState("");
-  const [pending, setPending] = React.useState(false);
-
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] || null;
-    if (!file) return;
-    setPending(true);
-    try {
-      const fd = new FormData();
-      fd.set("file", file);
-      const res = await uploadAction(null as any, fd);
-      if (res?.ok && res.path) {
-        setPath(res.path);
-        toast.success("Face image uploaded");
-      } else {
-        toast.error("Upload failed");
-      }
-    } finally {
-      setPending(false);
-    }
-  }
-
-  return (
-    <div className="space-y-2">
-      <input type="hidden" name="face_path" value={path} />
-      <input
-        type="file"
-        accept="image/*"
-        onChange={onFile}
-        disabled={pending}
-      />
-      {path && (
-        <p className="text-xs text-muted-foreground">Ready to continue</p>
-      )}
     </div>
   );
 }

@@ -42,7 +42,10 @@ export default async function FaceStepPage() {
         <div className="text-center mb-6">
           <h2 className="text-xl font-semibold text-[#4f4f4f]">Facial Scan</h2>
         </div>
-        <FaceClient uploadAction={uploadFaceCapture} saveAction={saveFaceCapture} />
+        <FaceClient
+          uploadAction={uploadFaceCapture}
+          saveAction={saveFaceCapture}
+        />
       </div>
       <div
         className="fixed inset-x-0 bottom-0 z-40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2"
