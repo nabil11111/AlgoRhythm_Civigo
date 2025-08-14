@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function OnboardingWelcomePage() {
   return (
-    <div className="min-h-[100svh] flex flex-col">
+    <div className="min-h-[100svh] flex flex-col bg-white text-[#171717]">
       <header className="pt-10 pb-8">
         <div className="mx-auto max-w-[360px] text-center">
           <Image
@@ -16,7 +16,9 @@ export default function OnboardingWelcomePage() {
         </div>
       </header>
       <main className="mx-auto max-w-[360px] flex-1 w-full px-2 text-center">
-        <h1 className="text-2xl font-bold text-[var(--color-primary)]">Welcome</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-primary)]">
+          Welcome
+        </h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">
           Select your language to continue
         </p>

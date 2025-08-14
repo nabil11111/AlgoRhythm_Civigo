@@ -44,3 +44,4 @@ Changelog
 - feat(onboarding-ui): welcome (mobile-first)
 - fix(onboarding-ui): welcome colors + logo header
 - fix(onboarding-ui): use CSS var() tokens for primary/muted in welcome + ProgressHeader
+- fix(onboarding-ui): force light theme on welcome (bg white, dark text) to match design
