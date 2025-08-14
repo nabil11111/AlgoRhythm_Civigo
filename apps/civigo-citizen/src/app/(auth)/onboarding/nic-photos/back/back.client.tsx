@@ -40,7 +40,9 @@ export default function BackClient({
         const stream = media as MediaStream;
         const track = stream.getVideoTracks()[0];
         // @ts-ignore
-        const caps = track?.getCapabilities ? track.getCapabilities() : undefined;
+        const caps = track?.getCapabilities
+          ? track.getCapabilities()
+          : undefined;
         setTorchSupported(Boolean(caps && (caps as any).torch));
       }
     } catch (err) {
@@ -147,38 +149,51 @@ export default function BackClient({
       {cameraError && (
         <p className="text-center text-xs text-gray-600">{cameraError}</p>
       )}
-      <div className="flex items-center justify-center gap-4">
-        <Button
+      <div className="flex items-center justify-center">
+        <button
           type="button"
-          variant="primary"
           onClick={streamReady ? capture : startCamera}
           disabled={!streamReady || pending}
+          aria-label={streamReady ? "Capture" : "Enable Camera"}
+          className="inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white w-16 h-16 disabled:opacity-50"
         >
-          {streamReady ? "Capture" : "Enable Camera"}
-        </Button>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M9 3l2 2h2l2-2h2a3 3 0 013 3v12a3 3 0 01-3 3H5a3 3 0 01-3-3V6a3 3 0 013-3h4zm3 15a5 5 0 100-10 5 5 0 000 10zm0-2.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
+          </svg>
+        </button>
+      </div>
+      <div className="mt-4 flex items-center justify-center gap-5">
         {previewUrl && (
-          <Button
+          <button
             type="button"
-            variant="secondary"
             onClick={() => {
               setPreviewUrl(null);
               setUploadPath(null);
             }}
+            aria-label="Retry"
+            className="inline-flex items-center justify-center rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] w-12 h-12"
             disabled={pending}
           >
-            Retry
-          </Button>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M12 5V1l-5 5 5 5V7a5 5 0 11-5 5H4a8 8 0 108-8z" />
+            </svg>
+          </button>
         )}
         <button
           type="button"
           onClick={async () => {
             try {
-              const stream = videoRef.current?.srcObject as MediaStream | undefined;
-              const track = stream?.getVideoTracks && stream.getVideoTracks()[0];
+              const stream = videoRef.current?.srcObject as
+                | MediaStream
+                | undefined;
+              const track =
+                stream?.getVideoTracks && stream.getVideoTracks()[0];
               // @ts-ignore
               if (track?.applyConstraints && torchSupported) {
                 // @ts-ignore
-                await track.applyConstraints({ advanced: [{ torch: !flashOn }] });
+                await track.applyConstraints({
+                  advanced: [{ torch: !flashOn }],
+                });
                 setFlashOn((v) => !v);
               } else {
                 toast.message("Flash not supported on this device/browser");
@@ -187,20 +202,25 @@ export default function BackClient({
               toast.error("Could not toggle flash");
             }
           }}
-          className="inline-flex items-center rounded-md border-2 border-[var(--color-primary)] px-3 py-2 text-[var(--color-primary)] disabled:opacity-50"
+          aria-label="Toggle flash"
+          className="inline-flex items-center justify-center rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] w-12 h-12 disabled:opacity-50"
           disabled={!torchSupported}
           aria-pressed={flashOn}
         >
-          {flashOn ? "Flash On" : "Flash Off"}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M7 2h10l-6 9h5l-8 11 2-9H7z" />
+          </svg>
         </button>
-        <label className="inline-flex items-center rounded-md border-2 border-[var(--color-primary)] px-3 py-2 text-[var(--color-primary)]">
-          Upload
+        <label className="inline-flex items-center justify-center rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] w-12 h-12">
           <input
             type="file"
             accept="image/*"
             onChange={onFilePick}
             className="hidden"
           />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M12 3l4 4h-3v6h-2V7H8l4-4zm-7 14h14v2H5v-2z" />
+          </svg>
         </label>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
