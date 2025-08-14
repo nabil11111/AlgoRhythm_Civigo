@@ -14,8 +14,8 @@ Screens checklist (mobile-first, in order)
 - [x] Phone (Mobile Number.png)
 - [x] Verification (verification.png)
 - [x] Email (no PNG; match system)
-- [ ] First name (firstname.png)
-- [ ] Last name (lastname.png)
+- [x] First name (firstname.png)
+- [x] Last name (lastname.png)
 - [ ] Create password (create password.png)
 - [ ] NIC photos — front (NIC font.png)
 - [ ] NIC photos — back (nic backpng)
@@ -59,3 +59,4 @@ Changelog
 - feat(onboarding-ui): phone (mobile-first); +94 prefix UI; anchored Send OTP CTA; server action receives +94 + 9 digits
 - feat(onboarding-ui): verification (mobile-first); 6-digit code input; anchored Verify CTA
 - feat(onboarding-ui): email page (mobile-first); matches theme; anchored Continue CTA
+- feat(onboarding-ui): names (mobile-first); centered inputs w/ bottom borders; anchored Continue CTA
