@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
+import { oldNic, newNic } from "./schema";
 
 export default function NicForm({
   submitNicAction,
@@ -18,6 +19,7 @@ export default function NicForm({
   const [nic, setNic] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [selectedSuffix, setSelectedSuffix] = React.useState<"V" | "X" | null>(null);
+  const [errorText, setErrorText] = React.useState<string | null>(null);
   const router = useRouter();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -43,8 +45,18 @@ export default function NicForm({
 
   React.useEffect(() => {
     const last = nic.slice(-1);
-    if (/^[vVxX]$/.test(last)) setSelectedSuffix(last.toUpperCase() as "V" | "X");
+    if (/^[vVxX]$/.test(last))
+      setSelectedSuffix(last.toUpperCase() as "V" | "X");
     else setSelectedSuffix(null);
+  }, [nic]);
+
+  React.useEffect(() => {
+    if (!nic) {
+      setErrorText(null);
+      return;
+    }
+    const isValid = oldNic.safeParse(nic).success || newNic.safeParse(nic).success;
+    setErrorText(isValid ? null : "Invalid NIC format. Use 12 digits or 9 digits + V/X.");
   }, [nic]);
 
   return (
@@ -57,7 +69,9 @@ export default function NicForm({
 
       {/* Single bottom-bordered input to match design */}
       <div className="mx-auto w-full max-w-[360px]">
-        <Label htmlFor="nic-real" className="sr-only">NIC</Label>
+        <Label htmlFor="nic-real" className="sr-only">
+          NIC
+        </Label>
         <input
           id="nic-real"
           aria-label="NIC"
@@ -67,9 +81,21 @@ export default function NicForm({
           onChange={(e) => setNic(e.target.value)}
           disabled={pending}
           placeholder="199877703646 or 123456789V"
-          className="block w-full border-0 border-b-2 border-gray-300 bg-transparent text-center text-[28px] tracking-[0.25em] h-14 focus:outline-none focus:border-[var(--color-primary)] placeholder:text-gray-400"
+          aria-invalid={errorText ? true : undefined}
+          aria-describedby="nic-hint nic-error"
+          className={[
+            "block w-full border-0 border-b-2 bg-transparent text-center text-[28px] tracking-[0.25em] h-14 focus:outline-none placeholder:text-gray-400",
+            errorText ? "border-red-500 focus:border-red-600" : "border-gray-300 focus:border-[var(--color-primary)]",
+          ].join(" ")}
         />
-        <p id="nic-hint" className="mt-2 text-center text-xs text-gray-500">We’ll verify this with your GovID records</p>
+        <p id="nic-hint" className="mt-2 text-center text-xs text-gray-500">
+          We’ll verify this with your GovID records
+        </p>
+        {errorText && (
+          <p id="nic-error" className="mt-1 text-center text-xs text-red-600" role="alert">
+            {errorText}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-center gap-10">
@@ -109,7 +135,7 @@ export default function NicForm({
 
       <Button
         type="submit"
-        disabled={pending}
+        disabled={pending || !!errorText || !nic}
         className="w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-[18px] font-medium"
       >
         {pending ? "Saving..." : "Next"}
