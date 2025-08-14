@@ -144,9 +144,10 @@ export default function NicForm({
       </div>
 
       <Button
+        variant="primary"
         type="submit"
         disabled={pending || !!errorText || !nic}
-        className="w-full rounded-md bg-[#0052A5] text-white py-3.5 text-[18px] font-medium"
+        className="w-full rounded-md py-3.5 text-[18px] font-medium"
       >
         {pending ? "Saving..." : "Next"}
       </Button>
