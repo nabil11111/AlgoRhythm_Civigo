@@ -30,7 +30,7 @@ export async function submitEmail(formData: FormData) {
   cookieStore.set("onboarding_email", parsed.data.email, {
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 15 * 60,
   });
