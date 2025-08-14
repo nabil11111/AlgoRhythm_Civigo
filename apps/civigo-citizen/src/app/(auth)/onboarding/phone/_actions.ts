@@ -19,7 +19,8 @@ export async function sendOtp(
     cookieStore.set("onboarding_temp_id", tempId, {
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      // In development over http (e.g., local IP on device), do not mark secure
+      secure: process.env.NODE_ENV === "production",
       path: "/",
     });
   }
