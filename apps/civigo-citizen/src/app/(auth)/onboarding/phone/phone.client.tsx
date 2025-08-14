@@ -66,7 +66,9 @@ export default function PhoneForms({
     <div className="space-y-10">
       <form onSubmit={onSend} className="space-y-6" aria-busy={pendingSend}>
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-[#4f4f4f]">Enter Your Mobile Number</h2>
+          <h2 className="text-xl font-semibold text-[#4f4f4f]">
+            Enter Your Mobile Number
+          </h2>
         </div>
 
         <div className="flex items-center justify-center gap-2">
@@ -76,15 +78,24 @@ export default function PhoneForms({
             name="phone"
             inputMode="numeric"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
+              setPhone(digits);
+            }}
             disabled={pendingSend}
+            maxLength={9}
             className="w-full max-w-[260px] border-0 border-b-2 border-gray-300 bg-transparent text-center text-[28px] tracking-[0.25em] h-14 focus:outline-none focus:border-[var(--color-primary)]"
             aria-label="Phone"
           />
         </div>
 
         <div className="fixed inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
-          <Button variant="primary" type="submit" disabled={pendingSend} className="w-full rounded-md py-3.5 text-[18px] font-medium">
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={pendingSend}
+            className="w-full rounded-md py-3.5 text-[18px] font-medium"
+          >
             {pendingSend ? "Sending..." : "Verify"}
           </Button>
         </div>
@@ -93,7 +104,12 @@ export default function PhoneForms({
       <form onSubmit={onVerify} className="space-y-3" aria-busy={pendingVerify}>
         <div>
           <Label htmlFor="code">Enter OTP</Label>
-          <Input id="code" name="code" placeholder="000000" disabled={pendingVerify} />
+          <Input
+            id="code"
+            name="code"
+            placeholder="000000"
+            disabled={pendingVerify}
+          />
         </div>
         <Button type="submit" disabled={pendingVerify}>
           {pendingVerify ? "Verifying..." : "Verify"}
