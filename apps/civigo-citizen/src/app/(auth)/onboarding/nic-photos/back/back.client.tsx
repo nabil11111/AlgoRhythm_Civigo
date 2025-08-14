@@ -58,6 +58,20 @@ export default function BackClient({
     }
   }
 
+  async function restartCamera() {
+    const video = videoRef.current;
+    const stream = (video?.srcObject as MediaStream | undefined) || undefined;
+    if (video && stream) {
+      try {
+        await video.play();
+        setStreamReady(true);
+        setCameraError(null);
+        return;
+      } catch {}
+    }
+    await startCamera();
+  }
+
   React.useEffect(() => {
     if (window.isSecureContext) startCamera();
     else
@@ -157,7 +171,13 @@ export default function BackClient({
           aria-label={streamReady ? "Capture" : "Enable Camera"}
           className="inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white w-16 h-16 disabled:opacity-50"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden
+          >
             <path d="M9 3l2 2h2l2-2h2a3 3 0 013 3v12a3 3 0 01-3 3H5a3 3 0 01-3-3V6a3 3 0 013-3h4zm3 15a5 5 0 100-10 5 5 0 000 10zm0-2.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
           </svg>
         </button>
@@ -169,12 +189,19 @@ export default function BackClient({
             onClick={() => {
               setPreviewUrl(null);
               setUploadPath(null);
+              restartCamera();
             }}
             aria-label="Retry"
             className="inline-flex items-center justify-center rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] w-12 h-12"
             disabled={pending}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden
+            >
               <path d="M12 5V1l-5 5 5 5V7a5 5 0 11-5 5H4a8 8 0 108-8z" />
             </svg>
           </button>
@@ -207,7 +234,13 @@ export default function BackClient({
           disabled={!torchSupported}
           aria-pressed={flashOn}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden
+          >
             <path d="M7 2h10l-6 9h5l-8 11 2-9H7z" />
           </svg>
         </button>
@@ -218,7 +251,13 @@ export default function BackClient({
             onChange={onFilePick}
             className="hidden"
           />
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden
+          >
             <path d="M12 3l4 4h-3v6h-2V7H8l4-4zm-7 14h14v2H5v-2z" />
           </svg>
         </label>
