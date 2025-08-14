@@ -16,7 +16,7 @@ export async function submitPassword(prev: { ok: boolean; error?: string } | nul
   if (!parsed.success) return { ok: false, error: 'invalid' } as const;
 
   // Transiently store password in a secure cookie to be consumed in finalize step
-  (await cookies()).set('onboarding_password', String(formData.get('password') || ''), { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 10 * 60 });
+  (await cookies()).set('onboarding_password', String(formData.get('password') || ''), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 10 * 60 });
 
   revalidatePath('/onboarding/nic-photos');
   return { ok: true } as const;
