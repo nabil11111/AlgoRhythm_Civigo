@@ -47,3 +47,4 @@ Changelog
 - fix(onboarding-ui): force light theme on welcome (bg white, dark text) to match design
 - fix(onboarding-ui): white background on onboarding layout to remove black edges
 - fix(onboarding-ui): add curved blue arc background + improved button styling to match welcome.png
+- fix(onboarding-ui): make welcome page responsive (full width) + correct blue curve direction

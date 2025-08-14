@@ -2,29 +2,24 @@ import Image from "next/image";
 
 export default function OnboardingWelcomePage() {
   return (
-    <div className="min-h-[100svh] flex flex-col bg-white text-[#171717] relative overflow-hidden">
+    <div className="min-h-[100svh] w-full flex flex-col bg-white text-[#171717] relative overflow-hidden">
       {/* Curved blue arc background element */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="relative h-full">
-          <div 
-            className="absolute inset-x-0 top-0 h-[65%] bg-gradient-to-b from-blue-50/40 to-transparent"
+        <div className="relative h-full w-full">
+          {/* Bottom curved blue arc matching design */}
+          <div
+            className="absolute inset-x-0 bottom-0 h-[45%] bg-[var(--color-primary)]"
             style={{
-              clipPath: 'ellipse(120% 100% at 50% 0%)'
-            }}
-          />
-          <div 
-            className="absolute inset-x-0 bottom-0 h-[40%] bg-[var(--color-primary)]"
-            style={{
-              clipPath: 'ellipse(120% 80% at 50% 100%)'
+              clipPath: "ellipse(100% 60% at 50% 100%)",
             }}
           />
         </div>
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-[100svh]">
+      <div className="relative z-10 flex flex-col min-h-[100svh] w-full">
         <header className="pt-10 pb-8">
-          <div className="mx-auto max-w-[360px] text-center">
+          <div className="mx-auto w-full max-w-sm text-center px-4">
             <Image
               src="/logo.png"
               alt="Civigo"
@@ -35,7 +30,7 @@ export default function OnboardingWelcomePage() {
             />
           </div>
         </header>
-        <main className="mx-auto max-w-[360px] flex-1 w-full px-2 text-center">
+        <main className="mx-auto w-full max-w-sm flex-1 px-4 text-center">
           <h1 className="text-2xl font-bold text-[var(--color-primary)]">
             Welcome
           </h1>
@@ -45,7 +40,7 @@ export default function OnboardingWelcomePage() {
 
           <div className="mt-10" />
         </main>
-        <footer className="mx-auto max-w-[360px] w-full mt-auto pb-6 px-2 space-y-3 relative z-20">
+        <footer className="mx-auto w-full max-w-sm mt-auto pb-6 px-4 space-y-3 relative z-20">
           <a
             href="/onboarding/start"
             className="block w-full rounded-lg border-2 border-[var(--color-primary)] text-[var(--color-primary)] bg-white/95 backdrop-blur-sm py-4 text-base font-medium text-center shadow-sm hover:bg-white transition-colors"
