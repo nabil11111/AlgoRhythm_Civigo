@@ -30,7 +30,7 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 - [~] Step 4: Create password + confirm (defer auth user creation)
   - [x] Transiently store password in httpOnly cookie.
 - [~] Step 5: Upload NIC photos (front/back) to nic-media (server-signed URLs)
-  - [ ] Server action returning signed upload URLs and persisting paths.
+  - [~] Server action returning signed upload URLs and persisting paths.
 - [~] Step 6: Facial scan (mock) upload; mark identity_verifications.status='pending'
 - [~] Step 7: Finalize: server action issues gov_id via generate_gov_id(nic), creates auth user, writes profiles with gov_id, links any prepared artifacts; redirect to /(auth)/sign-in or /app
   - [x] Create auth user via admin; update profile with gov_id, nic, full_name; clear temp cookies.
@@ -44,6 +44,7 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 ## Citizen booking/documents updates
 
 - [x] When booking, write citizen_gov_id alongside existing citizen_id FK. (fallback path)
+  - [x] RPC path extended to accept and persist citizen_gov_id.
 - [ ] When uploading documents, store owner_gov_id alongside owner_user_id.
 
 ## UI (decent, not pixel-perfect)
@@ -71,3 +72,5 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 - feat(citizen/onboarding): scaffold routes and server action stubs for NIC → phone → names → password → NIC photos → face → finalize
 - feat(citizen/onboarding): OTP rate-limit; transient names/password; finalize creates auth user and sets gov_id
 - chore(db-rls): confirm/adjust RLS; document officer restrictions for facial captures
+- feat(citizen/onboarding): phone step UI (shadcn-like) with toasts and progress header; NIC photos upload scaffolds
+- feat(citizen/booking): extend RPC to accept citizen_gov_id and pass from profile

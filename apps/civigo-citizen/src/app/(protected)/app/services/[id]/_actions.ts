@@ -28,6 +28,7 @@ export async function createAppointmentFromSlot(
         p_slot_id: input.slot_id,
         p_citizen_id: profile.id,
         p_notes: input.notes ?? null,
+        p_citizen_gov_id: profile.gov_id ?? null,
       })
       .maybeSingle();
 
