@@ -97,12 +97,12 @@ export default function FaceClient({
           <img
             src={previewUrl}
             alt="Face preview"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transform -scale-x-100"
           />
         ) : (
           <video
             ref={videoRef}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transform -scale-x-100"
             muted
             playsInline
             autoPlay
