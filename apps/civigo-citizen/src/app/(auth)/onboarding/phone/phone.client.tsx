@@ -28,7 +28,10 @@ export default function PhoneForms({
     setPendingSend(true);
     try {
       const res = await sendOtpAction(null as any, formData);
-      if (res?.ok) toast.success("OTP sent");
+      if (res?.ok) {
+        toast.success("OTP sent");
+        router.push("/onboarding/phone/verify");
+      }
       else if (res?.error === "rate_limited_minute")
         toast.error("Please wait a minute before retrying.");
       else if (res?.error === "rate_limited_hour")
@@ -43,24 +46,7 @@ export default function PhoneForms({
     }
   }
 
-  async function onVerify(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    setPendingVerify(true);
-    try {
-      const res = await verifyOtpAction(null as any, formData);
-      if (res?.ok) {
-        toast.success("Phone verified. Proceeding...");
-        router.push("/onboarding/email");
-        return;
-      } else if (res?.error === "expired")
-        toast.error("OTP expired. Please resend.");
-      else if (res?.error === "mismatch") toast.error("Incorrect code.");
-      else toast.error("Verification failed");
-    } finally {
-      setPendingVerify(false);
-    }
-  }
+  // moved verification to separate page
 
   return (
     <div className="space-y-10">
@@ -96,25 +82,11 @@ export default function PhoneForms({
             disabled={pendingSend}
             className="w-full rounded-md py-3.5 text-[18px] font-medium"
           >
-            {pendingSend ? "Sending..." : "Verify"}
+            {pendingSend ? "Sending..." : "Send OTP"}
           </Button>
         </div>
       </form>
 
-      <form onSubmit={onVerify} className="space-y-3" aria-busy={pendingVerify}>
-        <div>
-          <Label htmlFor="code">Enter OTP</Label>
-          <Input
-            id="code"
-            name="code"
-            placeholder="000000"
-            disabled={pendingVerify}
-          />
-        </div>
-        <Button type="submit" disabled={pendingVerify}>
-          {pendingVerify ? "Verifying..." : "Verify"}
-        </Button>
-      </form>
     </div>
   );
 }
