@@ -1,10 +1,9 @@
-import { saveNicPhotos, getNicUploadUrl, uploadNicPhoto } from "./_actions";
-import NicPhotosClient from "./photos.client";
 import { requireStepAllowed } from "../_state";
+import { redirect } from "next/navigation";
 
 export default async function NicPhotosStepPage() {
   await requireStepAllowed("nic-photos");
-  return <NicPhotosClient getUploadUrlAction={getNicUploadUrl} uploadAction={uploadNicPhoto} saveAction={saveNicPhotos} />;
+  redirect("/onboarding/nic-photos/front");
 }
 
 

@@ -17,8 +17,8 @@ Screens checklist (mobile-first, in order)
 - [x] First name (firstname.png)
 - [x] Last name (lastname.png)
 - [x] Create password (create password.png)
-- [ ] NIC photos — front (NIC font.png)
-- [ ] NIC photos — back (nic backpng)
+- [x] NIC photos — front (NIC font.png)
+- [x] NIC photos — back (nic backpng)
 - [ ] Facial scan (facial scan.png)
 - [ ] PIN creation (Pin Creation.png) — visual-only if step not wired
 - [ ] Finalize — layout polish only
@@ -61,3 +61,4 @@ Changelog
 - feat(onboarding-ui): email page (mobile-first); matches theme; anchored Continue CTA
 - feat(onboarding-ui): names (mobile-first); centered inputs w/ bottom borders; anchored Continue CTA
 - feat(onboarding-ui): password (mobile-first); centered bottom-bordered inputs; anchored Continue CTA
+- feat(onboarding-ui): NIC photos front/back split pages; camera capture + alternative upload; anchored Next CTAs
