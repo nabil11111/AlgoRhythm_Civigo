@@ -19,6 +19,8 @@ export default function BackClient({
   const [uploadPath, setUploadPath] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
   const [cameraError, setCameraError] = React.useState<string | null>(null);
+  const [flashOn, setFlashOn] = React.useState(false);
+  const [torchSupported, setTorchSupported] = React.useState(false);
   const router = useRouter();
 
   async function startCamera() {
@@ -34,6 +36,12 @@ export default function BackClient({
         await video.play();
         setStreamReady(true);
         setCameraError(null);
+        // Detect torch support
+        const stream = media as MediaStream;
+        const track = stream.getVideoTracks()[0];
+        // @ts-ignore
+        const caps = track?.getCapabilities ? track.getCapabilities() : undefined;
+        setTorchSupported(Boolean(caps && (caps as any).torch));
       }
     } catch (err) {
       setStreamReady(false);
@@ -148,6 +156,43 @@ export default function BackClient({
         >
           {streamReady ? "Capture" : "Enable Camera"}
         </Button>
+        {previewUrl && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setPreviewUrl(null);
+              setUploadPath(null);
+            }}
+            disabled={pending}
+          >
+            Retry
+          </Button>
+        )}
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const stream = videoRef.current?.srcObject as MediaStream | undefined;
+              const track = stream?.getVideoTracks && stream.getVideoTracks()[0];
+              // @ts-ignore
+              if (track?.applyConstraints && torchSupported) {
+                // @ts-ignore
+                await track.applyConstraints({ advanced: [{ torch: !flashOn }] });
+                setFlashOn((v) => !v);
+              } else {
+                toast.message("Flash not supported on this device/browser");
+              }
+            } catch {
+              toast.error("Could not toggle flash");
+            }
+          }}
+          className="inline-flex items-center rounded-md border-2 border-[var(--color-primary)] px-3 py-2 text-[var(--color-primary)] disabled:opacity-50"
+          disabled={!torchSupported}
+          aria-pressed={flashOn}
+        >
+          {flashOn ? "Flash On" : "Flash Off"}
+        </button>
         <label className="inline-flex items-center rounded-md border-2 border-[var(--color-primary)] px-3 py-2 text-[var(--color-primary)]">
           Upload
           <input
