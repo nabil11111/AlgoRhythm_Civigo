@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { getServiceRoleClient } from "@/src/utils/supabase/server";
+import { getServiceRoleClient } from "@/utils/supabase/server";
 import crypto from "node:crypto";
 
 const oldNic = z.string().regex(/^[0-9]{9}[VXvx]$/);

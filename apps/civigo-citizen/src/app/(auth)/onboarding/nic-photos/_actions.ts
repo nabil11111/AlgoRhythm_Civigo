@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { getServiceRoleClient } from "@/src/utils/supabase/server";
+import { getServiceRoleClient } from "@/utils/supabase/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { NextRequest } from "next/server";
 

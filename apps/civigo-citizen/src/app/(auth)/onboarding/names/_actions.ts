@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { getServiceRoleClient } from "@/src/utils/supabase/server";
+import { getServiceRoleClient } from "@/utils/supabase/server";
 
 const namesSchema = z.object({ first_name: z.string().min(1), last_name: z.string().min(1) });
 

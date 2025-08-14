@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { getServiceRoleClient } from "@/src/utils/supabase/server";
+import { getServiceRoleClient } from "@/utils/supabase/server";
 
 export async function finalizeOnboarding(prev: { ok: boolean; error?: string } | null) {
   const cookieStore = await cookies();

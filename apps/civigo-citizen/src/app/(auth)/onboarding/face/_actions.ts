@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { getServiceRoleClient } from "@/src/utils/supabase/server";
+import { getServiceRoleClient } from "@/utils/supabase/server";
 
 const schema = z.object({ face_path: z.string().min(1) });
 
