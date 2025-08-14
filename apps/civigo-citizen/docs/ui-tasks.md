@@ -7,7 +7,7 @@ Overview and brand colors
 
 Screens checklist (mobile-first, in order)
 
-- [ ] Welcome (welcome.png)
+- [x] Welcome (welcome.png)
 - [ ] Start (start.png)
 - [ ] Login/Signup (login-signup.png) — Sign in path is NIC → password
 - [ ] NIC number (NICno.png)
@@ -41,3 +41,4 @@ Changelog
 
 - chore(onboarding-ui): add ui-tasks.md tracker (seeded with screens/components and brand colors)
 - feat(onboarding-ui): tokens + ProgressHeader (mobile-first, primary #0052A5, secondary #009688)
+- feat(onboarding-ui): welcome (mobile-first)
