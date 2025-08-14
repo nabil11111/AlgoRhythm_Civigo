@@ -18,7 +18,9 @@ export default function NicForm({
 }) {
   const [nic, setNic] = React.useState("");
   const [pending, setPending] = React.useState(false);
-  const [selectedSuffix, setSelectedSuffix] = React.useState<"V" | "X" | null>(null);
+  const [selectedSuffix, setSelectedSuffix] = React.useState<"V" | "X" | null>(
+    null
+  );
   const [errorText, setErrorText] = React.useState<string | null>(null);
   const router = useRouter();
 
@@ -55,8 +57,11 @@ export default function NicForm({
       setErrorText(null);
       return;
     }
-    const isValid = oldNic.safeParse(nic).success || newNic.safeParse(nic).success;
-    setErrorText(isValid ? null : "Invalid NIC format. Use 12 digits or 9 digits + V/X.");
+    const isValid =
+      oldNic.safeParse(nic).success || newNic.safeParse(nic).success;
+    setErrorText(
+      isValid ? null : "Invalid NIC format. Use 12 digits or 9 digits + V/X."
+    );
   }, [nic]);
 
   return (
@@ -80,19 +85,24 @@ export default function NicForm({
           value={nic}
           onChange={(e) => setNic(e.target.value)}
           disabled={pending}
-          placeholder="199877703646 or 123456789V"
           aria-invalid={errorText ? true : undefined}
           aria-describedby="nic-hint nic-error"
           className={[
-            "block w-full border-0 border-b-2 bg-transparent text-center text-[28px] tracking-[0.25em] h-14 focus:outline-none placeholder:text-gray-400",
-            errorText ? "border-red-500 focus:border-red-600" : "border-gray-300 focus:border-[var(--color-primary)]",
+            "block w-full border-0 border-b-2 bg-transparent text-center text-[28px] tracking-[0.25em] h-14 focus:outline-none",
+            errorText
+              ? "border-red-500 focus:border-red-600"
+              : "border-gray-300 focus:border-[var(--color-primary)]",
           ].join(" ")}
         />
         <p id="nic-hint" className="mt-2 text-center text-xs text-gray-500">
           We’ll verify this with your GovID records
         </p>
         {errorText && (
-          <p id="nic-error" className="mt-1 text-center text-xs text-red-600" role="alert">
+          <p
+            id="nic-error"
+            className="mt-1 text-center text-xs text-red-600"
+            role="alert"
+          >
             {errorText}
           </p>
         )}
