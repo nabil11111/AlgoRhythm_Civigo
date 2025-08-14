@@ -107,6 +107,7 @@ export default function BackClient({
         const res = await uploadAction(null as any, fd);
         if (res?.ok && res.path) {
           setUploadPath(res.path);
+          try { localStorage.setItem('onb_nic_back_path', res.path); } catch {}
           setPreviewUrl(URL.createObjectURL(file));
           toast.success("Captured");
         } else {
@@ -129,6 +130,7 @@ export default function BackClient({
       const res = await uploadAction(null as any, fd);
       if (res?.ok && res.path) {
         setUploadPath(res.path);
+        try { localStorage.setItem('onb_nic_back_path', res.path); } catch {}
         setPreviewUrl(URL.createObjectURL(file));
         toast.success("Uploaded");
       } else toast.error("Upload failed");
