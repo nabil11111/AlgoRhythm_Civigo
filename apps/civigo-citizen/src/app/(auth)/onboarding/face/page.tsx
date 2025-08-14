@@ -1,7 +1,9 @@
 import { saveFaceCapture, uploadFaceCapture } from "./_actions";
+import { requireStepAllowed } from "../_state";
 import { ProgressHeader } from "../_components/ProgressHeader";
 
 export default async function FaceStepPage() {
+  await requireStepAllowed("face");
   return (
     <div>
       <ProgressHeader current="face" />

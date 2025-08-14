@@ -1,6 +1,8 @@
 import { submitPassword } from "./_actions";
+import { requireStepAllowed } from "../_state";
 
 export default async function PasswordStepPage() {
+  await requireStepAllowed("password");
   return (
     <form action={submitPassword} className="space-y-3">
       <div>

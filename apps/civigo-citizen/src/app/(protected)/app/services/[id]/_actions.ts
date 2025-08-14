@@ -36,6 +36,27 @@ export async function createAppointmentFromSlot(
 
     if (!rpcError && rpcResult) {
       const appointmentId = (rpcResult as any).appointment_id as string ?? (rpcResult as any).id as string;
+      // Link NIC document on first booking (best effort; non-blocking)
+      try {
+        const { data: doc } = await supabase
+          .from('documents')
+          .select('id')
+          .eq('owner_user_id', profile.id)
+          .eq('owner_gov_id', profile.gov_id)
+          .like('title', 'Identity: NIC%')
+          .maybeSingle();
+        if (doc?.id) {
+          const { data: exists } = await supabase
+            .from('appointment_documents')
+            .select('id')
+            .eq('appointment_id', appointmentId)
+            .eq('document_id', doc.id)
+            .maybeSingle();
+          if (!exists) {
+            await supabase.from('appointment_documents').insert({ appointment_id: appointmentId, document_id: doc.id });
+          }
+        }
+      } catch {}
       revalidatePath("/app/appointments");
       redirect(`/app/appointments/${appointmentId}`);
     }

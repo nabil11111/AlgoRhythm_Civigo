@@ -1,6 +1,8 @@
 import { submitNames } from "./_actions";
+import { requireStepAllowed } from "../_state";
 
 export default async function NamesStepPage() {
+  await requireStepAllowed("names");
   return (
     <form action={submitNames} className="space-y-3">
       <div>

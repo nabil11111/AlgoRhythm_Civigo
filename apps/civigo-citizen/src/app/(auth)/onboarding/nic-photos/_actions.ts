@@ -65,4 +65,26 @@ export async function uploadNicPhoto(prev: { ok: boolean; error?: string; path?:
   return { ok: true, path: objectName } as const;
 }
 
+export async function getSignedNicPhotoUrl(prev: { ok: boolean; error?: string; url?: string } | null, formData: FormData) {
+  const kind = String(formData.get('kind') || '');
+  if (kind !== 'front' && kind !== 'back') return { ok: false, error: 'invalid_kind' } as const;
+  const cookieStore = await cookies();
+  const tempId = cookieStore.get('onboarding_temp_id')?.value;
+  if (!tempId) return { ok: false, error: 'no_session' } as const;
+  const supabase = getServiceRoleClient();
+  if (!supabase) return { ok: false, error: 'server_misconfigured' } as const;
+
+  // Fetch stored path
+  const { data: idv } = await supabase
+    .from('identity_verifications')
+    .select('nic_front_path, nic_back_path')
+    .eq('user_temp_id', tempId)
+    .maybeSingle();
+  const path = kind === 'front' ? idv?.nic_front_path : idv?.nic_back_path;
+  if (!path) return { ok: false, error: 'not_found' } as const;
+  const { data: signed, error } = await supabase.storage.from('nic-media').createSignedUrl(path, 120);
+  if (error || !signed?.signedUrl) return { ok: false, error: 'sign_failed' } as const;
+  return { ok: true, url: signed.signedUrl } as const;
+}
+
 
