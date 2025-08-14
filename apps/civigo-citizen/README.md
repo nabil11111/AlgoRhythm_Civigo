@@ -8,6 +8,7 @@ Routes:
 - `/(protected)/app/services/[id]` (slots + booking)
 - `/(protected)/app/appointments` (list)
 - `/(protected)/app/appointments/[id]` (detail)
+- `/(auth)/onboarding/*` (NIC → phone (OTP) → names → password → NIC photos → face → finalize)
 
 Standards:
 
@@ -20,6 +21,12 @@ RLS notes:
 
 - `appointments` self-only policies; `departments/services` readable.
 - Slots are read from `service_slots` where `active=true` and `slot_at>=now()`.
+- Onboarding:
+- - `identity_verifications` owner read/write; admin full; officers no access.
+- - `phone_verifications` owner read/write; admin read; officers no access.
+- Storage:
+- - `nic-media` (private): folders `nic/front`, `nic/back`, `face/captures`. Owner/admin access; officers excluded from `face` assets.
+- - `citizen-documents` (private): `identity/nic`, `appointments/{id}`, `uploads/{gov_id}`. Officers see only where permitted (e.g., linked to a booking).
 
 Setup:
 
@@ -28,9 +35,35 @@ Setup:
 
 Booking flow (RPC-first):
 
-- Server Action `createAppointmentFromSlot` calls DB RPC `book_appointment_slot` for atomic capacity enforcement.
+- Server Action `createAppointmentFromSlot` calls DB RPC `book_appointment_slot` for atomic capacity enforcement and passes `citizen_gov_id`.
 - If the RPC is unavailable, enable fallback via `CITIZEN_BOOKING_FALLBACK_ENABLED=true` to use a guarded insert with active/capacity checks.
 - On success, `revalidatePath('/app/appointments')` and redirect to `/app/appointments/[id]`.
+
+Onboarding flow:
+
+- SSR-first; no service-role in the browser; all uploads via server actions.
+- Step 1 (NIC): validate old/new formats, check uniqueness.
+- Step 2 (Phone): OTP send/verify; 1/min and 5/hour rate-limit.
+- Step 3 (Names): transient httpOnly cookie storage.
+- Step 4 (Password): transient httpOnly cookie storage.
+- Step 5 (NIC photos): upload to `nic-media/nic/front|back`; persist paths.
+- Step 6 (Face): upload to `nic-media/face/captures`; persist path; status='pending'. Officers cannot read face captures.
+- Step 7 (Finalize): normalize NIC, `generate_gov_id(nic)`, create auth user (admin), update `profiles.gov_id`, create NIC document in `citizen-documents/identity/nic` linked via `owner_gov_id`, clear temp cookies, redirect to sign-in.
+
+NIC formats and generate_gov_id:
+
+- Old: 9 digits + V/X (case-insensitive). Canonical form strips the trailing letter.
+- New: 12 digits as-is. `generate_gov_id(nic)` currently returns the canonical NIC.
+
+gov_id usage:
+
+- Bookings write `citizen_gov_id` alongside `citizen_id` (RPC and fallback).
+- Documents use `owner_gov_id` alongside `owner_user_id`.
+
+Revalidation and SSR notes:
+
+- Always use literal URLs in `revalidatePath`.
+- Server Actions only in `_actions.ts` files; utilities must not contain `use server`.
 
 Appointments filters:
 

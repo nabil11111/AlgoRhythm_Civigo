@@ -50,6 +50,16 @@ export async function finalizeOnboarding(prev: { ok: boolean; error?: string } |
     role: 'citizen',
   }).eq('id', profileId);
 
+  // Create NIC document entry linked by owner_gov_id
+  await supabase.from('documents').insert({
+    owner_user_id: profileId,
+    owner_gov_id: govId,
+    title: 'Identity: NIC',
+    storage_path: `citizen-documents/identity/nic/${govId}-${Date.now()}.json`,
+    mime_type: 'application/json',
+    size_bytes: null,
+  });
+
   // Clear temp cookie
   cookieStore.set('onboarding_temp_id', '', { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 0 });
   cookieStore.set('onboarding_names', '', { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 0 });
