@@ -4,7 +4,7 @@ export default function OnboardingWelcomePage() {
   return (
     <div className="min-h-[100svh] w-full flex flex-col bg-white text-[#171717]">
       {/* Top section with logo and welcome text - matches Frame 1 */}
-      <div className="flex-1 w-full border-b-[6px] border-b-[var(--color-primary)] shadow-[0_8px_24px_rgba(0,82,165,0.18)] flex flex-col justify-center items-center bg-white">
+      <div className="flex-1 w-full border-b-[6px] border-b-[var(--color-primary)] rounded-b-2xl shadow-[0_8px_24px_rgba(0,82,165,0.18)] flex flex-col justify-center items-center bg-white">
         <div className="text-center space-y-6">
           {/* Logo */}
           <div className="mb-8">
@@ -31,7 +31,7 @@ export default function OnboardingWelcomePage() {
       </div>
 
       {/* Bottom section with language buttons - matches Frame 5 */}
-      <div className="mx-auto w-full max-w-[200px] px-4 pb-6 space-y-4">
+      <div className="mx-auto w-full max-w-[200px] px-4 pb-6 mt-6 space-y-4">
         <a
           href="/onboarding/start"
           className="block w-full rounded-md border-2 border-[var(--color-primary)] bg-white py-3.5 text-center"
