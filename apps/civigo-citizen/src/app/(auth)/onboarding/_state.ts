@@ -40,8 +40,8 @@ export async function getOnboardingState(): Promise<OnboardingState> {
         .select("nic_front_path, nic_back_path, face_capture_path")
         .eq("user_temp_id", tempId)
         .maybeSingle();
-      nicFrontPath = idv?.nic_front_path ?? null;
-      nicBackPath = idv?.nic_back_path ?? null;
+      nicFrontPath = idv?.nic_front_path ?? cookieStore.get("onboarding_nic_front")?.value ?? null;
+      nicBackPath = idv?.nic_back_path ?? cookieStore.get("onboarding_nic_back")?.value ?? null;
       facePath = idv?.face_capture_path ?? null;
     }
   }

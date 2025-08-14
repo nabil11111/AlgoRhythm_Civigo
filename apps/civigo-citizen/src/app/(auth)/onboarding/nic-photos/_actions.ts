@@ -36,6 +36,22 @@ export async function saveNicPhotos(
     })
     .eq("user_temp_id", tempId);
 
+  // Persist paths for step gating continuity during local testing over http
+  cookieStore.set("onboarding_nic_front", parsed.data.front_path, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 10 * 60,
+  });
+  cookieStore.set("onboarding_nic_back", parsed.data.back_path, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 10 * 60,
+  });
+
   revalidatePath("/onboarding/face");
   redirect("/onboarding/face");
 }
