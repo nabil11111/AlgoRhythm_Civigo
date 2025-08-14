@@ -31,7 +31,7 @@ export function ProgressHeader({ current }: { current: OnboardingStep }) {
                 className={[
                   "inline-flex h-6 items-center rounded-full px-2",
                   isActive
-                    ? "bg-[--color-primary] text-white"
+                    ? "bg-[var(--color-primary)] text-white"
                     : "bg-gray-100 text-gray-700",
                 ].join(" ")}
               >
