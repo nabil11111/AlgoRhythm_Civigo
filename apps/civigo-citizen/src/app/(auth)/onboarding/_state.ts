@@ -5,6 +5,7 @@ import { getServiceRoleClient } from "@/utils/supabase/server";
 export type OnboardingState = {
   tempId: string | null;
   phoneVerified: boolean;
+  email?: string | null;
   hasNames: boolean;
   hasPassword: boolean;
   nicFrontPath?: string | null;
@@ -16,6 +17,7 @@ export async function getOnboardingState(): Promise<OnboardingState> {
   const cookieStore = await cookies();
   const tempId = cookieStore.get("onboarding_temp_id")?.value ?? null;
   const names = cookieStore.get("onboarding_names")?.value ?? null;
+  const email = cookieStore.get("onboarding_email")?.value ?? null;
   const password = cookieStore.get("onboarding_password")?.value ?? null;
 
   let phoneVerified = false;
@@ -47,6 +49,7 @@ export async function getOnboardingState(): Promise<OnboardingState> {
   return {
     tempId,
     phoneVerified,
+    email,
     hasNames: !!names,
     hasPassword: !!password,
     nicFrontPath,
@@ -55,7 +58,15 @@ export async function getOnboardingState(): Promise<OnboardingState> {
   };
 }
 
-export type StepKey = "nic" | "phone" | "names" | "password" | "nic-photos" | "face" | "finalize";
+export type StepKey =
+  | "nic"
+  | "phone"
+  | "email"
+  | "names"
+  | "password"
+  | "nic-photos"
+  | "face"
+  | "finalize";
 
 export async function requireStepAllowed(step: StepKey) {
   const s = await getOnboardingState();
@@ -63,15 +74,15 @@ export async function requireStepAllowed(step: StepKey) {
   if (!s.tempId && step !== "nic" && step !== "phone") {
     redirect("/onboarding/nic");
   }
-  if (step === "names" && !s.phoneVerified) redirect("/onboarding/phone");
+  if (step === "email" && !s.phoneVerified) redirect("/onboarding/phone");
+  if (step === "names" && !s.email) redirect("/onboarding/email");
   if (step === "password" && !s.hasNames) redirect("/onboarding/names");
   if (step === "nic-photos" && !s.hasPassword) redirect("/onboarding/password");
-  if (step === "face" && (!s.nicFrontPath || !s.nicBackPath)) redirect("/onboarding/nic-photos");
+  if (step === "face" && (!s.nicFrontPath || !s.nicBackPath))
+    redirect("/onboarding/nic-photos");
   if (step === "finalize") {
     if (!s.phoneVerified) redirect("/onboarding/phone");
     if (!s.nicFrontPath || !s.nicBackPath) redirect("/onboarding/nic-photos");
     if (!s.facePath) redirect("/onboarding/face");
   }
 }
-
-

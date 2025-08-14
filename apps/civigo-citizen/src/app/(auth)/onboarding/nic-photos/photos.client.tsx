@@ -66,7 +66,11 @@ export default function NicPhotosClient({
         toast.success("Saved NIC photos");
         router.push("/onboarding/face");
         return;
-      } else toast.error("Save failed");
+      } else if (res?.error === "invalid") {
+        toast.error("Please upload both front and back images");
+      } else {
+        toast.error("Save failed");
+      }
     } finally {
       setPending(false);
     }
@@ -109,7 +113,7 @@ export default function NicPhotosClient({
         />
       </div>
       <div>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending || !frontPath || !backPath}>
           {pending ? "Saving..." : "Continue"}
         </Button>
       </div>

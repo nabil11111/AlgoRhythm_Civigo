@@ -29,6 +29,10 @@ export default function PhoneForms({
         toast.error("Please wait a minute before retrying.");
       else if (res?.error === "rate_limited_hour")
         toast.error("Too many attempts. Try again later.");
+      else if (res?.error === "phone_in_use")
+        toast.error(
+          "This phone number is already linked to an existing account."
+        );
       else toast.error("Could not send OTP");
     } finally {
       setPendingSend(false);
@@ -43,7 +47,7 @@ export default function PhoneForms({
       const res = await verifyOtpAction(null as any, formData);
       if (res?.ok) {
         toast.success("Phone verified. Proceeding...");
-        router.push("/onboarding/names");
+        router.push("/onboarding/email");
         return;
       } else if (res?.error === "expired")
         toast.error("OTP expired. Please resend.");
