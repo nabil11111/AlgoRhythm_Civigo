@@ -4,7 +4,7 @@ export default function OnboardingWelcomePage() {
   return (
     <div className="min-h-[100svh] w-full flex flex-col bg-white text-[#171717]">
       {/* Top section with logo and welcome text - matches Frame 1 */}
-      <div className="flex-1 border-2 border-[var(--color-primary)] mx-4 my-4 rounded-lg flex flex-col justify-center items-center bg-white">
+      <div className="flex-1 w-full border-b-[6px] border-b-[var(--color-primary)] shadow-[0_8px_24px_rgba(0,82,165,0.18)] flex flex-col justify-center items-center bg-white">
         <div className="text-center space-y-6">
           {/* Logo */}
           <div className="mb-8">
@@ -17,7 +17,7 @@ export default function OnboardingWelcomePage() {
               className="mx-auto h-auto w-[200px]"
             />
           </div>
-          
+
           {/* Welcome text */}
           <div className="space-y-2">
             <h1 className="text-[32px] font-bold text-[var(--color-primary)] leading-[39px]">

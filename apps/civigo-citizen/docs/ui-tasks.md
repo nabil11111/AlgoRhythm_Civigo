@@ -50,3 +50,4 @@ Changelog
 - fix(onboarding-ui): make welcome page responsive (full width) + correct blue curve direction
 - fix(onboarding-ui): extend blue curve higher, position buttons over blue area to match welcome.png
 - fix(onboarding-ui): redesign welcome page to match exact Figma design (Frame 1 with blue border, no curve)
+- fix(onboarding-ui): heavier bottom-only stroke on top frame + drop shadow; removed inner padding
