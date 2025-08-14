@@ -11,7 +11,7 @@ Screens checklist (mobile-first, in order)
 - [x] Start (start.png)
 - [ ] Login/Signup (login-signup.png) — Sign in path is NIC → password
 - [x] NIC number (NICno.png)
-- [ ] Phone (Mobile Number.png) + Verification (verification.png)
+- [x] Phone (Mobile Number.png) + Verification (verification.png)
 - [ ] Email (no PNG; match system)
 - [ ] First name (firstname.png)
 - [ ] Last name (lastname.png)
@@ -55,3 +55,4 @@ Changelog
 - feat(onboarding-ui): start screen (mobile-first) matching Signup.png layout
 - fix(onboarding-ui): start buttons route to /onboarding/nic (login + sign up)
 - feat(onboarding-ui): NIC number (mobile-first) matching NICno.png layout
+- feat(onboarding-ui): phone + verification (mobile-first); +94 prefix UI; anchored Verify CTA; server action receives +94 + 9 digits
