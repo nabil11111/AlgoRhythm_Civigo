@@ -20,7 +20,7 @@ export async function submitNames(prev: { ok: boolean; error?: string } | null, 
   // Transiently store names in a secure cookie (encrypted storage can be added later)
   const payload = JSON.stringify({ first_name: parsed.data.first_name, last_name: parsed.data.last_name });
   // Keep PII in httpOnly cookie, short-lived
-  (await cookies()).set('onboarding_names', payload, { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 15 * 60 });
+  (await cookies()).set('onboarding_names', payload, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 15 * 60 });
 
   revalidatePath('/onboarding/password');
   return { ok: true } as const;
