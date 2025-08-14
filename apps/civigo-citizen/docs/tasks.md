@@ -39,11 +39,11 @@ Status legend: [ ] Todo, [~] In progress, [x] Done, [!] Blocker
 
 - [ ] Ensure uploaded NIC photos are not publicly accessible; serve via signed URLs on the server only.
 - [ ] Automatically create a citizen “document” for NIC photos linked by owner_gov_id (officers viewable after booking, not facial captures).
-- [ ] Ensure gov_id is required for booking; if missing, redirect to onboarding.
+- [x] Ensure gov_id is required for booking; if missing, redirect to onboarding.
 
 ## Citizen booking/documents updates
 
-- [ ] When booking, write citizen_gov_id alongside existing citizen_id FK.
+- [x] When booking, write citizen_gov_id alongside existing citizen_id FK. (fallback path)
 - [ ] When uploading documents, store owner_gov_id alongside owner_user_id.
 
 ## UI (decent, not pixel-perfect)

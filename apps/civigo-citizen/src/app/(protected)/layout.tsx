@@ -18,6 +18,10 @@ export default async function ProtectedLayout({
     await supabase.auth.signOut();
     redirect("/sign-in");
   }
+  // Enforce onboarding completion: require gov_id
+  if (!profile.gov_id) {
+    redirect("/onboarding/nic");
+  }
   return (
     <div className="min-h-screen">
       <header className="flex items-center justify-between px-4 py-3 border-b">
