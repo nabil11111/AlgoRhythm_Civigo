@@ -17,6 +17,7 @@ export default function NicForm({
 }) {
   const [nic, setNic] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  const [selectedSuffix, setSelectedSuffix] = React.useState<"V" | "X" | null>(null);
   const router = useRouter();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -40,6 +41,12 @@ export default function NicForm({
     }
   }
 
+  React.useEffect(() => {
+    const last = nic.slice(-1);
+    if (/^[vVxX]$/.test(last)) setSelectedSuffix(last.toUpperCase() as "V" | "X");
+    else setSelectedSuffix(null);
+  }, [nic]);
+
   return (
     <form onSubmit={onSubmit} className="space-y-8" aria-busy={pending}>
       <div className="text-center space-y-2">
@@ -48,56 +55,53 @@ export default function NicForm({
         </h2>
       </div>
 
-      {/* Visual NIC slots with hidden real input */}
+      {/* Single bottom-bordered input to match design */}
       <div className="mx-auto w-full max-w-[360px]">
-        <div
-          className="relative mx-auto flex select-none justify-between gap-3 px-2"
-          onClick={() => {
-            const el = document.getElementById("nic-real") as HTMLInputElement | null;
-            el?.focus();
-          }}
-        >
-          {Array.from({ length: 12 }).map((_, idx) => {
-            const char = nic.replace(/\s/g, "")[idx] ?? "";
-            return (
-              <div key={idx} className="flex w-7 flex-col items-center">
-                <div className="text-[35px] leading-[42px] text-black/40 tabular-nums">
-                  {char}
-                </div>
-                <div className="mt-0.5 h-[6px] w-full border-b border-black/40" />
-              </div>
-            );
-          })}
-          <input
-            id="nic-real"
-            aria-label="NIC"
-            inputMode="numeric"
-            type="tel"
-            value={nic}
-            onChange={(e) => setNic(e.target.value)}
-            disabled={pending}
-            className="absolute inset-0 h-full w-full opacity-0"
-          />
-        </div>
-        <p id="nic-hint" className="mt-3 text-center text-xs text-gray-500">
-          We’ll verify this with your GovID records
-        </p>
+        <Label htmlFor="nic-real" className="sr-only">NIC</Label>
+        <input
+          id="nic-real"
+          aria-label="NIC"
+          inputMode="numeric"
+          type="tel"
+          value={nic}
+          onChange={(e) => setNic(e.target.value)}
+          disabled={pending}
+          placeholder="199877703646 or 123456789V"
+          className="block w-full border-0 border-b-2 border-gray-300 bg-transparent text-center text-[28px] tracking-[0.25em] h-14 focus:outline-none focus:border-[var(--color-primary)] placeholder:text-gray-400"
+        />
+        <p id="nic-hint" className="mt-2 text-center text-xs text-gray-500">We’ll verify this with your GovID records</p>
       </div>
 
       <div className="flex items-center justify-center gap-10">
         <button
           type="button"
           disabled={pending}
-          onClick={() => setNic((p) => p.replace(/[vVxX]$/, "") + "V")}
-          className="h-12 w-12 rounded-md border-2 border-[var(--color-primary)] text-[#333] text-2xl"
+          onClick={() => {
+            setNic((p) => p.replace(/[vVxX]$/, "") + "V");
+            setSelectedSuffix("V");
+          }}
+          className={[
+            "h-12 w-12 rounded-md border-2 text-2xl",
+            selectedSuffix === "V"
+              ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+              : "border-[var(--color-primary)] text-[#333] bg-white",
+          ].join(" ")}
         >
           V
         </button>
         <button
           type="button"
           disabled={pending}
-          onClick={() => setNic((p) => p.replace(/[vVxX]$/, "") + "X")}
-          className="h-12 w-12 rounded-md border-2 border-[var(--color-primary)] text-[#333] text-2xl"
+          onClick={() => {
+            setNic((p) => p.replace(/[vVxX]$/, "") + "X");
+            setSelectedSuffix("X");
+          }}
+          className={[
+            "h-12 w-12 rounded-md border-2 text-2xl",
+            selectedSuffix === "X"
+              ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+              : "border-[var(--color-primary)] text-[#333] bg-white",
+          ].join(" ")}
         >
           X
         </button>
@@ -106,7 +110,7 @@ export default function NicForm({
       <Button
         type="submit"
         disabled={pending}
-        className="w-full bg-[var(--color-primary)] text-white h-14 text-lg"
+        className="w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-[18px] font-medium"
       >
         {pending ? "Saving..." : "Next"}
       </Button>
