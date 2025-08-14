@@ -1,14 +1,13 @@
 'use server';
 
-import { z } from "zod";
+// NOTE: Server action files must only export async functions
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getServiceRoleClient } from "@/utils/supabase/server";
 import crypto from "node:crypto";
+import { nicSchema } from "./schema";
 
-const oldNic = z.string().regex(/^[0-9]{9}[VXvx]$/);
-const newNic = z.string().regex(/^[0-9]{12}$/);
-export const nicSchema = z.object({ nic: z.union([oldNic, newNic]) });
+// schema moved to ./schema to satisfy Next.js server action export rules
 
 export async function submitNic(prevState: { ok: boolean; error?: string } | null, formData: FormData) {
   const cookieStore = await cookies();
