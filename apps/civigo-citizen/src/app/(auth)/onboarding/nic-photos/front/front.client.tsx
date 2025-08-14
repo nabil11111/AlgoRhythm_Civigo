@@ -22,21 +22,41 @@ export default function FrontClient({
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [uploadPath, setUploadPath] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  const [cameraError, setCameraError] = React.useState<string | null>(null);
+
+  async function startCamera() {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia)
+        throw new Error("unavailable");
+      const media = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = media;
+        await video.play();
+        setStreamReady(true);
+        setCameraError(null);
+      }
+    } catch (err) {
+      setStreamReady(false);
+      if (!window.isSecureContext)
+        setCameraError(
+          "Camera requires HTTPS or localhost. Use an HTTPS tunnel for mobile testing."
+        );
+      else setCameraError("Unable to access camera. Please grant permission or use Upload.");
+    }
+  }
 
   React.useEffect(() => {
-    (async () => {
-      try {
-        const media = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        const video = videoRef.current;
-        if (video) {
-          video.srcObject = media;
-          await video.play();
-          setStreamReady(true);
-        }
-      } catch {
-        setStreamReady(false);
-      }
-    })();
+    if (window.isSecureContext) {
+      startCamera();
+    } else {
+      setCameraError(
+        "Camera requires HTTPS or localhost. Use an HTTPS tunnel for mobile testing."
+      );
+    }
     return () => {
       const v = videoRef.current as HTMLVideoElement | null;
       const s = v?.srcObject as MediaStream | undefined;
@@ -57,7 +77,9 @@ export default function FrontClient({
       if (!blob) return;
       setPending(true);
       try {
-        const file = new File([blob], "front.jpg", { type: blob.type || "image/jpeg" });
+        const file = new File([blob], "front.jpg", {
+          type: blob.type || "image/jpeg",
+        });
         const fd = new FormData();
         fd.set("kind", "front");
         fd.set("file", file);
@@ -96,31 +118,57 @@ export default function FrontClient({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-center text-xl font-semibold text-[#4f4f4f]">NIC Front Photo</h2>
+      <h2 className="text-center text-xl font-semibold text-[#4f4f4f]">
+        NIC Front Photo
+      </h2>
       <div className="rounded-xl border-2 border-[var(--color-primary)] overflow-hidden">
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={previewUrl} alt="Front preview" className="w-full h-[220px] object-cover" />
+          <img
+            src={previewUrl}
+            alt="Front preview"
+            className="w-full h-[220px] object-cover"
+          />
         ) : (
-          <video ref={videoRef} className="w-full h-[220px] object-cover" muted playsInline />
+          <video
+            ref={videoRef}
+            className="w-full h-[220px] object-cover"
+            muted
+            playsInline
+            autoPlay
+          />
         )}
       </div>
+      {cameraError && (
+        <p className="text-center text-xs text-gray-600">{cameraError}</p>
+      )}
       <div className="flex items-center justify-center gap-4">
-        <Button type="button" variant="primary" onClick={capture} disabled={!streamReady || pending}>
-          Capture
+        <Button
+          type="button"
+          variant="primary"
+          onClick={streamReady ? capture : startCamera}
+          disabled={!streamReady || pending}
+        >
+          {streamReady ? "Capture" : "Enable Camera"}
         </Button>
         <label className="inline-flex items-center rounded-md border-2 border-[var(--color-primary)] px-3 py-2 text-[var(--color-primary)]">
           Upload
-          <input type="file" accept="image/*" onChange={onFilePick} className="hidden" />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={onFilePick}
+            className="hidden"
+          />
         </label>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
-        <a href="/onboarding/nic-photos/back" className="block w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-center text-[18px] font-medium">
+        <a
+          href="/onboarding/nic-photos/back"
+          className="block w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-center text-[18px] font-medium"
+        >
           Next
         </a>
       </div>
     </div>
   );
 }
-
-
