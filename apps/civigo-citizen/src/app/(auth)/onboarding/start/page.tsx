@@ -39,7 +39,9 @@ export default function OnboardingStartPage() {
             <h1 className="text-[32px] font-bold text-[var(--color-primary)] leading-[39px]">
               Get Started
             </h1>
-            <p className="text-base text-[#4f4f4f] leading-[19px]">Sign in to continue</p>
+            <p className="text-base text-[#4f4f4f] leading-[19px]">
+              Sign in to continue
+            </p>
           </div>
         </div>
       </div>
@@ -47,13 +49,13 @@ export default function OnboardingStartPage() {
       {/* Actions */}
       <div className="mx-auto w-full max-w-[280px] px-4 pb-8 mt-6 space-y-4">
         <Link
-          href="/onboarding/login-signup"
+          href="/onboarding/nic"
           className="block w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-center text-[18px] font-medium"
         >
           Login
         </Link>
         <Link
-          href="/sign-up"
+          href="/onboarding/nic"
           className="block w-full rounded-md border-2 border-[var(--color-primary)] bg-white text-[var(--color-primary)] py-3.5 text-center text-[18px] font-medium"
         >
           Sign up
@@ -62,5 +64,3 @@ export default function OnboardingStartPage() {
     </div>
   );
 }
-
-

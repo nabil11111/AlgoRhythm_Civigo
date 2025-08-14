@@ -53,4 +53,5 @@ Changelog
 - fix(onboarding-ui): heavier bottom-only stroke on top frame + drop shadow; removed inner padding
 - fix(onboarding-ui): rounded bottom on top frame and added spacing above buttons to avoid touch
 - feat(onboarding-ui): start screen (mobile-first) matching Signup.png layout
+- fix(onboarding-ui): start buttons route to /onboarding/nic (login + sign up)
 - feat(onboarding-ui): NIC number (mobile-first) matching NICno.png layout
