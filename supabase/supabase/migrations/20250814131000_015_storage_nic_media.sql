@@ -7,9 +7,6 @@ insert into storage.buckets (id, name, public)
 values ('nic-media', 'nic-media', false)
 on conflict (id) do nothing;
 
--- Enable RLS on storage.objects
-alter table if exists storage.objects enable row level security;
-
 -- Policies: owner access (path-based by user/{auth.uid()}/...) and admin full
 -- NOTE: If you use front/back/captures folders without user prefix, prefer server-signed URLs for owner access.
 
