@@ -8,7 +8,7 @@ Overview and brand colors
 Screens checklist (mobile-first, in order)
 
 - [x] Welcome (welcome.png)
-- [ ] Start (start.png)
+- [x] Start (start.png)
 - [ ] Login/Signup (login-signup.png) — Sign in path is NIC → password
 - [ ] NIC number (NICno.png)
 - [ ] Phone (Mobile Number.png) + Verification (verification.png)
@@ -52,3 +52,4 @@ Changelog
 - fix(onboarding-ui): redesign welcome page to match exact Figma design (Frame 1 with blue border, no curve)
 - fix(onboarding-ui): heavier bottom-only stroke on top frame + drop shadow; removed inner padding
 - fix(onboarding-ui): rounded bottom on top frame and added spacing above buttons to avoid touch
+- feat(onboarding-ui): start screen (mobile-first) matching Signup.png layout
