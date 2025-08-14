@@ -37,7 +37,7 @@ export async function getNicUploadUrl(prev: { ok: boolean; error?: string; url?:
   const supabase = getServiceRoleClient();
   if (!supabase) return { ok: false, error: 'server_misconfigured' } as const;
 
-  const folder = kind === 'front' ? 'nic/front' : 'nic/back';
+  const folder = kind === 'front' ? 'front' : 'back';
   const objectName = `${folder}/${tempId}-${Date.now()}.jpg`;
   return { ok: true, url: objectName } as const;
 }
@@ -54,7 +54,7 @@ export async function uploadNicPhoto(prev: { ok: boolean; error?: string; path?:
   if (kind !== 'front' && kind !== 'back') return { ok: false, error: 'invalid_kind' } as const;
   if (!(file instanceof File)) return { ok: false, error: 'invalid_file' } as const;
 
-  const folder = kind === 'front' ? 'nic/front' : 'nic/back';
+  const folder = kind === 'front' ? 'front' : 'back';
   const ext = (file.type && file.type.includes('png')) ? 'png' : 'jpg';
   const objectName = `${folder}/${tempId}-${Date.now()}.${ext}`;
   const { error: upErr } = await supabase.storage.from('nic-media').upload(objectName, file, {

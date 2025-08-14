@@ -36,7 +36,7 @@ export async function uploadFaceCapture(prev: { ok: boolean; error?: string; pat
   const file = formData.get('file');
   if (!(file instanceof File)) return { ok: false, error: 'invalid_file' } as const;
 
-  const folder = 'face/captures';
+  const folder = 'captures';
   const ext = (file.type && file.type.includes('png')) ? 'png' : 'jpg';
   const objectName = `${folder}/${tempId}-${Date.now()}.${ext}`;
   const { error: upErr } = await supabase.storage.from('nic-media').upload(objectName, file, {

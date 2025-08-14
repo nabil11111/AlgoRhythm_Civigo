@@ -51,11 +51,12 @@ export async function finalizeOnboarding(prev: { ok: boolean; error?: string } |
   }).eq('id', profileId);
 
   // Create NIC document entry linked by owner_gov_id
+  // Persist a summary entry into citizen-documents/nic (metadata-only record)
   await supabase.from('documents').insert({
     owner_user_id: profileId,
     owner_gov_id: govId,
     title: 'Identity: NIC',
-    storage_path: `citizen-documents/identity/nic/${govId}-${Date.now()}.json`,
+    storage_path: `nic/${govId}-${Date.now()}.json`,
     mime_type: 'application/json',
     size_bytes: null,
   });
