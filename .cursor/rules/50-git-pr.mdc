@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+
+Branch per task; no direct commits to main; open PR with template covering Problem, Approach, Risks, Tests, Migrations, Env changes.
+
+Enforce Conventional Commits; include scope where useful (feat(citizen-booking): …); use BREAKING CHANGE footer or ! if needed.
+
+Summarize edits in PR and rationale; avoid cross-app refactors without an approved plan.

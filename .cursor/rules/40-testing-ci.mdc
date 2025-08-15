@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+Unit-test pure logic; integration test Server Actions/Route Handlers that touch DB; mock Resend and other external APIs.
+
+Critical paths under test: booking creation, slot capacity enforcement, officer status transitions, T‑24h window selector, SSR auth guards.
+
+CI must run typecheck, lint, and tests; fix violations before PR is “ready for review.”

@@ -1,0 +1,11 @@
+---
+description: Resend email standards for Next.js Server Actions/Routes
+globs:
+alwaysApply: false
+---
+
+Email sending happens server-side only via Server Actions or Route Handlers; RESEND_API_KEY must not be exposed to the browser.
+
+Provide both HTML and text alternatives; keep templates simple and testable.
+
+Idempotency for reminders: check notification_log before sending; record sends with correlation ids for auditing.
