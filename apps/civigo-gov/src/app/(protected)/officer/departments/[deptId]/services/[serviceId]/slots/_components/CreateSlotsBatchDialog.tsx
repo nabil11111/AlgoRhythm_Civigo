@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Form,
   FormField,
   FormItem,
@@ -26,8 +33,15 @@ import {
 } from "@/components/ui/form";
 import { createSlotsBatch } from "../_actions";
 
+interface Branch {
+  id: string;
+  code: string;
+  name: string;
+}
+
 const BatchSchema = z.object({
   serviceId: z.string().uuid(),
+  branchId: z.string().uuid().min(1, "Please select a branch"),
   start_date: z.string().min(1),
   end_date: z.string().min(1),
   start_time: z.string().regex(/^\d{2}:\d{2}$/),
@@ -47,8 +61,12 @@ function mapError(code?: string): string {
 
 export default function CreateSlotsBatchDialog({
   serviceId,
+  branches,
+  selectedBranchId,
 }: {
   serviceId: string;
+  branches: Branch[];
+  selectedBranchId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -57,6 +75,7 @@ export default function CreateSlotsBatchDialog({
     resolver: zodResolver(BatchSchema),
     defaultValues: {
       serviceId,
+      branchId: selectedBranchId || "",
       start_date: "",
       end_date: "",
       start_time: "09:00",
@@ -93,6 +112,31 @@ export default function CreateSlotsBatchDialog({
         </DialogHeader>
         <Form {...form}>
           <form className="grid gap-3" onSubmit={form.handleSubmit(onSubmit)}>
+            {/* Branch Selection */}
+            <FormField
+              control={form.control}
+              name="branchId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Branch</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a branch" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name} ({branch.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}

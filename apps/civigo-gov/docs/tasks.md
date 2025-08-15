@@ -1,3 +1,65 @@
+### Implementation Tasks — Branches, Department Media, and Service Instructions
+
+Owner: gov team  • Start: 2025‑08‑15
+
+Conventions:
+- Track with checkboxes; update after each commit with short commit refs.
+- Conventional Commits; branch: `feat/gov-branches-instructions`.
+
+#### Phase 0 — Groundwork
+- [x] Plan document written and approved → `apps/civigo-gov/docs/plan-branch-instructions.md` (init)
+- [x] Create task tracker (this file)
+
+#### Phase 1 — Database schema and RLS
+- [ ] Add `branches` table with strict RLS (public/auth read; admin all; officer write by department)
+- [ ] Add `service_branch_settings` with per-branch toggles and RLS (auth read; admin all; officer write)
+- [ ] Add `branch_id` to `service_slots`; backfill default branch per department; enforce not null + unique `(service_id, branch_id, slot_at)`; indexes
+- [ ] Update officer RLS on `service_slots` to validate branch.department matches
+- [ ] Add presentation fields: `departments.logo_path`, `departments.description_richtext`
+- [ ] Add instruction fields: `services.instructions_richtext`, `services.instructions_pdf_path`
+- [ ] Restrict `departments` and `services` SELECT to authenticated users (drop public read)
+- [ ] Update citizen read policy on `service_slots` to require `service_branch_settings.enabled = true`
+
+#### Phase 2 — Storage (bucket: `departments`)
+- [ ] Ensure bucket `departments` is private (set `public=false`)
+- [ ] RLS: SELECT to authenticated; officers/admins write with path checks
+  - logos: `logos/{department_id}/logo.(png|jpg|webp)`
+  - files: `files/{department_id}/...` and `files/services/{service_id}/instructions.pdf`
+
+#### Phase 3 — Server Actions (SSR-only writes)
+- [x] `uploadDepartmentLogo(deptId, file)` → path + `departments.logo_path`
+- [x] `updateDepartmentDescription(deptId, json)`
+- [x] Branch CRUD: create/update/delete
+- [x] `toggleServiceForBranch(serviceId, branchId, enabled)`
+- [x] `upsertServiceInstructions(serviceId, json)`
+- [x] `uploadServiceInstructionsPdf(serviceId, file)`
+- [x] `createSlotsForBranch(serviceId, branchId, generator)`
+
+#### Phase 4 — UI (shadcn/ui)
+- [x] Admin → Departments: tabs (Logo, Description, Branches)
+- [x] Officer → Department services: per-branch enable toggles
+- [x] Officer → Service detail: Instructions editor (Tiptap) + PDF upload
+- [x] Officer → Slots: branch selector + slot management
+ - [x] Officer → Slots: Batch Create supports branch selection
+ - [x] Officer → Slots: Batch Create uses client timezone to store correct UTC instants
+
+#### Phase 5 — Tests/Docs
+- [ ] Unit: slot generator, zod validations, sanitize rich text
+- [ ] Integration: RLS-positive/negative Server Action tests
+- [ ] Update docs/ERD and README links
+
+#### Phase 6 — Data migration/backfill
+- [ ] Create default branch per department; seed `service_branch_settings` enabled=true
+- [ ] Verify citizen browsing (auth-only) and booking unaffected
+
+#### Phase 7 — PR/CI
+- [ ] Open PR with migrations and storage policies
+- [ ] CI green (typecheck, lint, tests)
+- [ ] Review and merge plan
+
+Changelog:
+- init: add tracker
+
 # Civigo-Gov: Officer/Department Dashboard — Tasks
 
 ## Rules for this file
@@ -134,6 +196,44 @@
 - [ ] Tests: officer-appointments-actions.test.ts (happy paths + invalid transition error)
 - [ ] Docs: README updates for services RLS and appointment actions
 
+## Officer Appointment Details & Citizen Access
+
+### Plan
+
+- Create officer-readable profile policy: allow officers to SELECT limited citizen profile rows when the citizen has an appointment in a service within the officer's active department assignment.
+- Add route: `/officer/departments/[deptId]/appointments/[appointmentId]` (SSR) with guard checks and dept ownership validation.
+- Fetch appointment details: status/timestamps, service, citizen minimal profile, and linked documents (titles, mime, size).
+- Wire appointment actions (check-in, start, complete, cancel, no-show) on the details page using existing Server Actions; disable invalid actions by state.
+- Add Details link from `/officer/departments/[deptId]` table to the details page.
+- Tests: guard (wrong dept → /officer), actions happy path, RLS read of citizen profile succeeds only when scoped.
+
+### Database (RLS)
+
+- [x] Policy: `profiles_officer_read_appointments` — officer SELECT where an accessible appointment exists via department assignment.
+
+### Routes and UI
+
+- [x] Add `/officer/departments/[deptId]/appointments/[appointmentId]` details page
+- [x] Render Appointment, Citizen, Documents, and Actions sections
+- [x] Add Details button in department appointments table
+
+### Validation
+
+- [x] Add `OfficerAppointmentParam` for params validation
+
+### Tests
+
+- [ ] officer-appointment-details-guard.test.ts
+- [ ] officer-appointment-actions-on-detail.test.ts
+
+### Docs
+
+- [ ] Update README with details route and RLS scope
+
+## Changelog
+
+- feat(gov-officer): add appointment details page with actions and citizen/documents sections; add RLS policy for officer profile read (scoped)
+
 ## Officer Slots (per-service) — New
 
 ### Database
@@ -195,3 +295,5 @@ After each change and commit in this task, update apps/civigo-gov/docs/tasks.md:
 - feat(gov-officer/services): add toolbar search & pagination controls on services page
 - feat(gov-officer/slots): add service_slots migration + SSR slots page, actions, and create dialog
 - feat(gov-officer/slots): add date range filter and wire edit/toggle/delete dialogs
+ - fix(gov-officer/slots): batch create converts local date/time to UTC using client offset to avoid timezone drift
+ - feat(gov-officer/slots): batch create dialog includes branch dropdown and required validation

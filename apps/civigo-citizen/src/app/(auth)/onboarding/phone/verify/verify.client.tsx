@@ -26,7 +26,8 @@ export default function VerifyClient({
       if (res?.ok) {
         toast.success("Phone verified. Proceeding...");
         router.push("/onboarding/email");
-      } else if (res?.error === "expired") toast.error("OTP expired. Please resend.");
+      } else if (res?.error === "expired")
+        toast.error("OTP expired. Please resend.");
       else if (res?.error === "mismatch") toast.error("Incorrect code.");
       else toast.error("Verification failed");
     } finally {
@@ -46,7 +47,9 @@ export default function VerifyClient({
           name="code"
           inputMode="numeric"
           value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onChange={(e) =>
+            setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+          }
           maxLength={6}
           placeholder="000000"
           className="w-full max-w-[260px] border-0 border-b-2 border-gray-300 bg-transparent text-center text-[28px] tracking-[0.5em] h-14 focus:outline-none focus:border-[var(--color-primary)]"
@@ -54,12 +57,15 @@ export default function VerifyClient({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
-        <Button variant="primary" type="submit" disabled={pending || code.length !== 6} className="w-full rounded-md py-3.5 text-[18px] font-medium">
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={pending || code.length !== 6}
+          className="w-full rounded-md py-3.5 text-[18px] font-medium"
+        >
           {pending ? "Verifying..." : "Verify"}
         </Button>
       </div>
     </form>
   );
 }
-
-

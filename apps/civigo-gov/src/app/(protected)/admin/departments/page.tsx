@@ -5,6 +5,7 @@ import { EditDepartmentDialog } from "./_components/EditDepartmentDialog";
 import { ConfirmDeleteDialog } from "./_components/ConfirmDeleteDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default async function DepartmentsPage({
   searchParams,
@@ -28,33 +29,29 @@ export default async function DepartmentsPage({
         <CreateDepartmentDialog />
       </div>
       <Card className="p-0 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50 text-left">
-              <th className="p-2 border">Code</th>
-              <th className="p-2 border">Name</th>
-              <th className="p-2 border w-40">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Code</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead className="w-40">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {(rows ?? []).map((d) => (
-              <tr key={d.id}>
-                <td className="p-2 border">{d.code}</td>
-                <td className="p-2 border">{d.name}</td>
-                <td className="p-2 border">
+              <TableRow key={d.id}>
+                <TableCell className="font-mono text-xs">{d.code}</TableCell>
+                <TableCell>{d.name}</TableCell>
+                <TableCell>
                   <div className="flex gap-2">
-                    <EditDepartmentDialog
-                      id={d.id}
-                      code={d.code}
-                      name={d.name}
-                    />
+                    <EditDepartmentDialog id={d.id} code={d.code} name={d.name} />
                     <ConfirmDeleteDialog id={d.id} />
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </Card>
       <div className="flex items-center justify-between">
         <Button variant="outline" asChild>

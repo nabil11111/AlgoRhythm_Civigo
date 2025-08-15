@@ -138,7 +138,7 @@ export default function FaceClient({
           disabled={!uploadPath || pending}
           className="w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-[18px] font-medium"
         >
-          Next
+          Finish
         </button>
       </div>
     </div>

@@ -71,7 +71,8 @@ export type StepKey =
   | "names"
   | "password"
   | "nic-photos"
-  | "face";
+  | "face"
+  | "finalize";
 
 export async function requireStepAllowed(step: StepKey) {
   const s = await getOnboardingState();

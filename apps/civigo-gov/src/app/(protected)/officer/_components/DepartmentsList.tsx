@@ -19,7 +19,7 @@ export default function DepartmentsList({
 }) {
   if (!departments.length) {
     return (
-      <div className="border rounded p-6 text-sm text-gray-600">
+      <div className="border rounded-xl p-6 text-sm text-muted-foreground bg-card">
         No active departments assigned.
       </div>
     );

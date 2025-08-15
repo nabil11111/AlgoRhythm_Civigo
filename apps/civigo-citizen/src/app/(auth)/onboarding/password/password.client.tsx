@@ -42,10 +42,14 @@ export default function PasswordForm({
   return (
     <form onSubmit={onSubmit} className="space-y-8 pb-28" aria-busy={pending}>
       <div className="text-center">
-        <h2 className="text-xl font-semibold text-[#4f4f4f]">Create Password</h2>
+        <h2 className="text-xl font-semibold text-[#4f4f4f]">
+          Create Password
+        </h2>
       </div>
       <div>
-        <Label htmlFor="password" className="sr-only">Create password</Label>
+        <Label htmlFor="password" className="sr-only">
+          Create password
+        </Label>
         <Input
           id="password"
           type="password"
@@ -57,7 +61,9 @@ export default function PasswordForm({
         />
       </div>
       <div>
-        <Label htmlFor="confirm" className="sr-only">Confirm password</Label>
+        <Label htmlFor="confirm" className="sr-only">
+          Confirm password
+        </Label>
         <Input
           id="confirm"
           type="password"
@@ -69,7 +75,12 @@ export default function PasswordForm({
         />
       </div>
       <div className="fixed inset-x-0 bottom-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 pb-[calc(env(safe-area-inset-bottom,0)+16px)] pt-2">
-        <Button type="submit" variant="primary" disabled={pending} className="w-full rounded-md py-3.5 text-[18px] font-medium">
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={pending}
+          className="w-full rounded-md py-3.5 text-[18px] font-medium"
+        >
           {pending ? "Saving..." : "Continue"}
         </Button>
       </div>

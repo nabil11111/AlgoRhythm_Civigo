@@ -275,11 +275,17 @@ export default function BackClient({
           type="button"
           onClick={async () => {
             if (!uploadPath) return;
-            const front = (() => { try { return localStorage.getItem('onb_nic_front_path') || '' } catch { return '' }})();
+            const front = (() => {
+              try {
+                return localStorage.getItem("onb_nic_front_path") || "";
+              } catch {
+                return "";
+              }
+            })();
             const back = uploadPath;
             const fd = new FormData();
-            fd.set('front_path', front);
-            fd.set('back_path', back);
+            fd.set("front_path", front);
+            fd.set("back_path", back);
             await saveAction(null as any, fd);
           }}
           className="block w-full rounded-md bg-[var(--color-primary)] text-white py-3.5 text-center text-[18px] font-medium"

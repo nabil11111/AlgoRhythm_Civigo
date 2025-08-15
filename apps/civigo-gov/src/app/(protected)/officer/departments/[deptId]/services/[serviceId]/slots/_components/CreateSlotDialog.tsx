@@ -28,6 +28,7 @@ import { createSlot } from "../_actions";
 
 const CreateSchema = z.object({
   serviceId: z.string().uuid(),
+  branchId: z.string().uuid().optional(),
   slot_at: z.string().min(1),
   duration_minutes: z.coerce.number().int().min(5).max(240),
   capacity: z.coerce.number().int().min(1).max(100),
@@ -41,13 +42,14 @@ function mapError(code?: string): string {
   return "Something went wrong";
 }
 
-export default function CreateSlotDialog({ serviceId }: { serviceId: string }) {
+export default function CreateSlotDialog({ serviceId, branchId }: { serviceId: string; branchId?: string }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const form = useForm<z.infer<typeof CreateSchema>>({
     resolver: zodResolver(CreateSchema),
     defaultValues: {
       serviceId,
+      branchId,
       slot_at: "",
       duration_minutes: 15,
       capacity: 1,

@@ -10,6 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -90,7 +92,14 @@ export function AddOfficerDialog() {
                 </FormItem>
               )}
             />
-            <Button type="submit">{S.addOfficer}</Button>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Creating..." : S.addOfficer}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

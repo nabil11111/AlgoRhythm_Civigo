@@ -11,6 +11,7 @@ type ActionResult<T> =
 
 const CreateSchema = z.object({
   serviceId: z.string().uuid(),
+  branchId: z.string().uuid().optional(),
   slot_at: z.string().datetime(),
   duration_minutes: z.number().int().min(5).max(240),
   capacity: z.number().int().min(1).max(100),
@@ -19,6 +20,7 @@ const CreateSchema = z.object({
 const UpdateSchema = z.object({
   id: z.string().uuid(),
   serviceId: z.string().uuid(),
+  branchId: z.string().uuid().optional(),
   slot_at: z.string().datetime().optional(),
   duration_minutes: z.number().int().min(5).max(240).optional(),
   capacity: z.number().int().min(1).max(100).optional(),
@@ -37,10 +39,11 @@ const DeleteSchema = z.object({
 
 const BatchCreateSchema = z.object({
   serviceId: z.string().uuid(),
-  start_date: z.string().min(1), // YYYY-MM-DD
-  end_date: z.string().min(1), // YYYY-MM-DD
-  start_time: z.string().regex(/^\d{2}:\d{2}$/), // HH:mm
-  end_time: z.string().regex(/^\d{2}:\d{2}$/), // HH:mm
+  branchId: z.string().uuid(),
+  start_date: z.string().min(1), // YYYY-MM-DD (local)
+  end_date: z.string().min(1), // YYYY-MM-DD (local)
+  start_time: z.string().regex(/^\d{2}:\d{2}$/), // HH:mm (local)
+  end_time: z.string().regex(/^\d{2}:\d{2}$/), // HH:mm (local)
   interval_minutes: z.number().int().min(5).max(240),
   duration_minutes: z.number().int().min(5).max(240),
   capacity: z.number().int().min(1).max(100),
@@ -81,6 +84,7 @@ export async function createSlot(
     .from("service_slots")
     .insert({
       service_id: parsed.data.serviceId,
+      branch_id: parsed.data.branchId,
       slot_at: parsed.data.slot_at,
       duration_minutes: parsed.data.duration_minutes,
       capacity: parsed.data.capacity,
@@ -106,13 +110,14 @@ export async function updateSlot(
   const guard = await ensureOfficerService(parsed.data.serviceId);
   if (!guard.ok) return { ok: false, error: "forbidden" };
   const supabase = await getServerClient();
-  const updates: any = {};
+  const updates: Record<string, unknown> = {};
   if (parsed.data.slot_at !== undefined) updates.slot_at = parsed.data.slot_at;
   if (parsed.data.duration_minutes !== undefined)
     updates.duration_minutes = parsed.data.duration_minutes;
   if (parsed.data.capacity !== undefined)
     updates.capacity = parsed.data.capacity;
   if (parsed.data.active !== undefined) updates.active = parsed.data.active;
+  if (parsed.data.branchId !== undefined) updates.branch_id = parsed.data.branchId;
   const { error } = await supabase
     .from("service_slots")
     .update(updates)
@@ -184,12 +189,17 @@ export async function createSlotsBatch(
   const supabase = await getServerClient();
 
   // Validate ranges
-  const startDate = new Date(`${parsed.data.start_date}T00:00:00`);
-  const endDate = new Date(`${parsed.data.end_date}T00:00:00`);
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+  // Assume a fixed application timezone (Asia/Colombo, UTC+05:30, no DST)
+  const fixedOffsetMinutes = -330; // Date.getTimezoneOffset() style (UTC = local + offset)
+  const [sy, sMon, sd] = parsed.data.start_date.split("-").map((n) => Number(n));
+  const [ey, eMon, ed] = parsed.data.end_date.split("-").map((n) => Number(n));
+  const startDateUtc = new Date(Date.UTC(sy, sMon - 1, sd, 0, 0));
+  const endDateUtc = new Date(Date.UTC(ey, eMon - 1, ed, 0, 0));
+  // Validate calendar dates
+  if (Number.isNaN(startDateUtc.getTime()) || Number.isNaN(endDateUtc.getTime())) {
     return { ok: false, error: "invalid", message: "Invalid date range" };
   }
-  if (endDate < startDate) {
+  if (endDateUtc < startDateUtc) {
     return {
       ok: false,
       error: "invalid",
@@ -209,17 +219,17 @@ export async function createSlotsBatch(
   }
 
   // Build date range [startDate..endDate]
-  const days: Date[] = [];
-  for (
-    let d = new Date(startDate);
-    d <= endDate;
-    d = new Date(d.getTime() + 24 * 60 * 60 * 1000)
-  ) {
-    if (parsed.data.skip_weekends) {
-      const wd = d.getDay();
-      if (wd === 0 || wd === 6) continue; // skip Sun/Sat
-    }
-    days.push(new Date(d));
+  // Build list of day bases in UTC that correspond to local midnight for each calendar day
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const dayBasesUtc: number[] = [];
+  const startUtcCalendar = Date.UTC(sy, sMon - 1, sd, 0, 0);
+  const endUtcCalendar = Date.UTC(ey, eMon - 1, ed, 0, 0);
+  for (let t = startUtcCalendar; t <= endUtcCalendar; t += oneDayMs) {
+    const wd = new Date(t).getUTCDay();
+    if (parsed.data.skip_weekends && (wd === 0 || wd === 6)) continue;
+    // Local midnight for this calendar day, represented in UTC timeline
+    const localMidnightUtc = t + fixedOffsetMinutes * 60 * 1000; // UTC = local + fixed offset
+    dayBasesUtc.push(localMidnightUtc);
   }
 
   // Generate candidate slots
@@ -228,7 +238,7 @@ export async function createSlotsBatch(
     duration_minutes: number;
     capacity: number;
   }[] = [];
-  for (const day of days) {
+  for (const dayBase of dayBasesUtc) {
     for (
       let m = startMinutes;
       m <= endMinutes - parsed.data.duration_minutes;
@@ -236,8 +246,9 @@ export async function createSlotsBatch(
     ) {
       const hours = Math.floor(m / 60);
       const minutes = m % 60;
-      const dt = new Date(day);
-      dt.setHours(hours, minutes, 0, 0);
+      // UTC instant for local time-of-day: localMidnightUtc + minutesSinceMidnight
+      const dtUtcMs = dayBase + (hours * 60 + minutes) * 60 * 1000;
+      const dt = new Date(dtUtcMs);
       candidates.push({
         slot_at: dt.toISOString(),
         duration_minutes: parsed.data.duration_minutes,
@@ -252,10 +263,8 @@ export async function createSlotsBatch(
   }
 
   // Filter out duplicates based on existing slots in the window
-  const windowStartIso = new Date(days[0]).toISOString();
-  const windowEndIso = new Date(
-    days[days.length - 1].getTime() + 24 * 60 * 60 * 1000
-  ).toISOString();
+  const windowStartIso = new Date(dayBasesUtc[0]).toISOString();
+  const windowEndIso = new Date(dayBasesUtc[dayBasesUtc.length - 1] + oneDayMs).toISOString();
   const { data: existing } = await supabase
     .from("service_slots")
     .select("slot_at")
@@ -263,12 +272,13 @@ export async function createSlotsBatch(
     .gte("slot_at", windowStartIso)
     .lt("slot_at", windowEndIso);
   const existingSet = new Set(
-    (existing ?? []).map((e: any) => new Date(e.slot_at).toISOString())
+    (existing ?? []).map((e: { slot_at: string }) => new Date(e.slot_at).toISOString())
   );
   const rows = candidates
     .filter((c) => !existingSet.has(c.slot_at))
     .map((c) => ({
       service_id: parsed.data.serviceId,
+      branch_id: parsed.data.branchId,
       slot_at: c.slot_at,
       duration_minutes: c.duration_minutes,
       capacity: c.capacity,

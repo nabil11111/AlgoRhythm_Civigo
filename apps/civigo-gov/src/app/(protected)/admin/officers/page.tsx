@@ -7,6 +7,7 @@ import { ResetPasswordDialog } from "./_components/ResetPasswordDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type OfficerRow = {
   id: string;
@@ -77,44 +78,46 @@ export default async function OfficersPage({ searchParams }:{ searchParams?: Pro
         <AddOfficerDialog />
       </div>
       <Card className="p-0 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-gray-50 text-left">
-            <th className="p-2 border">Name</th>
-            <th className="p-2 border">Email</th>
-            <th className="p-2 border">Departments</th>
-            <th className="p-2 border w-64">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.values(map).map((o) => (
-            <tr key={o.id}>
-              <td className="p-2 border">{o.full_name}</td>
-              <td className="p-2 border">{o.email} <span className="ml-2 inline-block"><ResetPasswordDialog userId={o.id} /></span></td>
-              <td className="p-2 border">
-                <div className="flex flex-wrap gap-1">
-                  {o.assignments.map((a) => (
-                    <Badge key={a.department_id} variant={a.active ? "default" : "secondary"}>{a.code}</Badge>
-                  ))}
-                </div>
-              </td>
-              <td className="p-2 border">
-                <div className="flex gap-2 items-center">
-                  <AssignDepartmentDialog officerId={o.id} departments={departments ?? []} />
-                </div>
-                <div className="flex gap-2 mt-2">
-                  {o.assignments.map((a) => (
-                    <div key={a.department_id} className="flex items-center gap-2">
-                      <span className="text-xs">{a.code}</span>
-                      <ActiveSwitch officerId={o.id} departmentId={a.department_id} active={a.active} />
-                    </div>
-                  ))}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Departments</TableHead>
+              <TableHead className="w-64">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Object.values(map).map((o) => (
+              <TableRow key={o.id}>
+                <TableCell>{o.full_name}</TableCell>
+                <TableCell>
+                  {o.email} <span className="ml-2 inline-block"><ResetPasswordDialog userId={o.id} /></span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {o.assignments.map((a) => (
+                      <Badge key={a.department_id} variant={a.active ? "default" : "secondary"}>{a.code}</Badge>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2 items-center">
+                    <AssignDepartmentDialog officerId={o.id} departments={departments ?? []} />
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {o.assignments.map((a) => (
+                      <div key={a.department_id} className="flex items-center gap-2">
+                        <span className="text-xs">{a.code}</span>
+                        <ActiveSwitch officerId={o.id} departmentId={a.department_id} active={a.active} />
+                      </div>
+                    ))}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
       <div className="flex items-center justify-between">
         <Button variant="outline" asChild><a href={prevPageHref("/admin/officers", p)}>Previous</a></Button>

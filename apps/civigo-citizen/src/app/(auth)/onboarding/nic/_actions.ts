@@ -14,6 +14,33 @@ export async function submitNic(
   formData: FormData
 ) {
   const cookieStore = await cookies();
+  // If NIC exists in profiles, mark a login-intent cookie and proceed to password step
+  const nicInput = String(formData.get("nic") || "").trim();
+  const parseCheck = nicSchema.safeParse({ nic: nicInput });
+  if (parseCheck.success) {
+    const supabaseCheck = getServiceRoleClient();
+    if (supabaseCheck) {
+      const { data: existing } = await supabaseCheck
+        .from("profiles")
+        .select("id, gov_id")
+        .eq("nic", nicInput)
+        .maybeSingle();
+      if (existing?.id) {
+        // Use placeholder email derived from gov_id if present; otherwise NIC
+        const loginEmail = `${
+          (existing as any).gov_id ?? nicInput
+        }@placeholder.local`;
+        cookieStore.set("login_email", loginEmail, {
+          httpOnly: false,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          path: "/",
+          maxAge: 10 * 60,
+        });
+        return { ok: true, next: "/onboarding/login/password" } as const;
+      }
+    }
+  }
   let tempId = cookieStore.get("onboarding_temp_id")?.value;
   if (!tempId) {
     tempId = crypto.randomUUID();

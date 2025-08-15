@@ -40,7 +40,7 @@ export default function OnboardingStartPage() {
               Get Started
             </h1>
             <p className="text-base text-[#4f4f4f] leading-[19px]">
-              Sign in to continue
+              Sign in or sign up to continue
             </p>
           </div>
         </div>

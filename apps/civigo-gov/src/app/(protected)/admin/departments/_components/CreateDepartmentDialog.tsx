@@ -13,6 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -76,7 +78,16 @@ export function CreateDepartmentDialog() {
                 </FormItem>
               )}
             />
-            <Button type="submit">{S.departments.create}</Button>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Creating..." : S.departments.create}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

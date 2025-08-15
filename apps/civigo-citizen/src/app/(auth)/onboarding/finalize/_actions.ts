@@ -72,16 +72,34 @@ export async function finalizeOnboarding(
     })
     .eq("id", profileId);
 
-  // Create NIC document entry linked by owner_gov_id
-  // Persist a summary entry into citizen-documents/nic (metadata-only record)
-  await supabase.from("documents").insert({
-    owner_user_id: profileId,
-    owner_gov_id: govId,
-    title: "Identity: NIC",
-    storage_path: `nic/${govId}-${Date.now()}.json`,
-    mime_type: "application/json",
-    size_bytes: null,
-  });
+  // Create NIC document entries linked by owner_gov_id
+  // Persist a summary entry and actual NIC image paths for future access
+  await supabase.from("documents").insert([
+    {
+      owner_user_id: profileId,
+      owner_gov_id: govId,
+      title: "Identity: NIC",
+      storage_path: `nic/${govId}-${Date.now()}.json`,
+      mime_type: "application/json",
+      size_bytes: null,
+    },
+    {
+      owner_user_id: profileId,
+      owner_gov_id: govId,
+      title: "NIC Front Image",
+      storage_path: idv.nic_front_path,
+      mime_type: "image/jpeg",
+      size_bytes: null,
+    },
+    {
+      owner_user_id: profileId,
+      owner_gov_id: govId,
+      title: "NIC Back Image",
+      storage_path: idv.nic_back_path,
+      mime_type: "image/jpeg",
+      size_bytes: null,
+    },
+  ]);
 
   // Clear onboarding cookies and send user to sign-in
   cookieStore.set("onboarding_temp_id", "", {

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { signOut } from "../admin/_actions";
 import { getProfile, getServerClient } from "@/utils/supabase/server";
-import DepartmentHeader from "./_components/DepartmentHeader";
+import { OfficerSidebar } from "./_components/OfficerSidebar";
+import { OfficerTopbar } from "./_components/OfficerTopbar";
+import { signOut } from "./_actions";
 
 export default async function OfficerLayout({
   children,
@@ -21,42 +21,41 @@ export default async function OfficerLayout({
   }
 
   const supabase = await getServerClient();
+  // Get user's assigned departments with full details
   const { data: assignments } = await supabase
     .from("officer_assignments")
-    .select("department_id")
+    .select(`
+      department_id,
+      departments:department_id(id, code, name, logo_path)
+    `)
     .eq("officer_id", profile.id)
     .eq("active", true);
-  const departmentIds = (assignments ?? []).map(
-    (a: { department_id: string }) => a.department_id
-  );
-  let departmentName: string | null = null;
-  if (departmentIds.length === 1) {
-    const { data: dept } = await supabase
-      .from("departments")
-      .select("name")
-      .eq("id", departmentIds[0])
-      .single();
-    departmentName = dept?.name ?? null;
-  } else if (departmentIds.length > 1) {
-    departmentName = `Multiple (${departmentIds.length})`;
-  }
+
+  const departments = (assignments ?? [])
+    .map((a: any) => a.departments)
+    .filter(Boolean);
 
   return (
-    <div className="min-h-screen grid grid-rows-[56px_1fr]">
-      <header className="border-b px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/officer" className="font-semibold">
-            Civigo Officer
-          </Link>
-          <DepartmentHeader departmentName={departmentName} />
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex h-screen">
+        {/* Sidebar */}
+        <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+          <OfficerSidebar departments={departments} profile={profile} signOutAction={signOut} />
         </div>
-        <form action={signOut}>
-          <button type="submit" className="border rounded px-3 py-1.5">
-            Logout
-          </button>
-        </form>
-      </header>
-      <main className="p-6">{children}</main>
+        
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Bar */}
+          <OfficerTopbar profile={profile} departments={departments} />
+          
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto bg-gray-50">
+            <div className="p-6">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

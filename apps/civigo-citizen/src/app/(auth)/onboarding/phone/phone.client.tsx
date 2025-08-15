@@ -31,8 +31,7 @@ export default function PhoneForms({
       if (res?.ok) {
         toast.success("OTP sent");
         router.push("/onboarding/phone/verify");
-      }
-      else if (res?.error === "rate_limited_minute")
+      } else if (res?.error === "rate_limited_minute")
         toast.error("Please wait a minute before retrying.");
       else if (res?.error === "rate_limited_hour")
         toast.error("Too many attempts. Try again later.");
@@ -86,7 +85,6 @@ export default function PhoneForms({
           </Button>
         </div>
       </form>
-
     </div>
   );
 }

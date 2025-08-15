@@ -33,7 +33,8 @@ export default function NicForm({
       const res = await submitNicAction(null as any, fd);
       if (res?.ok) {
         toast.success("NIC accepted");
-        router.push("/onboarding/phone");
+        const next = (res as any).next as string | undefined;
+        router.push(next ?? "/onboarding/phone");
         return;
       } else if (res?.error === "invalid_nic")
         toast.error("Invalid NIC format");

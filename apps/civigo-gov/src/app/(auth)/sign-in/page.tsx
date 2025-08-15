@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getBrowserClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -71,18 +73,17 @@ export default function SignInPage() {
     <div className="min-h-screen flex items-center justify-center p-8">
       <div className="w-full max-w-md space-y-6">
         <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Sign in with your email and password configured in Supabase Studio.
         </p>
-        {error ? <div className="text-sm text-red-600">{error}</div> : null}
+        {error ? <div className="text-sm text-destructive">{error}</div> : null}
         <form className="space-y-4" onSubmit={onSubmit}>
           <div className="grid gap-2">
             <label htmlFor="email">Email</label>
-            <input
+            <Input
               id="email"
               name="email"
               type="email"
-              className="border rounded p-2"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -91,24 +92,19 @@ export default function SignInPage() {
           </div>
           <div className="grid gap-2">
             <label htmlFor="password">Password</label>
-            <input
+            <Input
               id="password"
               name="password"
               type="password"
-              className="border rounded p-2"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          <button
-            className="border rounded px-4 py-2"
-            type="submit"
-            disabled={loading}
-          >
+          <Button type="submit" disabled={loading}>
             {loading ? "Signing in..." : "Continue"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

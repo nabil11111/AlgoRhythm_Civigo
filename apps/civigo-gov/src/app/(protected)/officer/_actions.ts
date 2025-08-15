@@ -1,4 +1,10 @@
 "use server";
 
-// Placeholder for officer Server Actions (no mutations yet)
-// Keep SSR-only; rely on RLS. Add actions here when needed.
+import { redirect } from "next/navigation";
+import { getServerClient } from "@/utils/supabase/server";
+
+export async function signOut() {
+  const supabase = await getServerClient();
+  await supabase.auth.signOut();
+  redirect("/sign-in");
+}

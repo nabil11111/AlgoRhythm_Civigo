@@ -654,3 +654,4 @@ Notes
 - No service-role key in browser; uploads use signed URLs issued by Server Actions
 - Keep PII out of logs/toasts; use friendly error messages; mask NIC where displayed
 - Maintain existing flows; legacy users derive `gov_id` during onboarding or first login
+

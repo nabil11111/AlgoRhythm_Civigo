@@ -20,30 +20,30 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen grid grid-cols-[240px_1fr]">
-      <aside className="border-r p-4 space-y-4">
-        <div className="text-lg font-semibold">Civigo Admin</div>
-        <nav className="grid gap-2 text-sm">
-          <Link href="/admin" className="hover:underline">
+    <div className="min-h-screen grid grid-cols-[260px_1fr] bg-background">
+      <aside className="sticky top-0 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border p-6 space-y-6">
+        <div className="text-lg font-semibold tracking-tight">Civigo Admin</div>
+        <nav className="grid gap-1.5 text-sm">
+          <Link href="/admin" className="rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             Dashboard
           </Link>
-          <Link href="/admin/departments" className="hover:underline">
+          <Link href="/admin/departments" className="rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             Departments
           </Link>
-          <Link href="/admin/officers" className="hover:underline">
+          <Link href="/admin/officers" className="rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             Officers
           </Link>
         </nav>
         <form action={signOut}>
           <button
             type="submit"
-            className="mt-4 border rounded px-3 py-2 w-full text-left"
+            className="mt-2 inline-flex w-full items-center justify-center rounded-md border bg-background px-3 py-2 text-sm hover:bg-accent"
           >
             Logout
           </button>
         </form>
       </aside>
-      <main className="p-6">{children}</main>
+      <main className="p-8">{children}</main>
     </div>
   );
 }
