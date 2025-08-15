@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Civigo-Gov Admin Module
 
-## Getting Started
+## Admin Guard and Shell
 
-First, run the development server:
+- Guard lives at `src/app/(protected)/admin/layout.tsx`.
+- Uses Supabase SSR (`@supabase/ssr`) to read session via cookies.
+- Loads `public.profiles` for the current user and requires `role === 'admin'`.
+- Redirects unauthenticated users to `/(auth)/sign-in` and officers to `/officer`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Required Environment Variables
+
+Set in `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=<your-local-or-remote-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Server-only (optional, never exposed to browser):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Creating the First Admin
 
-## Learn More
+1. In Supabase Studio, create an auth user (email/password or magic link).
+2. Insert a row into `public.profiles` with the same `auth.users.id` and `role = 'admin'`.
+3. (Recommended for RLS) Add `{ "role": "admin" }` to the user's `app_metadata` so the JWT includes the `role` claim used by policies.
 
-To learn more about Next.js, take a look at the following resources:
+## Admin Routes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/(protected)/admin` – dashboard placeholder
+- `/(protected)/admin/departments` – CRUD for departments
+- `/(protected)/admin/officers` – list officers and manage department assignments
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Officer Dashboard
 
-## Deploy on Vercel
+- Guard lives at `src/app/(protected)/officer/layout.tsx`.
+- Uses Supabase SSR (`@supabase/ssr`) via `getProfile()` to require `role === 'officer'`.
+- Redirects unauthenticated users to `/(auth)/sign-in` and admins to `/admin`.
+- Landing route: `/(protected)/officer` (server component) shows a paginated 7‑day window of appointments (RLS-scoped).
+- Topbar shows the officer's active department (based on `public.officer_assignments`).
+- Client interactivity uses shadcn/ui and sonner; Toaster is mounted in root layout.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Department chooser
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/(protected)/officer` lists active departments (SSR, joins via `officer_assignments` → `departments`).
+- If only one active department, it auto-redirects to `/officer/departments/[deptId]`.
+- `/officer/departments/[deptId]` is SSR-guarded for role=officer AND active assignment to `[deptId]`.
+- Department page shows department header and a paginated appointments table scoped to services in that department.
+
+### Redirect behavior (shared sign-in)
+
+- Shared sign-in at `/(auth)/sign-in` fetches `public.profiles.role` after session:
+  - `admin` → `/admin`
+  - `officer` → `/officer`
+  - other → toast error and stay on page
+
+## Server Actions
+
+- Implemented in route-level `_actions.ts` files using Zod validation and Supabase SSR client.
+- Actions return `{ ok: true, data }` or `{ ok: false, error, message? }`.
+
+## UI
+
+- Desktop-first layout with Tailwind.
+- shadcn/ui components used for Dialog/Form/Table/etc.
+
+### UI components (shadcn/ui)
+
+- Generated components under `src/components/ui`:
+  `button, input, label, select, dialog, table, form, badge, switch, toast, toaster, dropdown-menu, card`.
+- Toaster is mounted in `src/app/layout.tsx`.
+
+## Pagination
+
+- Defaults: `page=1`, `pageSize=20`, max page size `50`.
+- Helpers in `src/lib/pagination.ts` and pager controls on `/admin/departments` and `/admin/officers`.
+
+## Tests
+
+- Example tests under `apps/civigo-gov/tests/*` using Vitest with simple module mocks.
+- Suggested dev deps: `vitest @testing-library/react @testing-library/jest-dom jsdom whatwg-fetch`.
+- Run with: `npx vitest`.
+
+## Admin-side password management (Officers)
+
+- When creating an officer, admins can set an optional temporary password in the "Add Officer Profile" dialog.
+- If the email does not exist in Supabase Auth, the user is created with `email_confirm: true` and the temporary password.
+- If the auth user already exists, admins can reset the password from the Officers list via the "Reset password" action.
+- Security: Temporary passwords are not logged or echoed. Share securely and rotate promptly.

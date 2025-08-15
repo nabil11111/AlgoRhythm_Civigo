@@ -1,0 +1,37 @@
+---
+alwaysApply: true
+---
+
+Directory layout (do not change without a design review):
+
+apps/civigo-citizen: Next.js, mobile-first citizen-facing app.
+
+apps/civigo-gov: Next.js, desktop-first officer/admin portal.
+
+supabase: self-hosted stack (CLI/compose), SQL migrations, edge functions, seeds, RLS docs.
+
+packages (optional): shared libs (types, utils, UI), strictly framework-agnostic.
+
+docs: architecture diagrams (ER, sequence), ADRs, operations docs.
+
+db: dump scripts and exported dumps for submissions.
+
+ops (optional): Dockerfiles/compose overrides, scheduler/infra scripts.
+
+Ownership:
+
+Citizen app is owned by the “citizen” team; gov app by the “gov” team; supabase/migrations/RLS by the “platform” team.
+
+Cross-app/shared changes must go through a short design note in docs/adr with reviewers from each owning team.
+
+Single responsibility per app:
+
+Do not put officer/admin screens in the citizen app, and vice versa.
+
+Shared code must live in packages/* with stable APIs and semantic versioning (even in monorepo).
+
+Naming conventions:
+
+Files and directories use kebab-case, TS types/interfaces in PascalCase, variables/functions in camelCase.
+
+Keep page/route names short, semantic, and consistent (e.g., /book, /appointments, /admin/services).

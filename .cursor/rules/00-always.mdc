@@ -1,0 +1,16 @@
+description: Non‑negotiable standards for Civigo monorepo
+alwaysApply: true
+
+Never commit secrets or credentials; read all config from environment variables (.env). Do not paste API keys (Supabase anon/service, Resend) into code or comments.
+
+TypeScript strict: avoid any; prefer precise types and narrow unions.
+
+Validate all inputs to Server Actions/Route Handlers with zod (or equivalent) before DB/network calls.
+
+Tests required when changing logic on critical flows (booking, slot capacity, status transitions, reminder selection).
+
+Use Conventional Commits for all commits: feat, fix, chore, docs, refactor, test, perf, build, ci; use feat(scope): description; mark breaking changes with ! or BREAKING CHANGE footer.
+
+Small, focused changes: if >5 files must change, propose a plan first, then implement in steps.
+
+Do not add dependencies without justification and alternatives noted in the PR description.

@@ -1,0 +1,14 @@
+---
+description: Next.js App Router + Supabase SSR standards
+alwaysApply: false
+---
+Default to Server Components; only use Client Components where interactivity is required; isolate hooks to leaf nodes.
+
+Auth: use @supabase/ssr for cookie-based sessions; create browser and server clients; protect routes in Server Components/middleware; do not use deprecated helpers.
+
+Supabase: never expose service_role key in the browser; only NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY client-side; privileged operations in Server Actions/Route Handlers only.
+
+Error handling: wrap Server Actions/APIs in try/catch; return typed errors; log server errors with minimal PII.
+
+Styling: Tailwind, mobile-first in civigo-citizen, desktop-first in civigo-gov.
+

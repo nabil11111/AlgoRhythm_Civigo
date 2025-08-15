@@ -1,0 +1,104 @@
+---
+globs: apps/civigo-citizen/**
+alwaysApply: false
+---
+
+Civigo is a mobile‑first, multilingual citizen app for Sri Lanka that puts a verified digital identity (GovID) at the center, enabling seamless sign‑in across government platforms and delivering end‑to‑end service flows—discover, book, pay, track, and store—guided by the built‑in AI assistant, Nethra. The app is built with Next.js App Router and secured via Supabase Auth configured with cookie‑based sessions using the official SSR helpers, ensuring server‑side protections for authenticated routes and role‑based access.
+
+Core value
+GovID first: verify once with NIC + biometrics, then use GovID for passwordless access to Civigo and to log in to partner government apps and websites.
+
+One place for services: browse departments, book appointments, track applications, and keep documents in a secure wallet—without re‑entering personal details.
+
+AI guidance: Nethra helps find the right service, answers questions, completes common tasks, and speeds up booking with smart suggestions.
+
+Target platforms and languages
+Platforms: mobile web first, tablet/desktop “works fine” responsive layout.
+
+Languages: Sinhala, Tamil, English; localization applied to navigation, forms, validation, and notifications.
+
+Accessibility: touch targets ≥44×44 CSS px where possible, visible focus, adequate contrast (WCAG references below).
+
+
+
+Architecture overview
+Frontend: Next.js (App Router), Tailwind, server components by default; client components only where interactivity is needed.
+
+Auth/session: Supabase Auth with @supabase/ssr (browser client for public reads; server client for protected data & mutations); cookies for session storage.
+
+Data: Supabase Postgres via PostgREST; service catalog, slots, appointments, documents, notifications, audit logs.
+
+Storage: Supabase Storage with signed URLs for uploads and secure access to receipts and documents.
+
+Notifications: confirmation emails from server actions through Resend; reminders scheduled outside the app (cron/Edge Function) but reflected in the app timeline.
+
+Observability: server‑side error logging with minimal PII; audit trails for key actions (booking, document upload).
+
+
+
+Key features
+GovID (digital identity)
+
+Identity verification: scan NIC front/back, facial match, then set a PIN/biometric for secure sign‑in; session handled server‑side via Supabase SSR helpers.
+
+Verified profile: store legal name, DOB, and masked NIC; reuse with explicit user consent during flows.
+
+Privacy controls: consent prompts for data use, revocable permissions, audit trail of sharing and authentication events.
+
+Single sign‑on for government apps/sites
+
+In‑app approvals: receive login prompts from partner apps, approve/reject with PIN/biometrics or number‑match; redirect URLs and site_url configured in Supabase local/hosted auth settings.
+
+Connections manager: list authorized apps, scopes, last access; revoke at any time.
+
+Passwordless continuity: no passwords to remember; standards‑based redirects supported by Supabase Auth configuration.
+
+Services directory and discovery
+
+Department cards and featured services for quick scanning; content localized across Sinhala/Tamil/English.
+
+Search and filters: category, nearest office, booking availability, open‑now, language support; responsive mobile lists leading to detail pages.
+
+Detail clarity: purpose, requirements, documents needed, processing time, fees, and available branches.
+
+Booking and scheduling
+
+Flow: Branch → Date → Time → Confirm; only available slots are enabled; capacity & closure days enforced by backend.
+
+Smart availability: “next available” shortcut, disabled closed days, and visual capacity indicators for each timeslot.
+
+Confirmation & reminders: post‑booking summary, “Add to calendar,” directions, and reminder preferences; email sent by server action via Resend.
+
+Activity and tracking
+
+Upcoming vs Past tabs; status steps such as Submitted → Processing → Ready; timeline with timestamps and event notes.
+
+Details include reference ID/QR, booked slot, location map link, and attached documents; reschedule/cancel if policy allows.
+
+Receipts stored to wallet, with signed URL retrieval from Storage.
+
+Document wallet
+
+Secure wallet for confirmations, receipts, and IDs; biometrics/PIN gate; storage access only via signed URLs.
+
+Expiry alerts for key IDs (passport, license, NIC) with configurable reminders.
+
+Optional cloud sync; explicit share flows for officer review with consent logging.
+
+AI chat (Nethra)
+
+Conversational intents: “book passport,” “track application,” “nearest office,” “what documents do I need?”; multilingual prompts and responses.
+
+Quick‑reply chips for common intents; transparent “AI‑assisted” label; escalation to human help where applicable.
+
+Context‑aware actions: deep‑link into booking with prefilled service/branch/date/time; confirm before performing critical actions.
+
+Settings and security
+
+Sign‑in & security: PIN, biometric unlock, session cookies managed by SSR client per Supabase guide.
+
+Notifications: reminders, status updates, closures; channels via email, optional SMS; per‑language templates.
+
+Language & accessibility: Sinhala/Tamil/English; text size, high‑contrast, reduce motion; respect WCAG target sizes and focus indicators.
+
+

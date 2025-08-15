@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Citizen-facing app for Civigo. SSR-first with Supabase auth and RLS. Booking flow is slot-driven using `service_slots`.
 
-## Getting Started
+Routes:
 
-First, run the development server:
+- `/(auth)/sign-in`, `/(auth)/sign-up`
+- `/(protected)/app` (browse departments)
+- `/(protected)/app/departments/[id]` (services in department)
+- `/(protected)/app/services/[id]` (slots + booking)
+- `/(protected)/app/appointments` (list)
+- `/(protected)/app/appointments/[id]` (detail)
+- `/(auth)/onboarding/*` (NIC → phone (OTP) → names → password → NIC photos → face → finalize)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Standards:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- SSR auth via `@supabase/ssr` with cookie adapter.
+- No service-role in browser; privileged ops in Server Actions.
+- Zod validation; shadcn/ui basics; `sonner` Toaster in root layout.
+- Use literal URLs in `revalidatePath` (for dynamic routes use concrete path like `/app/appointments`, not a route pattern; do not pass the type param when giving a specific path).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+RLS notes:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `appointments` self-only policies; `departments/services` readable.
+- Slots are read from `service_slots` where `active=true` and `slot_at>=now()`.
+- Onboarding:
+- - `identity_verifications` owner read/write; admin full; officers no access.
+- - `phone_verifications` owner read/write; admin read; officers no access.
+- Storage:
+- - `nic-media` (private): folders `nic/front`, `nic/back`, `face/captures`. Owner/admin access; officers excluded from `face` assets.
+- - `citizen-documents` (private): `identity/nic`, `appointments/{id}`, `uploads/{gov_id}`. Officers see only where permitted (e.g., linked to a booking).
 
-## Learn More
+Setup:
 
-To learn more about Next.js, take a look at the following resources:
+1) Add env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (and optionally `SUPABASE_SERVICE_ROLE_KEY` for server).
+2) Install and run: `npm i` then `npm run dev`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Booking flow (RPC-first):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Server Action `createAppointmentFromSlot` calls DB RPC `book_appointment_slot` for atomic capacity enforcement and passes `citizen_gov_id`.
+- If the RPC is unavailable, enable fallback via `CITIZEN_BOOKING_FALLBACK_ENABLED=true` to use a guarded insert with active/capacity checks.
+- On success, `revalidatePath('/app/appointments')` and redirect to `/app/appointments/[id]`.
 
-## Deploy on Vercel
+Onboarding flow:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- SSR-first; no service-role in the browser; all uploads via server actions.
+- Step 1 (NIC): validate old/new formats, check uniqueness.
+- Step 2 (Phone): OTP send/verify; 1/min and 5/hour rate-limit.
+- Step 3 (Names): transient httpOnly cookie storage.
+- Step 4 (Password): transient httpOnly cookie storage.
+- Step 5 (NIC photos): upload to `nic-media/nic/front|back`; persist paths.
+- Step 6 (Face): upload to `nic-media/face/captures`; persist path; status='pending'. Officers cannot read face captures.
+- Step 7 (Finalize): normalize NIC, `generate_gov_id(nic)`, create auth user (admin), update `profiles.gov_id`, create NIC document in `citizen-documents/identity/nic` linked via `owner_gov_id`, clear temp cookies, redirect to sign-in.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+NIC formats and generate_gov_id:
+
+- Old: 9 digits + V/X (case-insensitive). Canonical form strips the trailing letter.
+- New: 12 digits as-is. `generate_gov_id(nic)` currently returns the canonical NIC.
+
+gov_id usage:
+
+- Bookings write `citizen_gov_id` alongside `citizen_id` (RPC and fallback).
+- Documents use `owner_gov_id` alongside `owner_user_id`.
+
+Revalidation and SSR notes:
+
+- Always use literal URLs in `revalidatePath`.
+- Server Actions only in `_actions.ts` files; utilities must not contain `use server`.
+
+Appointments filters:
+
+- `/app/appointments?status=upcoming|past` to filter by time relative to now; default shows all.
+- Pagination persists across filters; filter changes reset page to 1.
+
+Search guidance:
+
+- For multi-column search, use PostgREST `or` with `ilike` (e.g., `or(code.ilike.%q%,name.ilike.%q%)`).
+- Avoid chaining multiple `ilike` calls which would AND the conditions.
