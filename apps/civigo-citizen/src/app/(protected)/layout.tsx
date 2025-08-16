@@ -20,8 +20,12 @@ export default async function ProtectedLayout({
   if (!profile.gov_id) {
     redirect("/onboarding/nic");
   }
+  const agentEnabled = process.env.AGENT_ENABLED === "true";
   return (
-    <div className="min-h-screen bg-white text-[#171717]">
+    <div
+      className="min-h-screen bg-white text-[#171717]"
+      data-agent-enabled={agentEnabled ? "true" : "false"}
+    >
       <main className="w-full">{children}</main>
     </div>
   );
