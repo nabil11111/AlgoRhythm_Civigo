@@ -47,6 +47,30 @@ export async function runAgent(
     dateToISO?: string;
   }
 ) {
+  // Validate and sanitize inputs
+  if (!message || message.trim().length === 0) {
+    throw new Error("Message cannot be empty");
+  }
+  
+  // Limit message length for security
+  if (message.length > 1000) {
+    throw new Error("Message too long");
+  }
+  
+  // Validate context parameters if provided
+  if (context.serviceId && !ServiceIdSchema.safeParse(context.serviceId).success) {
+    throw new Error("Invalid serviceId");
+  }
+  if (context.dateFromISO && !IsoDateSchema.safeParse(context.dateFromISO).success) {
+    throw new Error("Invalid dateFromISO");
+  }
+  if (context.dateToISO && !IsoDateSchema.safeParse(context.dateToISO).success) {
+    throw new Error("Invalid dateToISO");
+  }
+  if (context.branchId && !ServiceIdSchema.safeParse(context.branchId).success) {
+    throw new Error("Invalid branchId");
+  }
+  
   // For this implementation, we avoid external model calls and simulate a minimal deterministic flow
   // respecting the constraint to keep all tool use server-side and validated.
   // Replace with real Gemini function-calling logic wired to SYSTEM_PROMPT and response schema.
@@ -100,7 +124,13 @@ export async function runAgent(
   if (/document|instruction|requirement/i.test(message) && context.serviceId) {
     const info = await Tools.getServiceInstructions(context.serviceId);
     const docs = await Tools.getUserDocuments();
-    const answer = `${info.serviceName}: ${info.instructions_richtext ? "Found instructions" : info.instructions_pdf_url ? "PDF available" : "No instructions"}. You have ${docs.length} documents.`;
+    const answer = `${info.serviceName}: ${
+      info.instructions_richtext
+        ? "Found instructions"
+        : info.instructions_pdf_url
+        ? "PDF available"
+        : "No instructions"
+    }. You have ${docs.length} documents.`;
     return AgentResponseSchema.parse({
       answer,
       actions: [
@@ -171,10 +201,53 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Run a minimal agent loop (placeholder). In production, wire to Gemini using SYSTEM_PROMPT.
-  const result = await runAgent(message, context);
-  return new Response(JSON.stringify(result), {
-    status: 200,
-    headers: { "content-type": "application/json" },
-  });
+  try {
+    // Run a minimal agent loop (placeholder). In production, wire to Gemini using SYSTEM_PROMPT.
+    const result = await runAgent(message, context);
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Agent error:", error);
+    
+    // Map known tool errors to user-friendly messages
+    const errorMessage = error instanceof Error ? error.message : "unknown";
+    let userMessage = "Something went wrong. Please try again.";
+    let statusCode = 500;
+    
+    switch (errorMessage) {
+      case "not_authenticated":
+        userMessage = "Authentication required.";
+        statusCode = 401;
+        break;
+      case "slot_inactive":
+        userMessage = "This slot is no longer available.";
+        statusCode = 400;
+        break;
+      case "slot_full":
+        userMessage = "This slot is fully booked.";
+        statusCode = 400;
+        break;
+      case "slot_past":
+        userMessage = "Cannot book slots in the past.";
+        statusCode = 400;
+        break;
+      case "rpc_not_available":
+        userMessage = "Booking service temporarily unavailable.";
+        statusCode = 503;
+        break;
+    }
+    
+    return new Response(
+      JSON.stringify({ 
+        error: errorMessage,
+        message: userMessage
+      }),
+      {
+        status: statusCode,
+        headers: { "content-type": "application/json" },
+      }
+    );
+  }
 }
