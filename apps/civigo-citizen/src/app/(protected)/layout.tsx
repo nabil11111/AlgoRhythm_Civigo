@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getProfile, getServerClient } from "@/utils/supabase/server";
+import { Suspense } from "react";
 
 export default async function ProtectedLayout({
   children,
@@ -21,17 +22,23 @@ export default async function ProtectedLayout({
     redirect("/onboarding/nic");
   }
   const agentEnabled = process.env.AGENT_ENABLED === "true";
+  
+  // Dynamic import for client component
+  const AgentMount = agentEnabled 
+    ? (await import("@/components/agent/AgentMount")).default 
+    : null;
+  
   return (
     <div
       className="min-h-screen bg-white text-[#171717]"
       data-agent-enabled={agentEnabled ? "true" : "false"}
     >
       <main className="w-full">{children}</main>
-      {agentEnabled ? (
-        // Render client mount lazily to avoid server import at top-level
-        // biome-ignore lint/suspicious/noAsyncPromiseExecutor: SSR function context
-        (await import("@/components/agent/AgentMount")).default()
-      ) : null}
+      {AgentMount && (
+        <Suspense fallback={null}>
+          <AgentMount />
+        </Suspense>
+      )}
     </div>
   );
 }

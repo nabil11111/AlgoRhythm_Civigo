@@ -94,7 +94,7 @@ export default async function ServicesPage({
           </h2>
         </div>
 
-        <div className="flex justify-between items-start">
+        <div className="grid grid-cols-4 gap-4">
           <Link
             href="/app/departments"
             className="flex flex-col items-center gap-2"
@@ -128,12 +128,12 @@ export default async function ServicesPage({
             </span>
           </Link>
 
-          <Link href="/support" className="flex flex-col items-center gap-2">
-            <div className="w-[50px] h-[50px] rounded-full bg-[var(--color-secondary)] border border-[var(--color-secondary)] grid place-items-center">
-              <HelpIcon />
+          <Link href="/app/assistant" className="flex flex-col items-center gap-2">
+            <div className="w-[50px] h-[50px] rounded-full bg-[var(--color-primary)] border border-[var(--color-primary)] grid place-items-center">
+              <AIIcon />
             </div>
             <span className="text-[12px] text-[#282828] leading-[20px] text-center">
-              Help
+              AI Assistant
             </span>
           </Link>
         </div>
@@ -256,9 +256,12 @@ export default async function ServicesPage({
 
         {/* AI Assistant FAB */}
         <div className="fixed bottom-24 right-5">
-          <button className="w-11 h-11 bg-[var(--color-primary)] rounded-full grid place-items-center shadow-lg">
+          <Link
+            href="/app/assistant"
+            className="w-11 h-11 bg-[var(--color-primary)] rounded-full grid place-items-center shadow-lg hover:bg-[var(--color-primary)]/90 transition-colors"
+          >
             <AIIcon />
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -347,19 +350,7 @@ function MapPinIcon() {
   );
 }
 
-function HelpIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M9 9a3 3 0 1 1 5.2 1.8c-.9.9-1.7 1.2-2.2 2.2V15"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <circle cx="12" cy="19" r="1" fill="white" />
-    </svg>
-  );
-}
+
 
 function SearchSmallIcon() {
   return (
