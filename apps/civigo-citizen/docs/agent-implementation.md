@@ -127,25 +127,123 @@ All tools:
 
 ### A) Documents needed for a service
 
-1. Agent calls getServiceInstructions(serviceId)
-2. Agent summarizes requirements from `instructions_richtext` or notes “PDF available”
-3. Agent calls getUserDocuments() and lists what the user already has
-4. SuggestedActions: `openService`, `openAppointments`
+**Test Message**: `"What documents do I need for Passport Renewal?"`
+**Context**: `{ serviceId: "passport-renewal" }`
+
+**Expected Flow**:
+
+1. Agent calls `getServiceInstructions("passport-renewal")`
+2. Agent calls `getUserDocuments()`
+3. Agent summarizes requirements and current documents
+4. Returns `openService` and `openAppointments` actions
+
+**cURL Test**:
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -H "Cookie: your-auth-cookie" \
+  -d '{"message":"What documents do I need for Passport Renewal?","context":{"serviceId":"passport-renewal"}}'
+```
 
 ### B) Find morning slot next week at a branch and book
 
-1. Agent asks for missing inputs (serviceId/branchId/dateRange) if needed
-2. Agent calls searchSlots(serviceId, dateFromISO, dateToISO, branchId)
-3. Agent proposes options and SuggestedActions: `showSlots`, `book {slotId}`
-4. On confirm, agent calls bookSlot({ slotId }) and returns reference code
+**Test Message**: `"Find me a morning slot next week at Colombo HQ"`
+**Context**: `{ serviceId: "passport-renewal", branchId: "colombo-hq", dateFromISO: "2024-01-15T00:00:00.000Z", dateToISO: "2024-01-22T23:59:59.999Z" }`
+
+**Expected Flow**:
+
+1. Agent calls `searchSlots(serviceId, dateFromISO, dateToISO, branchId)`
+2. Agent filters morning slots (< 12:00)
+3. Returns `showSlots` action with filtered results
+4. On follow-up, calls `bookSlot({ slotId })` and returns reference code
+
+**cURL Test**:
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -H "Cookie: your-auth-cookie" \
+  -d '{"message":"Find me a morning slot next week","context":{"serviceId":"passport-renewal","branchId":"colombo-hq","dateFromISO":"2024-01-15T00:00:00.000Z","dateToISO":"2024-01-22T23:59:59.999Z"}}'
+```
 
 ### C) What appointments do I have?
 
-1. Agent calls getUserAppointments()
-2. Agent summarizes upcoming/past; SuggestedActions: `openAppointments`
+**Test Message**: `"What appointments do I have?"`
+**Context**: `{}`
+
+**Expected Flow**:
+
+1. Agent calls `getUserAppointments()`
+2. Agent summarizes upcoming/past appointments
+3. Returns `openAppointments` action
+
+**cURL Test**:
+
+```bash
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -H "Cookie: your-auth-cookie" \
+  -d '{"message":"What appointments do I have?"}'
+```
+
+### Environment Setup for Testing
+
+**Required Environment Variables**:
+
+```env
+# .env.local
+AGENT_ENABLED=true
+GEMINI_API_KEY=your-gemini-api-key-here
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+**Feature Flag Testing**:
+
+- Set `AGENT_ENABLED=false` → Chat UI should not appear
+- Set `AGENT_ENABLED=true` → Chat button appears in protected routes
+- API returns `{"disabled":true}` when disabled
+
+**Rate Limiting Test**:
+
+```bash
+# Test rate limiting (10 requests / 5 minutes)
+for i in {1..12}; do
+  curl -X POST http://localhost:3000/api/agent \
+    -H "Content-Type: application/json" \
+    -d '{"message":"test"}' && echo " - Request $i"
+done
+# Requests 11-12 should return 429 rate_limited
+```
 
 ---
 
 ## Progress Log
 
 (Append a new entry after every commit with: Task #, short commit hash, files changed, and a brief summary.)
+
+- Task #1: 4fad3ec
+  Files changed: apps/civigo-citizen/docs/agent-implementation.md
+  Summary: Initial creation of the agent implementation plan file.
+
+- Task #2-7: f925a38
+  Files changed: apps/civigo-citizen/src/app/(protected)/_agent_tools.ts, apps/civigo-citizen/src/lib/agent/types.ts, apps/civigo-citizen/src/lib/agent/schemas.ts, apps/civigo-citizen/src/lib/agent/constants.ts, apps/civigo-citizen/src/app/api/agent/route.ts, apps/civigo-citizen/src/components/agent/ChatButton.tsx, apps/civigo-citizen/src/components/agent/ChatDrawer.tsx, apps/civigo-citizen/src/components/agent/MessageList.tsx, apps/civigo-citizen/src/components/agent/SuggestedActions.tsx, apps/civigo-citizen/src/app/(protected)/layout.tsx
+  Summary: Implemented server-side tools, shared types/schemas/constants, API route, and minimal chat UI components.
+
+- Task #8 (prep): 47feb96
+  Files changed: apps/civigo-citizen/src/components/agent/AgentMount.tsx, apps/civigo-citizen/src/app/(protected)/layout.tsx, apps/civigo-citizen/src/app/api/agent/route.ts, apps/civigo-citizen/README.md
+  Summary: Added AgentMount component for chat UI, extended API controller for instructions/documents, and updated README with env flags.
+
+- Task #9: 3318451
+  Files changed: apps/civigo-citizen/tests/agent/schemas.test.ts, apps/civigo-citizen/tests/agent/runAgent.test.ts
+  Summary: Added unit tests for schemas validation and runAgent controller with mocked tools.
+
+- Task #8: 0a8131e
+  Files changed: apps/civigo-citizen/src/app/api/agent/route.ts
+  Summary: Finalized validation, error mapping, and security in API controller with input sanitization and user-friendly error messages.
+
+- Task #10: [pending]
+  Files changed: apps/civigo-citizen/docs/agent-implementation.md
+  Summary: Added comprehensive demo scripts, environment setup instructions, and testing commands for all three main use cases.
