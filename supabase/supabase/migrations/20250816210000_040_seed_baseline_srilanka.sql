@@ -94,9 +94,10 @@ begin
   end if;
   execute 'create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_auth_user()';
 end $$;
+/*
 
 -- Users
--- Admin user: admin@civigo.local / 12345678
+-- Admin user from local dump: admin@civigo.local / 12345678
 do $$
 declare
   v_user_id uuid;
@@ -107,9 +108,9 @@ begin
       raw_user_meta_data, raw_app_meta_data, aud
     )
     values (
-      gen_random_uuid(),
+      'a2272e1c-735e-4a88-a64a-80726d3dae3a',
       'admin@civigo.local',
-      crypt('12345678', gen_salt('bf')),
+      '$2a$06$4QfdS4QALeeLAf9GUaWAF.MsRiZML.zJKXFZAaLYvECT2CEIw2NyS',
       now(),
       jsonb_build_object('role','admin'),
       jsonb_build_object('provider','email','providers',array['email']),
@@ -126,7 +127,27 @@ begin
   update public.profiles set role = 'admin' where id = v_user_id;
 end$$;
 
--- Officer user: officer@civigo.local / 12345678
+-- Ensure identity for admin@civigo.local
+do $$
+declare
+  v_user_id uuid;
+begin
+  select id into v_user_id from auth.users where email = 'admin@civigo.local';
+  if v_user_id is not null and not exists (
+    select 1 from auth.identities where user_id = v_user_id and provider = 'email'
+  ) then
+    insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id)
+    values (
+      v_user_id,
+      v_user_id,
+      jsonb_build_object('sub', v_user_id::text, 'email', 'admin@civigo.local', 'email_verified', false, 'phone_verified', false),
+      'email',
+      now(), now(), now(), gen_random_uuid()
+    );
+  end if;
+end$$;
+
+-- Officer user from local dump: officer@civigo.local / 12345678
 do $$
 declare
   v_user_id uuid;
@@ -138,9 +159,9 @@ begin
       raw_user_meta_data, raw_app_meta_data, aud
     )
     values (
-      gen_random_uuid(),
+      '3439dcad-5243-4506-88cb-a0d8a4b7430d',
       'officer@civigo.local',
-      crypt('12345678', gen_salt('bf')),
+      '$2a$06$e9AzQYfQqM2MH1STNX5va.DY3C9XMUlEQkb9Jt4dCBC.vdnJe2zae',
       now(),
       jsonb_build_object('role','officer'),
       jsonb_build_object('provider','email','providers',array['email']),
@@ -160,6 +181,26 @@ begin
   insert into public.officer_assignments (officer_id, department_id, active)
   values (v_user_id, v_dept_id, true)
   on conflict (officer_id, department_id) do update set active = true;
+end$$;
+
+-- Ensure identity for officer@civigo.local
+do $$
+declare
+  v_user_id uuid;
+begin
+  select id into v_user_id from auth.users where email = 'officer@civigo.local';
+  if v_user_id is not null and not exists (
+    select 1 from auth.identities where user_id = v_user_id and provider = 'email'
+  ) then
+    insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id)
+    values (
+      v_user_id,
+      v_user_id,
+      jsonb_build_object('sub', v_user_id::text, 'email', 'officer@civigo.local', 'email_verified', false, 'phone_verified', false),
+      'email',
+      now(), now(), now(), gen_random_uuid()
+    );
+  end if;
 end$$;
 
 -- Citizen user: citizen@civigo.local / 12345678, with a proper NIC
@@ -197,6 +238,125 @@ begin
   where id = v_user_id;
 end$$;
 
+-- Ensure identity for citizen@civigo.local
+do $$
+declare
+  v_user_id uuid;
+begin
+  select id into v_user_id from auth.users where email = 'citizen@civigo.local';
+  if v_user_id is not null and not exists (
+    select 1 from auth.identities where user_id = v_user_id and provider = 'email'
+  ) then
+    insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id)
+    values (
+      v_user_id,
+      v_user_id,
+      jsonb_build_object('sub', v_user_id::text, 'email', 'citizen@civigo.local', 'email_verified', false, 'phone_verified', false),
+      'email',
+      now(), now(), now(), gen_random_uuid()
+    );
+  end if;
+end$$;
+
+-- Additional user from dump: test@civigo.local
+do $$
+declare
+  v_user_id uuid;
+begin
+  if not exists (select 1 from auth.users where email = 'test@civigo.local') then
+    insert into auth.users (
+      id, email, encrypted_password, email_confirmed_at,
+      raw_user_meta_data, raw_app_meta_data, aud
+    )
+    values (
+      'fcc86e9a-bfa1-4b14-8ae8-ec6e3355cdb3',
+      'test@civigo.local',
+      '$2a$10$0tLa/ZtaVCzULWNvfffel.b0g/U271IkwfbdqAoNb0ys03l0WkONq',
+      now(),
+      jsonb_build_object('email_verified', true),
+      jsonb_build_object('provider','email','providers',array['email']),
+      'authenticated'
+    ) returning id into v_user_id;
+  else
+    select id into v_user_id from auth.users where email = 'test@civigo.local';
+    update auth.users
+    set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('email_verified', true)
+    where id = v_user_id;
+  end if;
+end$$;
+
+-- Additional officer from dump: officer@civigo.com
+do $$
+declare
+  v_user_id uuid;
+begin
+  if not exists (select 1 from auth.users where email = 'officer@civigo.com') then
+    insert into auth.users (
+      id, email, encrypted_password, email_confirmed_at,
+      raw_user_meta_data, raw_app_meta_data, aud
+    )
+    values (
+      '666717ca-6adf-4d77-a4c8-22e05e18ed45',
+      'officer@civigo.com',
+      '$2a$10$amxgBTZCjEUdjGI8WzI9bewREG6h9rkwxVEup/3tsTx02E1F1pq8e',
+      now(),
+      jsonb_build_object('role','officer','full_name','test officer','email_verified', true),
+      jsonb_build_object('role','officer','provider','email','providers',array['email']),
+      'authenticated'
+    ) returning id into v_user_id;
+  else
+    select id into v_user_id from auth.users where email = 'officer@civigo.com';
+    update auth.users
+    set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('role','officer','full_name','test officer','email_verified', true),
+        raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || jsonb_build_object('role','officer')
+    where id = v_user_id;
+  end if;
+
+  -- Ensure profile role is officer (trigger will set, but we enforce idempotently)
+  update public.profiles set role = 'officer' where id = v_user_id;
+end$$;
+
+-- Ensure identity for test@civigo.local
+do $$
+declare
+  v_user_id uuid;
+begin
+  select id into v_user_id from auth.users where email = 'test@civigo.local';
+  if v_user_id is not null and not exists (
+    select 1 from auth.identities where user_id = v_user_id and provider = 'email'
+  ) then
+    insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id)
+    values (
+      v_user_id,
+      v_user_id,
+      jsonb_build_object('sub', v_user_id::text, 'email', 'test@civigo.local', 'email_verified', false, 'phone_verified', false),
+      'email',
+      now(), now(), now(), gen_random_uuid()
+    );
+  end if;
+end$$;
+
+-- Ensure identity for officer@civigo.com
+do $$
+declare
+  v_user_id uuid;
+begin
+  select id into v_user_id from auth.users where email = 'officer@civigo.com';
+  if v_user_id is not null and not exists (
+    select 1 from auth.identities where user_id = v_user_id and provider = 'email'
+  ) then
+    insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id)
+    values (
+      v_user_id,
+      v_user_id,
+      jsonb_build_object('sub', v_user_id::text, 'email', 'officer@civigo.com', 'email_verified', false, 'phone_verified', false),
+      'email',
+      now(), now(), now(), gen_random_uuid()
+    );
+  end if;
+end$$;
+
+*/
 COMMIT;
 
 
