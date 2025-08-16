@@ -4,9 +4,11 @@ import { getProfile, getServerClient } from "@/utils/supabase/server";
 import { OfficerAppointmentParam } from "@/lib/validation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, User, FileText } from "lucide-react";
-import { markConfirmed, markCheckedIn, markStarted, markCompleted, markCancelled, markNoShow } from "../../_actions";
+import { Calendar, User } from "lucide-react";
+import { markConfirmed, markCheckedIn, markStarted, markCompleted, markCancelled, markNoShow, getAppointmentDocumentUrls, sendChangeRequest } from "../../_actions";
 import { AppointmentStatusManager } from "./_components/AppointmentStatusManager";
+import { DocumentPreview } from "./_components/DocumentPreview";
+import { RequestChangeForm } from "./_components/RequestChangeForm";
 
 type PageProps = {
   params: Promise<{ deptId: string; appointmentId: string }>;
@@ -32,7 +34,7 @@ export default async function AppointmentDetailsPage({ params }: PageProps) {
     )
     .eq("id", parsed.data.appointmentId)
     .maybeSingle();
-  if (!appt || appt.service?.department_id !== parsed.data.deptId) redirect("/officer");
+  if (!appt || (appt.service as unknown as { department_id: string } | null)?.department_id !== parsed.data.deptId) redirect("/officer");
 
   const { data: assignment } = await supabase
     .from("officer_assignments")
@@ -50,16 +52,13 @@ export default async function AppointmentDetailsPage({ params }: PageProps) {
     .eq("id", appt.citizen_id as string)
     .maybeSingle();
 
-  // Linked documents
-  const { data: docLinks } = await supabase
-    .from("appointment_documents")
-    .select("documents:document_id(id, title, mime_type, size_bytes)")
-    .eq("appointment_id", appt.id as string);
+  // Get document previews with signed URLs
+  const documentUrlsResult = await getAppointmentDocumentUrls({
+    appointmentId: appt.id as string,
+    deptId: parsed.data.deptId,
+  });
 
-  type DocItem = { documents: { id: string; title: string; mime_type: string | null; size_bytes: number | null } | null };
-  const docs = (docLinks as DocItem[] | null ?? [])
-    .map((d) => d.documents)
-    .filter((x): x is NonNullable<DocItem["documents"]> => Boolean(x));
+  const documentPreviews = documentUrlsResult.ok ? documentUrlsResult.data.documentPreviews : [];
 
   const apptId = appt.id as string;
   const deptId = parsed.data.deptId;
@@ -95,7 +94,7 @@ export default async function AppointmentDetailsPage({ params }: PageProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Service</label>
-                  <p className="text-gray-900 font-medium">{appt.service?.name || "Unknown Service"}</p>
+                  <p className="text-gray-900 font-medium">{(appt.service as unknown as { name: string } | null)?.name || "Unknown Service"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Date & Time</label>
@@ -161,51 +160,11 @@ export default async function AppointmentDetailsPage({ params }: PageProps) {
           </Card>
 
           {/* Documents */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Documents
-                <Badge variant="secondary" className="ml-2">
-                  {docs.length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {docs.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No documents uploaded</p>
-                  <p className="text-sm">Documents will appear here when uploaded by the citizen</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {docs.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{doc.title}</p>
-                          <p className="text-sm text-gray-500">
-                            {doc.mime_type || "unknown"} • {((doc.size_bytes || 0) / 1024).toFixed(1)} KB
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <DocumentPreview documentPreviews={documentPreviews} />
         </div>
 
-        {/* Right Column - Status Management */}
-        <div className="lg:col-span-1">
+        {/* Right Column - Status Management & Actions */}
+        <div className="lg:col-span-1 space-y-6">
           <AppointmentStatusManager
             appointment={{
               id: apptId,
@@ -225,6 +184,13 @@ export default async function AppointmentDetailsPage({ params }: PageProps) {
             markCompletedAction={markCompleted}
             markCancelledAction={markCancelled}
             markNoShowAction={markNoShow}
+          />
+          
+          {/* Change Request Form */}
+          <RequestChangeForm
+            appointmentId={apptId}
+            deptId={deptId}
+            sendChangeRequestAction={sendChangeRequest}
           />
         </div>
       </div>

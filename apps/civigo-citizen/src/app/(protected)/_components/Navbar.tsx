@@ -8,7 +8,7 @@ import {
   LayoutGrid as LayoutGridIcon,
   Clock as ClockIcon,
   Wallet as WalletIcon,
-  Menu as MenuIcon,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -33,7 +33,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
       icon: WalletIcon,
       href: "/app/wallet",
     },
-    { id: "more", label: "More", icon: MenuIcon, href: "/app/more" },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: SettingsIcon,
+      href: "/settings",
+    },
   ];
 
   function handleNavigate(id: string, href: string) {

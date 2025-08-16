@@ -82,8 +82,8 @@ export default function GovIdCard({ profile }: { profile: Profile | null }) {
             </div>
           </div>
 
-          {/* Avatar and DOB section */}
-          <div className="flex flex-col items-center space-y-4">
+          {/* Avatar section */}
+          <div className="flex flex-col items-center">
             <div className="w-[100px] h-[100px] rounded-full border border-[#ff8f00]/20 overflow-hidden bg-gray-100 grid place-items-center">
               <svg
                 width="60"
@@ -95,9 +95,6 @@ export default function GovIdCard({ profile }: { profile: Profile | null }) {
                 <circle cx="12" cy="8" r="4" fill="#cbd5e1" />
                 <path d="M4 20a8 8 0 0 1 16 0" fill="#e5e7eb" />
               </svg>
-            </div>
-            <div className="text-[12px] text-[#4f4f4f] leading-[20px]">
-              27 - 10 - 1977
             </div>
           </div>
         </div>

@@ -64,11 +64,19 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
       endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   }
 
+  // Get services for this specific department first
+  const { data: deptServices } = await supabase
+    .from("services")
+    .select("id, name, code")
+    .eq("department_id", parsed.data.deptId)
+    .order("name");
+  
+  const serviceIds = (deptServices ?? []).map(s => s.id);
+
   // Fetch comprehensive data
   const [
     { data: department },
     { data: appointments },
-    { data: services },
     { data: branches },
     { data: stats }
   ] = await Promise.all([
@@ -79,44 +87,26 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
       .eq("id", parsed.data.deptId)
       .single(),
     
-    // Appointments with filters
-    supabase
-      .from("appointments")
-      .select(`
-        id, reference_code, appointment_at, status, confirmed_at, checked_in_at, started_at, completed_at, no_show,
-        services:service_id(id, name, code),
-        profiles:citizen_id(full_name, phone),
-        service_slots:slot_id(branch_id, branches:branch_id(name))
-      `)
-      .eq("services.department_id", parsed.data.deptId)
-      .gte("appointment_at", `${startDate}T00:00:00`)
-      .lte("appointment_at", `${endDate}T23:59:59`)
-      .order("appointment_at", { ascending: true })
-      .then(query => {
-        if (statusFilter !== "all") {
-          return supabase
-            .from("appointments")
-            .select(`
-              id, reference_code, appointment_at, status, confirmed_at, checked_in_at, started_at, completed_at, no_show,
-              services:service_id(id, name, code),
-              profiles:citizen_id(full_name, phone),
-              service_slots:slot_id(branch_id, branches:branch_id(name))
-            `)
-            .eq("services.department_id", parsed.data.deptId)
-            .eq("status", statusFilter)
-            .gte("appointment_at", `${startDate}T00:00:00`)
-            .lte("appointment_at", `${endDate}T23:59:59`)
-            .order("appointment_at", { ascending: true });
-        }
-        return query;
-      }),
-    
-    // Services for filter dropdown
-    supabase
-      .from("services")
-      .select("id, name, code")
-      .eq("department_id", parsed.data.deptId)
-      .order("name"),
+    // Appointments with filters - filter by service IDs
+    (async () => {
+      let query = supabase
+        .from("appointments")
+        .select(`
+          id, reference_code, appointment_at, status, confirmed_at, checked_in_at, started_at, completed_at, no_show, service_id, slot_id,
+          profiles:citizen_id(full_name, phone),
+          service_slots:slot_id(branch_id, branches:branch_id(name))
+        `)
+        .in("service_id", serviceIds)
+        .gte("appointment_at", `${startDate}T00:00:00`)
+        .lte("appointment_at", `${endDate}T23:59:59`)
+        .order("appointment_at", { ascending: true });
+
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      return query;
+    })(),
     
     // Branches for display
     supabase
@@ -125,22 +115,31 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
       .eq("department_id", parsed.data.deptId)
       .order("name"),
     
-    // Statistics for dashboard
+    // Statistics for dashboard - filter by service IDs
     supabase
       .from("appointments")
       .select("status")
-      .eq("services.department_id", parsed.data.deptId)
+      .in("service_id", serviceIds)
       .gte("appointment_at", `${startDate}T00:00:00`)
       .lte("appointment_at", `${endDate}T23:59:59`)
   ]);
+
+  // Enrich appointments with service data
+  const enrichedAppointments = (appointments ?? []).map(apt => {
+    const service = deptServices?.find(s => s.id === apt.service_id);
+    return {
+      ...apt,
+      services: service ? { id: service.id, name: service.name, code: service.code } : { id: null, name: "Unknown Service", code: "UNKNOWN" }
+    };
+  });
 
   if (!department) redirect("/officer");
 
   return (
     <AppointmentsManagement
       department={department}
-      appointments={appointments ?? []}
-      services={services ?? []}
+      appointments={enrichedAppointments}
+      services={deptServices ?? []}
       branches={branches ?? []}
       stats={stats ?? []}
       deptId={parsed.data.deptId}

@@ -40,6 +40,14 @@ export default async function DepartmentPage({ params }: PageProps) {
     redirect("/officer");
   }
 
+  // Get services for this specific department first
+  const { data: deptServices } = await supabase
+    .from("services")
+    .select("id, name")
+    .eq("department_id", parsed.data.deptId);
+  
+  const serviceIds = (deptServices ?? []).map(s => s.id);
+
   // Fetch comprehensive department data
   const [
     { data: dept },
@@ -55,15 +63,14 @@ export default async function DepartmentPage({ params }: PageProps) {
       .eq("id", parsed.data.deptId)
       .single(),
     
-    // Recent appointments
+    // Recent appointments - filter by service IDs
     supabase
       .from("appointments")
       .select(`
-        id, reference_code, appointment_at, status, checked_in_at, started_at, completed_at,
-        services:service_id(id, name),
+        id, reference_code, appointment_at, status, checked_in_at, started_at, completed_at, service_id,
         profiles:citizen_id(full_name)
       `)
-      .eq("services.department_id", parsed.data.deptId)
+      .in("service_id", serviceIds)
       .gte("appointment_at", new Date().toISOString().split("T")[0])
       .order("appointment_at")
       .limit(10),
@@ -80,14 +87,23 @@ export default async function DepartmentPage({ params }: PageProps) {
       .select("id")
       .eq("department_id", parsed.data.deptId),
     
-    // Today's stats
+    // Today's stats - filter by service IDs
     supabase
       .from("appointments")
       .select("status")
-      .eq("services.department_id", parsed.data.deptId)
+      .in("service_id", serviceIds)
       .gte("appointment_at", new Date().toISOString().split("T")[0])
       .lt("appointment_at", new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0])
   ]);
+
+  // Enrich appointments with service data
+  const enrichedAppointments = (appointments ?? []).map(apt => {
+    const service = deptServices?.find(s => s.id === apt.service_id);
+    return {
+      ...apt,
+      services: service ? { id: service.id, name: service.name } : { id: null, name: "Unknown Service" }
+    };
+  });
 
   if (!dept) {
     redirect("/officer");
@@ -109,7 +125,7 @@ export default async function DepartmentPage({ params }: PageProps) {
   return (
     <DepartmentOverview
       department={dept}
-      appointments={appointments ?? []}
+      appointments={enrichedAppointments}
       servicesCount={(services ?? []).length}
       branchesCount={(branches ?? []).length}
       todayStats={todayStats ?? []}

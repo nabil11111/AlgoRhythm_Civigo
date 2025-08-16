@@ -12,6 +12,7 @@ type PageProps = {
     date?: string;
     time?: string;
     slotId?: string;
+    documents?: string;
   }>;
 };
 
@@ -60,7 +61,7 @@ function renderRichText(richText: any): string {
 
 export default async function BookingConfirmPage({ searchParams }: PageProps) {
   const sp = (await searchParams) ?? {};
-  const { serviceId, branchId, date, time, slotId } = sp;
+  const { serviceId, branchId, date, time, slotId, documents } = sp;
 
   if (!serviceId || !branchId || !date || !time || !slotId) {
     return (
@@ -129,6 +130,23 @@ export default async function BookingConfirmPage({ searchParams }: PageProps) {
     .select("id, code, name, address")
     .eq("id", branchId)
     .maybeSingle();
+
+  // Parse selected documents
+  const selectedDocumentIds = documents
+    ? documents.split(",").filter((id) => id.trim())
+    : [];
+
+  // Fetch selected documents if any
+  let selectedDocuments: any[] = [];
+  if (selectedDocumentIds.length > 0) {
+    const { data: docs } = await supabase
+      .from("documents")
+      .select("id, title, mime_type")
+      .eq("owner_user_id", profile.id)
+      .in("id", selectedDocumentIds);
+
+    selectedDocuments = docs || [];
+  }
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -255,6 +273,39 @@ export default async function BookingConfirmPage({ searchParams }: PageProps) {
             </div>
           )}
 
+        {/* Selected Documents Section */}
+        {selectedDocuments.length > 0 && (
+          <div className="mb-6 border border-[#e0e0e0] rounded-lg p-4">
+            <h2 className="text-[16px] font-bold text-[#4f4f4f] mb-3">
+              Presubmitted Documents
+            </h2>
+            <div className="space-y-2">
+              {selectedDocuments.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50"
+                >
+                  <div className="text-gray-600">
+                    {doc.title.includes("NIC") ? (
+                      <IDCardIcon />
+                    ) : (
+                      <DocumentIcon />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[14px] font-medium text-gray-900">
+                      {doc.title}
+                    </p>
+                    <p className="text-[12px] text-gray-500">
+                      Will be attached to your appointment
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="space-y-3">
           {/* Confirm Button */}
@@ -263,6 +314,7 @@ export default async function BookingConfirmPage({ searchParams }: PageProps) {
             branchId={branchId}
             slotId={slotId}
             citizenId={profile.id}
+            selectedDocuments={selectedDocumentIds}
           />
 
           {/* Back Button */}
@@ -308,6 +360,76 @@ function AIIcon() {
       <path
         d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
         fill="white"
+      />
+    </svg>
+  );
+}
+
+function IDCardIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <rect
+        x="2"
+        y="6"
+        width="20"
+        height="12"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="8" cy="12" r="2" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M14 10h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M14 14h4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function DocumentIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polyline
+        points="14,2 14,8 20,8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="16"
+        y1="13"
+        x2="8"
+        y2="13"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="16"
+        y1="17"
+        x2="8"
+        y2="17"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

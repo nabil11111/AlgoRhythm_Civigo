@@ -160,6 +160,169 @@ export async function getUserDocuments() {
   return { ok: true, documents } as const;
 }
 
+export async function getAppointmentDocuments(appointmentId: string) {
+  const supabase = await getServerClient();
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "unauthorized" } as const;
+
+  // Verify appointment belongs to user
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("id")
+    .eq("id", appointmentId)
+    .eq("citizen_id", user.id)
+    .maybeSingle();
+
+  if (!appointment) {
+    return { ok: false, error: "appointment_not_found" } as const;
+  }
+
+  // Get appointment documents with document details
+  const { data: appointmentDocs, error } = await supabase
+    .from("appointment_documents")
+    .select(
+      `
+      id,
+      documents:document_id (
+        id,
+        title,
+        storage_path,
+        mime_type,
+        created_at
+      )
+    `
+    )
+    .eq("appointment_id", appointmentId);
+
+  if (error) {
+    return { ok: false, error: "fetch_failed" } as const;
+  }
+
+  // Transform for UI
+  const documents =
+    appointmentDocs?.map((ad: any) => ({
+      appointmentDocumentId: ad.id,
+      id: ad.documents.id,
+      name: ad.documents.title,
+      type: ad.documents.title.includes("NIC") ? "identity" : "document",
+      status: "attached",
+      created_at: ad.documents.created_at,
+    })) || [];
+
+  return { ok: true, documents } as const;
+}
+
+export async function addDocumentToAppointment(
+  appointmentId: string,
+  documentId: string
+) {
+  const supabase = await getServerClient();
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "unauthorized" } as const;
+
+  // Verify appointment belongs to user
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("id")
+    .eq("id", appointmentId)
+    .eq("citizen_id", user.id)
+    .maybeSingle();
+
+  if (!appointment) {
+    return { ok: false, error: "appointment_not_found" } as const;
+  }
+
+  // Verify document belongs to user
+  const { data: document } = await supabase
+    .from("documents")
+    .select("id")
+    .eq("id", documentId)
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+
+  if (!document) {
+    return { ok: false, error: "document_not_found" } as const;
+  }
+
+  // Check if already linked
+  const { data: existing } = await supabase
+    .from("appointment_documents")
+    .select("id")
+    .eq("appointment_id", appointmentId)
+    .eq("document_id", documentId)
+    .maybeSingle();
+
+  if (existing) {
+    return { ok: false, error: "already_linked" } as const;
+  }
+
+  // Link document to appointment
+  const { error } = await supabase.from("appointment_documents").insert({
+    appointment_id: appointmentId,
+    document_id: documentId,
+  });
+
+  if (error) {
+    return { ok: false, error: "link_failed" } as const;
+  }
+
+  return { ok: true } as const;
+}
+
+export async function removeDocumentFromAppointment(
+  appointmentDocumentId: string
+) {
+  const supabase = await getServerClient();
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "unauthorized" } as const;
+
+  // Verify appointment document belongs to user
+  const { data: appointmentDoc } = await supabase
+    .from("appointment_documents")
+    .select(
+      `
+      id,
+      appointments!inner (
+        id,
+        citizen_id
+      )
+    `
+    )
+    .eq("id", appointmentDocumentId)
+    .maybeSingle();
+
+  if (
+    !appointmentDoc ||
+    (appointmentDoc as any).appointments.citizen_id !== user.id
+  ) {
+    return { ok: false, error: "not_found" } as const;
+  }
+
+  // Remove the link
+  const { error } = await supabase
+    .from("appointment_documents")
+    .delete()
+    .eq("id", appointmentDocumentId);
+
+  if (error) {
+    return { ok: false, error: "delete_failed" } as const;
+  }
+
+  return { ok: true } as const;
+}
+
 export async function createDocument(formData: FormData) {
   const supabase = await getServerClient();
   const serviceSupabase = getServiceRoleClient();

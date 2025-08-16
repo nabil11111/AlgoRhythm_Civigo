@@ -69,15 +69,16 @@ export default async function ActivityPage({ searchParams }: PageProps) {
     status: a.status as string,
   }));
 
-  // Fetch past appointments/applications
+  // Fetch past appointments (all statuses for now to see what's available)
   let pastQuery = supabase
     .from("appointments")
     .select(
       `
       id,
-      reference_number,
+      reference_code,
       appointment_at,
       status,
+      service_id,
       services:service_id (
         id,
         name,
@@ -109,6 +110,21 @@ export default async function ActivityPage({ searchParams }: PageProps) {
   }
 
   const { data: pastAppointments } = await pastQuery.range(0, pageSize - 1);
+
+  // Update service names mapping to include past appointments
+  const pastServiceIds = Array.from(
+    new Set((pastAppointments ?? []).map((a) => a.service_id).filter(Boolean))
+  ) as string[];
+
+  if (pastServiceIds.length > 0) {
+    const { data: pastServices } = await supabase
+      .from("services")
+      .select("id, name")
+      .in("id", pastServiceIds);
+    for (const s of pastServices ?? []) {
+      serviceNameById.set(s.id as string, s.name as string);
+    }
+  }
 
   // Format date and time helper functions
   const formatDate = (dateString: string) => {
@@ -363,54 +379,141 @@ export default async function ActivityPage({ searchParams }: PageProps) {
 
         {/* Past Section */}
         <div>
-          <h2 className="text-[20px] font-normal text-[#1d1d1d] mb-4">Past</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-5 px-5">
-            {pastAppointments?.length === 0 ? (
-              <div className="w-full text-center py-8 text-gray-500">
-                No past applications
+          <h2 className="text-[20px] font-normal text-[#1d1d1d] mb-4">
+            Past Appointments
+          </h2>
+          {pastAppointments?.length === 0 ? (
+            <div className="w-full text-center py-12">
+              <div className="max-w-sm mx-auto">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Clock className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-[18px] font-medium text-[#282828] mb-2">
+                  No Past Appointments
+                </h3>
+                <p className="text-[14px] text-gray-500">
+                  Your past appointments will appear here.
+                </p>
               </div>
-            ) : (
-              pastAppointments?.map((appointment) => {
-                const service = Array.isArray(appointment.services)
-                  ? appointment.services[0]
-                  : appointment.services;
+            </div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-2 -mx-5 px-5">
+              {pastAppointments?.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="min-w-[280px] flex-shrink-0 bg-white border-2 border-[var(--color-secondary)] rounded-xl p-4"
+                >
+                  {/* Service Name and Status */}
+                  <div className="border-b border-gray-200 pb-3 mb-4 flex justify-between items-center">
+                    <h3 className="text-[16px] font-normal text-[#282828]">
+                      {serviceNameById.get(appointment.service_id as string) ||
+                        "Appointment"}
+                    </h3>
+                    {getStatusBadge(appointment.status)}
+                  </div>
 
-                return (
-                  <div
-                    key={appointment.id}
-                    className="min-w-[280px] flex-shrink-0 bg-white border-2 border-[var(--color-secondary)] rounded-xl p-4"
-                  >
-                    {/* Service Name and Status */}
-                    <div className="border-b border-gray-200 pb-3 mb-4 flex justify-between items-center">
-                      <h3 className="text-[16px] font-normal text-[#282828]">
-                        {service?.name || "Service"}
-                      </h3>
-                      {getStatusBadge(appointment.status)}
+                  {/* Appointment Details */}
+                  <div className="space-y-3 mb-4">
+                    {/* Date */}
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-[var(--color-secondary)]" />
+                      <span className="text-[12px] text-[#282828]">
+                        {formatDate(appointment.appointment_at)}
+                      </span>
                     </div>
 
-                    {/* Stepper Progress */}
-                    {getStepperProgress(appointment.status)}
-
-                    {/* Status Text */}
-                    <div className="mt-3">
-                      <p className="text-[12px] text-[#282828] leading-relaxed">
-                        Stage: Processing - ETA 2-4 Days
-                      </p>
+                    {/* Time */}
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-4 h-4 text-[var(--color-secondary)]" />
+                      <span className="text-[12px] text-[#282828]">
+                        {formatTime(appointment.appointment_at)}
+                      </span>
                     </div>
 
-                    {/* Arrow */}
-                    <div className="flex justify-end mt-4">
-                      <Link
-                        href={`/app/booking/success?appointmentId=${appointment.id}`}
-                      >
-                        <ArrowRight className="w-6 h-6 text-[var(--color-secondary)]" />
-                      </Link>
+                    {/* Reference Code */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded bg-[var(--color-secondary)] flex items-center justify-center">
+                        <span className="text-[8px] text-white font-bold">
+                          #
+                        </span>
+                      </div>
+                      <span className="text-[12px] text-[#282828]">
+                        Ref: {appointment.reference_code}
+                      </span>
                     </div>
                   </div>
-                );
-              })
-            )}
-          </div>
+
+                  {/* Status Badge */}
+                  {appointment.status === "completed" ? (
+                    <div className="flex items-center gap-2 mb-4 p-2 bg-green-50 rounded-lg">
+                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden
+                        >
+                          <path
+                            d="M20 6 9 17l-5-5"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-[12px] text-green-700 font-medium">
+                        Service Completed
+                      </span>
+                    </div>
+                  ) : appointment.status === "cancelled" ? (
+                    <div className="flex items-center gap-2 mb-4 p-2 bg-red-50 rounded-lg">
+                      <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden
+                        >
+                          <path
+                            d="M18 6 6 18M6 6l12 12"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-[12px] text-red-700 font-medium">
+                        Appointment Cancelled
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mb-4 p-2 bg-gray-50 rounded-lg">
+                      <div className="w-5 h-5 bg-gray-500 rounded-full flex items-center justify-center">
+                        <Clock className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-[12px] text-gray-700 font-medium">
+                        Status: {appointment.status}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Arrow */}
+                  <div className="flex justify-end">
+                    <Link
+                      href={`/app/appointments/${appointment.id}`}
+                      className="w-6 h-6 text-[var(--color-secondary)] hover:opacity-75"
+                    >
+                      <ArrowRight className="w-6 h-6" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

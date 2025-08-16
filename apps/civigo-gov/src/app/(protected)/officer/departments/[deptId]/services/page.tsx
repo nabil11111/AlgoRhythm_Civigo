@@ -26,10 +26,18 @@ export default async function ServicesPage({ params }: PageProps) {
     .maybeSingle();
   if (!assignment) redirect("/officer");
 
-  // Fetch all data in parallel
+  // Get services for this specific department first
+  const { data: deptServices } = await supabase
+    .from("services")
+    .select("id, code, name, instructions_richtext, instructions_pdf_path")
+    .eq("department_id", parsed.data.deptId)
+    .order("name");
+  
+  const serviceIds = (deptServices ?? []).map(s => s.id);
+
+  // Fetch remaining data in parallel
   const [
     { data: department },
-    { data: services },
     { data: branches },
     { data: serviceSettings },
     { data: slots }
@@ -39,12 +47,6 @@ export default async function ServicesPage({ params }: PageProps) {
       .select("id, code, name")
       .eq("id", parsed.data.deptId)
       .single(),
-    
-    supabase
-      .from("services")
-      .select("id, code, name, instructions_richtext, instructions_pdf_path")
-      .eq("department_id", parsed.data.deptId)
-      .order("name"),
     
     supabase
       .from("branches")
@@ -59,7 +61,7 @@ export default async function ServicesPage({ params }: PageProps) {
     supabase
       .from("service_slots")
       .select("service_id, branch_id, active")
-      .eq("services.department_id", parsed.data.deptId)
+      .in("service_id", serviceIds)
       .eq("active", true)
       .gte("slot_at", new Date().toISOString())
   ]);
@@ -69,7 +71,7 @@ export default async function ServicesPage({ params }: PageProps) {
   return (
     <ServicesManagement
       department={department}
-      services={services ?? []}
+      services={deptServices ?? []}
       branches={branches ?? []}
       serviceSettings={serviceSettings ?? []}
       activeSlots={slots ?? []}

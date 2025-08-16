@@ -25,6 +25,32 @@ interface AppointmentReminderEmailData {
   hoursUntilAppointment: number;
 }
 
+interface AppointmentChangeRequestEmailData {
+  citizenName: string;
+  citizenEmail: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  serviceName: string;
+  departmentName: string;
+  referenceCode: string;
+  branchName?: string;
+  changeMessage: string;
+  officerName: string;
+}
+
+interface AppointmentCancellationEmailData {
+  citizenName: string;
+  citizenEmail: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  serviceName: string;
+  departmentName: string;
+  referenceCode: string;
+  branchName?: string;
+  cancellationReason: string;
+  officerName: string;
+}
+
 export async function sendAppointmentConfirmationEmail(data: AppointmentConfirmationEmailData) {
   console.log('sendAppointmentConfirmationEmail called with data:', {
     citizenName: data.citizenName,
@@ -195,8 +221,8 @@ export async function sendAppointmentReminderEmail(data: AppointmentReminderEmai
   <title>Appointment Reminder - Civigo</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Appointment Reminder</h1>
+  <div style="background: linear-gradient(135deg,rgb(252, 189, 2) 0%,rgb(237, 245, 87) 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 28px;"> Appointment Reminder</h1>
     <p style="color: #ffe8ec; margin: 10px 0 0 0; font-size: 16px;">Your appointment is ${timeFrame}!</p>
   </div>
   
@@ -316,6 +342,304 @@ This is an automated reminder. Please do not reply to this email.
   } catch (error) {
     console.error('Failed to send appointment reminder email:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+export async function sendAppointmentChangeRequestEmail(data: AppointmentChangeRequestEmailData) {
+  console.log('sendAppointmentChangeRequestEmail called with data:', {
+    citizenName: data.citizenName,
+    citizenEmail: data.citizenEmail,
+    serviceName: data.serviceName,
+    appointmentDate: data.appointmentDate,
+    referenceCode: data.referenceCode,
+    officerName: data.officerName
+  });
+  
+  if (!process.env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY is not set in environment variables');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+  
+  try {
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Change Request for Your Appointment - Civigo</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <h1 style="margin: 0; font-size: 28px; font-weight: bold;">Civigo</h1>
+    <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Digital Government Services</p>
+  </div>
+  
+  <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+    <h2 style="color: #2c3e50; margin-top: 0; font-size: 24px;">Change Request for Your Appointment</h2>
+    
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      Dear <strong>${data.citizenName}</strong>,
+    </p>
+    
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      An officer from <strong>${data.departmentName}</strong> has sent you a change request regarding your upcoming appointment.
+    </p>
+    
+    <div style="background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #2c3e50; margin-top: 0; font-size: 18px;">Appointment Details</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Reference Code:</td>
+          <td style="padding: 8px 0; font-family: monospace; background: #f8f9fa; padding: 4px 8px; border-radius: 4px;">${data.referenceCode}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Service:</td>
+          <td style="padding: 8px 0;">${data.serviceName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Date & Time:</td>
+          <td style="padding: 8px 0;">${data.appointmentDate} at ${data.appointmentTime}</td>
+        </tr>
+        ${data.branchName ? `
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Branch:</td>
+          <td style="padding: 8px 0;">${data.branchName}</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+    
+    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #856404; margin-top: 0; font-size: 18px;">📋 Change Request Message</h3>
+      <p style="font-size: 16px; margin: 0; color: #856404; font-style: italic;">
+        "${data.changeMessage}"
+      </p>
+      <p style="font-size: 14px; margin: 15px 0 0 0; color: #856404;">
+        <strong>From:</strong> ${data.officerName}
+      </p>
+    </div>
+    
+    <div style="background: #e8f4f8; border: 1px solid #bee5eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #0c5460; margin-top: 0; font-size: 18px;">📞 Next Steps</h3>
+      <p style="font-size: 16px; margin: 0; color: #0c5460;">
+        Please contact the department to discuss this change request or to make any necessary adjustments to your appointment.
+      </p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e3e6ea;">
+      <p style="font-size: 14px; color: #6c757d; margin: 0;">
+        This is an automated message from Civigo Digital Government Services.
+      </p>
+      <p style="font-size: 12px; color: #adb5bd; margin: 10px 0 0 0;">
+        Please do not reply to this email. For assistance, contact the relevant government department.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const textContent = `
+CHANGE REQUEST FOR YOUR APPOINTMENT
+
+Dear ${data.citizenName},
+
+An officer from ${data.departmentName} has sent you a change request regarding your upcoming appointment.
+
+APPOINTMENT DETAILS
+Reference Code: ${data.referenceCode}
+Service: ${data.serviceName}
+Date & Time: ${data.appointmentDate} at ${data.appointmentTime}
+${data.branchName ? `Branch: ${data.branchName}` : ''}
+
+CHANGE REQUEST MESSAGE
+"${data.changeMessage}"
+From: ${data.officerName}
+
+NEXT STEPS
+Please contact the department to discuss this change request or to make any necessary adjustments to your appointment.
+
+---
+This is an automated message from Civigo Digital Government Services.
+Please do not reply to this email. For assistance, contact the relevant government department.
+    `;
+
+    console.log('Sending change request email via Resend...');
+    const { data: emailResult, error } = await resend.emails.send({
+      from: 'Civigo <onboarding@resend.dev>',
+      to: [data.citizenEmail],
+      subject: `Change Request: ${data.serviceName} Appointment (${data.referenceCode})`,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      console.error('Resend API error:', error);
+      return { success: false, error: error.message || 'Failed to send email' };
+    }
+
+    console.log('✅ Change request email sent successfully! Email ID:', emailResult?.id);
+    return { success: true, emailId: emailResult?.id };
+  } catch (error) {
+    console.error('Error sending change request email:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    };
+  }
+}
+
+export async function sendAppointmentCancellationEmail(data: AppointmentCancellationEmailData) {
+  console.log('sendAppointmentCancellationEmail called with data:', {
+    citizenName: data.citizenName,
+    citizenEmail: data.citizenEmail,
+    serviceName: data.serviceName,
+    appointmentDate: data.appointmentDate,
+    referenceCode: data.referenceCode,
+    officerName: data.officerName
+  });
+  
+  if (!process.env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY is not set in environment variables');
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+  
+  try {
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointment Cancelled - Civigo</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <h1 style="margin: 0; font-size: 28px; font-weight: bold;">❌ Appointment Cancelled</h1>
+    <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Your appointment has been cancelled</p>
+  </div>
+  
+  <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+    <h2 style="color: #2c3e50; margin-top: 0; font-size: 24px;">Appointment Cancellation Notice</h2>
+    
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      Dear <strong>${data.citizenName}</strong>,
+    </p>
+    
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      We regret to inform you that your appointment with <strong>${data.departmentName}</strong> has been cancelled by our office.
+    </p>
+    
+    <div style="background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #2c3e50; margin-top: 0; font-size: 18px;">Cancelled Appointment Details</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Reference Code:</td>
+          <td style="padding: 8px 0; font-family: monospace; background: #f8f9fa; padding: 4px 8px; border-radius: 4px;">${data.referenceCode}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Service:</td>
+          <td style="padding: 8px 0;">${data.serviceName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Original Date & Time:</td>
+          <td style="padding: 8px 0;">${data.appointmentDate} at ${data.appointmentTime}</td>
+        </tr>
+        ${data.branchName ? `
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #555;">Branch:</td>
+          <td style="padding: 8px 0;">${data.branchName}</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+    
+    <div style="background: #ffebee; border: 1px solid #ffcdd2; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #c62828; margin-top: 0; font-size: 18px;">💬 Reason for Cancellation</h3>
+      <p style="font-size: 16px; margin: 0; color: #c62828; font-style: italic;">
+        "${data.cancellationReason}"
+      </p>
+      <p style="font-size: 14px; margin: 15px 0 0 0; color: #c62828;">
+        <strong>Cancelled by:</strong> ${data.officerName}
+      </p>
+    </div>
+    
+    <div style="background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #1565c0; margin-top: 0; font-size: 18px;">🔄 Next Steps</h3>
+      <p style="font-size: 16px; margin: 0; color: #1565c0;">
+        If you still need this service, please book a new appointment through our system or contact the department directly. We apologize for any inconvenience caused.
+      </p>
+    </div>
+    
+    <div style="background: #fff3e0; border: 1px solid #ffcc02; border-radius: 8px; padding: 15px; margin: 20px 0;">
+      <p style="font-size: 14px; margin: 0; color: #f57c00; text-align: center;">
+        <strong>💡 Need Help?</strong> Contact the department for assistance with rebooking or alternative arrangements.
+      </p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e3e6ea;">
+      <p style="font-size: 14px; color: #6c757d; margin: 0;">
+        This is an automated message from Civigo Digital Government Services.
+      </p>
+      <p style="font-size: 12px; color: #adb5bd; margin: 10px 0 0 0;">
+        Please do not reply to this email. For assistance, contact the relevant government department.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const textContent = `
+APPOINTMENT CANCELLED
+
+Dear ${data.citizenName},
+
+We regret to inform you that your appointment with ${data.departmentName} has been cancelled by our office.
+
+CANCELLED APPOINTMENT DETAILS
+Reference Code: ${data.referenceCode}
+Service: ${data.serviceName}
+Original Date & Time: ${data.appointmentDate} at ${data.appointmentTime}
+${data.branchName ? `Branch: ${data.branchName}` : ''}
+
+REASON FOR CANCELLATION
+"${data.cancellationReason}"
+Cancelled by: ${data.officerName}
+
+NEXT STEPS
+If you still need this service, please book a new appointment through our system or contact the department directly. We apologize for any inconvenience caused.
+
+Need Help? Contact the department for assistance with rebooking or alternative arrangements.
+
+---
+This is an automated message from Civigo Digital Government Services.
+Please do not reply to this email. For assistance, contact the relevant government department.
+    `;
+
+    console.log('Sending cancellation email via Resend...');
+    const { data: emailResult, error } = await resend.emails.send({
+      from: 'Civigo <onboarding@resend.dev>',
+      to: [data.citizenEmail],
+      subject: `❌ Appointment Cancelled: ${data.serviceName} (${data.referenceCode})`,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      console.error('Resend API error:', error);
+      return { success: false, error: error.message || 'Failed to send email' };
+    }
+
+    console.log('✅ Cancellation email sent successfully! Email ID:', emailResult?.id);
+    return { success: true, emailId: emailResult?.id };
+  } catch (error) {
+    console.error('Error sending cancellation email:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    };
   }
 }
 

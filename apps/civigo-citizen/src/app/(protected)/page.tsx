@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getProfile, getServerClient } from "@/utils/supabase/server";
 import Navbar from "./_components/Navbar";
 import GovIdCard from "./_components/GovIdCard";
@@ -59,7 +60,8 @@ export default async function HomePage() {
               : "Citizen!"}
           </h1>
         </div>
-        <button
+        <Link
+          href="/notifications"
           aria-label="Notifications"
           className="relative p-2 rounded-full border border-[var(--color-border)]"
         >
@@ -77,7 +79,7 @@ export default async function HomePage() {
               fill="#0052A5"
             />
           </svg>
-        </button>
+        </Link>
       </div>
 
       <div className="flex-1 pb-28">

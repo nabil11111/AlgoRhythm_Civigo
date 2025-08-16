@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Shield
 } from "lucide-react";
+import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 
 
 interface Appointment {
@@ -36,7 +37,7 @@ interface AppointmentStatusManagerProps {
   markCheckedInAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
   markStartedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
   markCompletedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
-  markCancelledAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markCancelledAction: (data: { id: string; deptId: string; reason: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
   markNoShowAction: (data: { id: string; deptId: string; value: boolean }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
 }
 
@@ -51,6 +52,7 @@ export function AppointmentStatusManager({
   markNoShowAction
 }: AppointmentStatusManagerProps) {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const handleAction = async (action: () => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>, actionName: string) => {
     setIsProcessing(actionName);
@@ -63,6 +65,13 @@ export function AppointmentStatusManager({
     } finally {
       setIsProcessing(null);
     }
+  };
+
+  const handleCancellation = async (reason: string) => {
+    await handleAction(
+      () => markCancelledAction({ id: appointment.id, deptId, reason }),
+      "Cancel"
+    );
   };
 
   const getStatusInfo = (status: string, noShow?: boolean) => {
@@ -134,6 +143,7 @@ export function AppointmentStatusManager({
   const isNoShow = appointment.no_show;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
@@ -315,14 +325,7 @@ export function AppointmentStatusManager({
                   size="sm"
                   className="flex items-center gap-2 text-red-600 hover:text-red-700"
                   disabled={isProcessing !== null}
-                  onClick={() => {
-                    if (confirm("Are you sure you want to cancel this appointment? This action cannot be undone.")) {
-                      handleAction(
-                        () => markCancelledAction({ id: appointment.id, deptId }),
-                        "Cancel"
-                      );
-                    }
-                  }}
+                  onClick={() => setShowCancelDialog(true)}
                 >
                   <XCircle className="w-4 h-4" />
                   {isProcessing === "Cancel" ? "Processing..." : "Cancel"}
@@ -346,5 +349,14 @@ export function AppointmentStatusManager({
         )}
       </CardContent>
     </Card>
+
+    <CancelAppointmentDialog
+      isOpen={showCancelDialog}
+      onClose={() => setShowCancelDialog(false)}
+      onConfirm={handleCancellation}
+      appointmentId={appointment.id}
+      isLoading={isProcessing === "Cancel"}
+    />
+    </>
   );
 }

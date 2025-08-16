@@ -9,6 +9,7 @@ type ConfirmButtonProps = {
   branchId: string;
   slotId: string;
   citizenId: string;
+  selectedDocuments?: string[];
 };
 
 export default function ConfirmButton({
@@ -16,6 +17,7 @@ export default function ConfirmButton({
   branchId,
   slotId,
   citizenId,
+  selectedDocuments = [],
 }: ConfirmButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -41,6 +43,21 @@ export default function ConfirmButton({
       }
 
       if (data?.ok) {
+        // Link selected documents to the appointment
+        if (selectedDocuments.length > 0) {
+          try {
+            for (const documentId of selectedDocuments) {
+              await supabase.from("appointment_documents").insert({
+                appointment_id: data.appointment_id,
+                document_id: documentId,
+              });
+            }
+          } catch (error) {
+            console.error("Error linking documents:", error);
+            // Continue to success page even if document linking fails
+          }
+        }
+
         // Redirect to success page with appointment ID
         router.push(
           `/app/booking/success?appointmentId=${data.appointment_id}`

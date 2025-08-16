@@ -15,7 +15,7 @@ export default function UpcomingAppointments({
 }) {
   if (!appointments || appointments.length === 0) {
     return (
-      <div className="bg-white border-t-2 border-[var(--color-secondary)] px-5 py-6">
+      <div className="bg-white border-t-4 border-[var(--color-secondary)] rounded-t-3xl px-5 py-6">
         <div className="mb-6">
           <h2 className="text-[20px] text-[#1d1d1d] leading-[28px]">
             Upcoming Appointments
@@ -82,7 +82,7 @@ export default function UpcomingAppointments({
   }
 
   return (
-    <div className="bg-white border-t-2 border-[var(--color-secondary)] px-5 py-6">
+    <div className="bg-white border-t-4 border-[var(--color-secondary)] rounded-t-3xl px-5 py-6">
       {/* Section Title */}
       <div className="mb-6">
         <h2 className="text-[20px] text-[#1d1d1d] leading-[28px]">
@@ -97,11 +97,28 @@ export default function UpcomingAppointments({
             key={a.id}
             className="bg-white border border-[var(--color-secondary)] rounded-[12px] p-3 min-w-[280px] flex-shrink-0"
           >
-            {/* Title with bottom border */}
+            {/* Title with status badge and bottom border */}
             <div className="pb-2 mb-4 border-b border-[#e0e0e0]">
-              <h3 className="text-[16px] text-[#282828] leading-[22px] font-normal">
-                {a.title ?? "Appointment"}
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-[16px] text-[#282828] leading-[22px] font-normal">
+                  {a.title ?? "Appointment"}
+                </h3>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-[20px] text-[7px] leading-[20px] ${
+                    a.status === "confirmed"
+                      ? "bg-green-100 text-green-800"
+                      : a.status === "booked"
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {a.status === "confirmed"
+                    ? "Confirmed"
+                    : a.status === "booked"
+                    ? "Booked"
+                    : a.status}
+                </span>
+              </div>
             </div>
 
             {/* Details */}
@@ -145,7 +162,7 @@ export default function UpcomingAppointments({
               <Link
                 href={`/app/appointments/${a.id}`}
                 aria-label="View appointment details"
-                className="w-4 h-4 grid place-items-center text-[var(--color-secondary)] hover:opacity-75"
+                className="w-6 h-6 grid place-items-center text-[var(--color-secondary)] hover:opacity-75"
               >
                 <ArrowRightIcon />
               </Link>

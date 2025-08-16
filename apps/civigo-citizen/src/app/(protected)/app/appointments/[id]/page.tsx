@@ -7,6 +7,8 @@ import QRCodeComponent from "../../booking/success/_components/QRCodeComponent";
 import AddToCalendarButton from "../../booking/success/_components/AddToCalendarButton";
 import GetDirectionsButton from "../../booking/success/_components/GetDirectionsButton";
 import PDFDownload from "../../services/[id]/_components/PDFDownload";
+import AppointmentDocumentManager from "./_components/AppointmentDocumentManager";
+import AppointmentFeedback from "./_components/AppointmentFeedback";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -58,7 +60,7 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
   const profile = await getProfile();
   const supabase = await getServerClient();
 
-  // Fetch comprehensive appointment data
+  // Fetch comprehensive appointment data including timeline timestamps
   const { data: appointment } = await supabase
     .from("appointments")
     .select(
@@ -67,6 +69,12 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
       reference_code,
       appointment_at,
       status,
+      created_at,
+      confirmed_at,
+      checked_in_at,
+      started_at,
+      completed_at,
+      cancelled_at,
       services:service_id (
         id,
         name,
@@ -245,15 +253,13 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
             </span>
           </div>
 
-          {/* Timeline/Stepper */}
-          {appointment.status !== "cancelled" && (
-            <div className="mb-6">
-              <h3 className="text-[14px] font-medium text-[#4f4f4f] mb-3">
-                Progress:
-              </h3>
-              <AppointmentStepper current={statusConfig.step} />
-            </div>
-          )}
+          {/* Timeline */}
+          <div className="mb-6">
+            <h3 className="text-[14px] font-medium text-[#4f4f4f] mb-3">
+              Timeline:
+            </h3>
+            <AppointmentTimeline appointment={appointment} />
+          </div>
         </div>
 
         {/* QR Code Section */}
@@ -379,6 +385,14 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
             </div>
           )}
 
+        {/* Document Management Section */}
+        <AppointmentDocumentManager appointmentId={appointment.id} />
+
+        {/* Feedback Section - Only for completed appointments */}
+        {appointment.status === "completed" && (
+          <AppointmentFeedback appointmentId={appointment.id} />
+        )}
+
         {/* Action Buttons */}
         {appointment.status !== "cancelled" && (
           <div className="space-y-3">
@@ -414,60 +428,221 @@ export default async function AppointmentDetailPage({ params }: PageProps) {
   );
 }
 
-// Timeline/Stepper Component - Fixed layout
-function AppointmentStepper({ current }: { current: number }) {
-  const steps = Array.from({ length: 4 }, (_, i) => i + 1);
+// Timeline Component showing actual appointment updates
+function AppointmentTimeline({ appointment }: { appointment: any }) {
+  // Format timestamp for display
+  const formatTimestamp = (timestamp: string | null) => {
+    if (!timestamp) return null;
+    const date = new Date(timestamp);
+    return {
+      date: date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      time: date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
+    };
+  };
+
+  // Create timeline events based on available timestamps
+  const timelineEvents = [];
+
+  // Always show booking event
+  if (appointment.created_at) {
+    timelineEvents.push({
+      id: "booked",
+      title: "Appointment Booked",
+      description: "Your appointment has been scheduled",
+      timestamp: formatTimestamp(appointment.created_at),
+      status: "completed",
+      icon: "check",
+    });
+  }
+
+  // Add confirmed event if available
+  if (appointment.confirmed_at) {
+    timelineEvents.push({
+      id: "confirmed",
+      title: "Appointment Confirmed",
+      description: "Your appointment has been confirmed by the office",
+      timestamp: formatTimestamp(appointment.confirmed_at),
+      status: "completed",
+      icon: "check",
+    });
+  }
+
+  // Add check-in event if available
+  if (appointment.checked_in_at) {
+    timelineEvents.push({
+      id: "checked_in",
+      title: "Checked In",
+      description: "You have checked in at the branch",
+      timestamp: formatTimestamp(appointment.checked_in_at),
+      status: "completed",
+      icon: "check",
+    });
+  }
+
+  // Add started event if available
+  if (appointment.started_at) {
+    timelineEvents.push({
+      id: "started",
+      title: "Service Started",
+      description: "Your appointment is now in progress",
+      timestamp: formatTimestamp(appointment.started_at),
+      status: "completed",
+      icon: "check",
+    });
+  }
+
+  // Add completed event if available
+  if (appointment.completed_at) {
+    timelineEvents.push({
+      id: "completed",
+      title: "Service Completed",
+      description: "Your appointment has been completed successfully",
+      timestamp: formatTimestamp(appointment.completed_at),
+      status: "completed",
+      icon: "check",
+    });
+  }
+
+  // Add cancelled event if applicable
+  if (appointment.cancelled_at) {
+    timelineEvents.push({
+      id: "cancelled",
+      title: "Appointment Cancelled",
+      description: "This appointment has been cancelled",
+      timestamp: formatTimestamp(appointment.cancelled_at),
+      status: "cancelled",
+      icon: "x",
+    });
+  }
+
+  // Show pending events based on current status
+  if (appointment.status === "booked" && !appointment.confirmed_at) {
+    timelineEvents.push({
+      id: "pending_confirmation",
+      title: "Awaiting Confirmation",
+      description: "Waiting for office confirmation of your appointment",
+      timestamp: null,
+      status: "pending",
+      icon: "clock",
+    });
+  } else if (appointment.confirmed_at && !appointment.checked_in_at) {
+    timelineEvents.push({
+      id: "pending_checkin",
+      title: "Ready for Check-in",
+      description: "Please arrive 10 minutes early and check in",
+      timestamp: null,
+      status: "pending",
+      icon: "clock",
+    });
+  }
 
   return (
-    <div className="mt-2">
-      {/* Progress stepper */}
-      <div className="flex items-center gap-1">
-        {steps.map((step, index) => {
-          const isCompleted = step < current;
-          const isCurrent = step === current;
-
-          return (
-            <div key={step} className="flex items-center">
-              {/* Step circle */}
-              <div
-                className={`w-5 h-5 rounded-full grid place-items-center text-[12px] leading-[20px] ${
-                  isCompleted || isCurrent
-                    ? "bg-[var(--color-primary)] border border-[var(--color-primary)] text-white"
-                    : "border border-[#e0e0e0] text-[#e0e0e0] bg-white"
-                }`}
-              >
-                {step}
-              </div>
-
-              {/* Connector line */}
-              {index < steps.length - 1 && (
-                <div
-                  className={`w-5 h-0.5 ${
-                    step < current
-                      ? "bg-[var(--color-primary)]"
-                      : "bg-[#e0e0e0]"
-                  }`}
-                />
+    <div className="space-y-4">
+      {timelineEvents.map((event, index) => (
+        <div key={event.id} className="flex gap-3">
+          {/* Timeline indicator */}
+          <div className="flex flex-col items-center">
+            {/* Icon */}
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                event.status === "completed"
+                  ? "bg-green-100 border-2 border-green-500"
+                  : event.status === "cancelled"
+                  ? "bg-red-100 border-2 border-red-500"
+                  : "bg-gray-100 border-2 border-gray-300"
+              }`}
+            >
+              {event.icon === "check" && (
+                <svg
+                  className="w-3 h-3 text-green-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+              {event.icon === "x" && (
+                <svg
+                  className="w-3 h-3 text-red-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+              {event.icon === "clock" && (
+                <svg
+                  className="w-3 h-3 text-gray-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               )}
             </div>
-          );
-        })}
-      </div>
+            {/* Connecting line */}
+            {index < timelineEvents.length - 1 && (
+              <div className="w-0.5 h-8 bg-gray-200 mt-1"></div>
+            )}
+          </div>
 
-      {/* Stage info */}
-      <div className="mt-3">
-        <span className="text-[12px] text-[#282828] leading-[20px]">
-          Stage:{" "}
-          {current === 1
-            ? "Booked"
-            : current === 2
-            ? "Confirmed"
-            : current === 3
-            ? "In Progress"
-            : "Completed"}{" "}
-          – ETA 2-4 Days
-        </span>
-      </div>
+          {/* Event content */}
+          <div className="flex-1 pb-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4
+                  className={`text-[14px] font-medium ${
+                    event.status === "completed"
+                      ? "text-gray-900"
+                      : event.status === "cancelled"
+                      ? "text-red-600"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {event.title}
+                </h4>
+                <p
+                  className={`text-[12px] mt-1 ${
+                    event.status === "completed"
+                      ? "text-gray-600"
+                      : event.status === "cancelled"
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {event.description}
+                </p>
+              </div>
+              {event.timestamp && (
+                <div className="text-right text-[10px] text-gray-500">
+                  <div>{event.timestamp.date}</div>
+                  <div>{event.timestamp.time}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

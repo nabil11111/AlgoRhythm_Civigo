@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getBrowserClient } from "@/utils/supabase/client";
+import DocumentSelector from "../../../../_components/DocumentSelector";
 
 type Branch = {
   id: string;
@@ -32,6 +33,7 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(false);
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
 
   // Add some test dates for debugging (add dates for current month)
   React.useEffect(() => {
@@ -104,9 +106,25 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       if (slots) {
         const dates = Array.from(
           new Set(
-            slots.map(
-              (slot) => new Date(slot.slot_at).toISOString().split("T")[0]
-            )
+            slots.map((slot) => {
+              // Parse the UTC timestamp
+              const date = new Date(slot.slot_at);
+
+              // Use LOCAL date extraction - this is what user sees in their timezone
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const day = String(date.getDate()).padStart(2, "0");
+              const localDateStr = `${year}-${month}-${day}`;
+
+              console.log("Slot date extraction:", {
+                originalUTC: slot.slot_at,
+                parsedLocalDate: date.toString(),
+                extractedDate: localDateStr,
+                userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              });
+
+              return localDateStr;
+            })
           )
         );
         console.log("Available dates:", dates);
@@ -125,24 +143,76 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   const fetchAvailableSlots = async () => {
     setLoading(true);
     try {
-      const startDate = new Date(selectedDate);
-      const endDate = new Date(selectedDate);
-      endDate.setDate(endDate.getDate() + 1);
+      console.log("Fetching slots for selected date:", selectedDate);
 
-      console.log("Fetching slots for date:", selectedDate);
+      // Fetch slots and appointments to check capacity
+      const [slotsResult, appointmentsResult] = await Promise.all([
+        supabase
+          .from("service_slots")
+          .select("*")
+          .eq("service_id", serviceId)
+          .eq("branch_id", selectedBranch)
+          .eq("active", true)
+          .order("slot_at", { ascending: true }),
+        supabase
+          .from("appointments")
+          .select("slot_id, appointment_at, status")
+          .eq("service_id", serviceId)
+          .in("status", ["booked"]),
+      ]);
 
-      const { data: slots, error } = await supabase
-        .from("service_slots")
-        .select("*")
-        .eq("service_id", serviceId)
-        .eq("branch_id", selectedBranch)
-        .eq("active", true)
-        .gte("slot_at", startDate.toISOString())
-        .lt("slot_at", endDate.toISOString())
-        .order("slot_at", { ascending: true });
+      const allSlots = slotsResult.data || [];
+      const appointments = appointmentsResult.data || [];
 
-      console.log("Slots for selected date:", { slots, error });
-      setAvailableSlots(slots || []);
+      console.log("Fetched data:", {
+        selectedDate,
+        allSlots,
+        appointments,
+        slotsError: slotsResult.error,
+        appointmentsError: appointmentsResult.error,
+      });
+
+      if (allSlots) {
+        // Filter slots by date and availability
+        const slotsForDate = allSlots.filter((slot) => {
+          const slotDate = new Date(slot.slot_at);
+
+          // Use LOCAL date extraction to match with available dates (consistent with fetchAvailableDates)
+          const localDateStr = `${slotDate.getFullYear()}-${String(
+            slotDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(slotDate.getDate()).padStart(2, "0")}`;
+
+          // Check if slot matches selected date
+          const dateMatches = localDateStr === selectedDate;
+
+          // Count booked appointments for this slot
+          const bookedCount = appointments.filter(
+            (apt) => apt.slot_id === slot.id && apt.status === "booked"
+          ).length;
+
+          // Check if slot has capacity
+          const hasCapacity = bookedCount < slot.capacity;
+
+          console.log("Filtering slot:", {
+            slotAt: slot.slot_at,
+            slotLocalTime: slotDate.toString(),
+            extractedDate: localDateStr,
+            selectedDate: selectedDate,
+            dateMatches,
+            capacity: slot.capacity,
+            bookedCount,
+            hasCapacity,
+            willShow: dateMatches && hasCapacity,
+          });
+
+          return dateMatches && hasCapacity;
+        });
+
+        console.log("Filtered slots for date:", slotsForDate);
+        setAvailableSlots(slotsForDate);
+      } else {
+        setAvailableSlots([]);
+      }
     } catch (error) {
       console.error("Error fetching available slots:", error);
       setAvailableSlots([]);
@@ -157,7 +227,11 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   };
 
   const isDateAvailable = (date: Date): boolean => {
-    const dateStr = date.toISOString().split("T")[0];
+    // Use local date extraction to match with how availableDates are created
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateStr = `${year}-${month}-${day}`;
     return availableDates.includes(dateStr);
   };
 
@@ -181,7 +255,9 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   };
 
   const formatTime = (slotAt: string): string => {
-    return new Date(slotAt).toLocaleTimeString("en-US", {
+    const date = new Date(slotAt);
+    // Display time in user's local timezone with proper formatting
+    return date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -210,13 +286,20 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       return;
     }
 
-    setSelectedDate(date.toISOString().split("T")[0]);
+    // Use local date format to match our fetching logic
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const localDateStr = `${year}-${month}-${day}`;
+
+    setSelectedDate(localDateStr);
     setSelectedSlot(""); // Reset selected slot
 
-    console.log(
-      "Date successfully selected:",
-      date.toISOString().split("T")[0]
-    );
+    console.log("Date successfully selected:", {
+      clickedDate: date.toString(),
+      localDateStr: localDateStr,
+      utcDateStr: date.toISOString().split("T")[0],
+    });
   };
 
   const handleBooking = async () => {
@@ -229,13 +312,34 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       if (!slot) return;
 
       // Create URL parameters for the confirmation page
+      const slotDate = new Date(slot.slot_at);
+
+      // Use local time for display (what user expects to see)
+      const localTime = slotDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false, // Use 24-hour format for consistency
+      });
+
+      console.log("Booking confirmation params:", {
+        slotAt: slot.slot_at,
+        slotDate: slotDate.toString(),
+        localTime: localTime,
+        selectedDate: selectedDate,
+      });
+
       const params = new URLSearchParams({
         serviceId,
         branchId: selectedBranch,
         date: selectedDate,
-        time: slot.slot_at.split("T")[1].substring(0, 5), // Extract time (HH:MM)
+        time: localTime, // Use properly formatted local time
         slotId: selectedSlot,
       });
+
+      // Add selected documents to params
+      if (selectedDocuments.length > 0) {
+        params.set("documents", selectedDocuments.join(","));
+      }
 
       // Navigate to confirmation page
       router.push(`/app/booking/confirm?${params.toString()}`);
@@ -377,8 +481,12 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
                     date.getMonth() === currentMonth.getMonth();
                   const isToday =
                     date.toDateString() === new Date().toDateString();
-                  const isSelected =
-                    selectedDate === date.toISOString().split("T")[0];
+                  // Use local date format for selection comparison
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, "0");
+                  const day = String(date.getDate()).padStart(2, "0");
+                  const dateStr = `${year}-${month}-${day}`;
+                  const isSelected = selectedDate === dateStr;
                   const isAvailable = isDateAvailable(date);
                   const isWeekendDay = isWeekend(date);
                   const isPast =
@@ -477,6 +585,18 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Document Presubmission Section */}
+      {selectedSlot && (
+        <div className="mb-6">
+          <DocumentSelector
+            selectedDocumentIds={selectedDocuments}
+            onSelectionChange={setSelectedDocuments}
+            title="Presubmit Documents (Optional)"
+            description="Select documents to attach to your appointment. This can help speed up your visit."
+          />
         </div>
       )}
 

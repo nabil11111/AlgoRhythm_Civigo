@@ -10,35 +10,73 @@ type StatusCard = {
 };
 
 export default function ApplicationStatus({ items }: { items?: StatusCard[] }) {
-  const data: StatusCard[] = items ?? [
-    {
-      id: "1",
-      title: "NIC Replacement",
-      statusLabel: "Processing",
-      eta: "2-4 Days",
-      currentStep: 3,
-      totalSteps: 4,
-    },
-    {
-      id: "2",
-      title: "Birth Certificate Copy",
-      statusLabel: "Processing",
-      eta: "2-4 Days",
-      currentStep: 4,
-      totalSteps: 4,
-    },
-    {
-      id: "3",
-      title: "Passport Renewal",
-      statusLabel: "Processing",
-      eta: "7-10 Days",
-      currentStep: 2,
-      totalSteps: 4,
-    },
-  ];
+  const data: StatusCard[] = items ?? [];
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white border-t-4 border-[var(--color-secondary)] rounded-t-3xl px-5 py-6">
+        {/* Section Title */}
+        <div className="mb-6">
+          <h2 className="text-[20px] text-[#1d1d1d] leading-[28px]">
+            Application Status
+          </h2>
+        </div>
+        <div className="text-center py-8">
+          <div className="text-gray-400 mb-3">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="mx-auto"
+            >
+              <rect
+                x="3"
+                y="4"
+                width="18"
+                height="16"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+              <rect
+                x="7"
+                y="8"
+                width="4"
+                height="2"
+                rx="1"
+                fill="currentColor"
+              />
+              <rect
+                x="7"
+                y="12"
+                width="10"
+                height="2"
+                rx="1"
+                fill="currentColor"
+              />
+              <rect
+                x="7"
+                y="16"
+                width="6"
+                height="2"
+                rx="1"
+                fill="currentColor"
+              />
+            </svg>
+          </div>
+          <p className="text-[16px] text-[#666666] mb-2">Coming Soon</p>
+          <p className="text-[14px] text-[#999999]">
+            Application status tracking will be available soon
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white border-t-2 border-[var(--color-secondary)] px-5 py-6">
+    <div className="bg-white border-t-4 border-[var(--color-secondary)] rounded-t-3xl px-5 py-6">
       {/* Section Title */}
       <div className="mb-6">
         <h2 className="text-[20px] text-[#1d1d1d] leading-[28px]">

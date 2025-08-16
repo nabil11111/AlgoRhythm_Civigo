@@ -189,23 +189,25 @@ export async function createSlotsBatch(
   const supabase = await getServerClient();
 
   // Validate ranges
-  // Assume a fixed application timezone (Asia/Colombo, UTC+05:30, no DST)
-  const fixedOffsetMinutes = -330; // Date.getTimezoneOffset() style (UTC = local + offset)
   const [sy, sMon, sd] = parsed.data.start_date.split("-").map((n) => Number(n));
   const [ey, eMon, ed] = parsed.data.end_date.split("-").map((n) => Number(n));
-  const startDateUtc = new Date(Date.UTC(sy, sMon - 1, sd, 0, 0));
-  const endDateUtc = new Date(Date.UTC(ey, eMon - 1, ed, 0, 0));
+  
   // Validate calendar dates
-  if (Number.isNaN(startDateUtc.getTime()) || Number.isNaN(endDateUtc.getTime())) {
-    return { ok: false, error: "invalid", message: "Invalid date range" };
+  if (isNaN(sy) || isNaN(sMon) || isNaN(sd) || isNaN(ey) || isNaN(eMon) || isNaN(ed)) {
+    return { ok: false, error: "invalid", message: "Invalid date format" };
   }
-  if (endDateUtc < startDateUtc) {
+  
+  const startDate = new Date(sy, sMon - 1, sd);
+  const endDate = new Date(ey, eMon - 1, ed);
+  
+  if (endDate < startDate) {
     return {
       ok: false,
       error: "invalid",
       message: "End date must be after start date",
     };
   }
+  
   const [sh, sm] = parsed.data.start_time.split(":").map(Number);
   const [eh, em] = parsed.data.end_time.split(":").map(Number);
   const startMinutes = sh * 60 + sm;
@@ -218,18 +220,13 @@ export async function createSlotsBatch(
     };
   }
 
-  // Build date range [startDate..endDate]
-  // Build list of day bases in UTC that correspond to local midnight for each calendar day
+  // Build date range - treat dates as local dates
   const oneDayMs = 24 * 60 * 60 * 1000;
-  const dayBasesUtc: number[] = [];
-  const startUtcCalendar = Date.UTC(sy, sMon - 1, sd, 0, 0);
-  const endUtcCalendar = Date.UTC(ey, eMon - 1, ed, 0, 0);
-  for (let t = startUtcCalendar; t <= endUtcCalendar; t += oneDayMs) {
-    const wd = new Date(t).getUTCDay();
+  const days: Date[] = [];
+  for (let d = new Date(startDate); d <= endDate; d = new Date(d.getTime() + oneDayMs)) {
+    const wd = d.getDay();
     if (parsed.data.skip_weekends && (wd === 0 || wd === 6)) continue;
-    // Local midnight for this calendar day, represented in UTC timeline
-    const localMidnightUtc = t + fixedOffsetMinutes * 60 * 1000; // UTC = local + fixed offset
-    dayBasesUtc.push(localMidnightUtc);
+    days.push(new Date(d));
   }
 
   // Generate candidate slots
@@ -238,7 +235,7 @@ export async function createSlotsBatch(
     duration_minutes: number;
     capacity: number;
   }[] = [];
-  for (const dayBase of dayBasesUtc) {
+  for (const day of days) {
     for (
       let m = startMinutes;
       m <= endMinutes - parsed.data.duration_minutes;
@@ -246,9 +243,9 @@ export async function createSlotsBatch(
     ) {
       const hours = Math.floor(m / 60);
       const minutes = m % 60;
-      // UTC instant for local time-of-day: localMidnightUtc + minutesSinceMidnight
-      const dtUtcMs = dayBase + (hours * 60 + minutes) * 60 * 1000;
-      const dt = new Date(dtUtcMs);
+      // Create the slot time by constructing a new Date with the day and time
+      const dt = new Date(day);
+      dt.setHours(hours, minutes, 0, 0);
       candidates.push({
         slot_at: dt.toISOString(),
         duration_minutes: parsed.data.duration_minutes,
@@ -263,8 +260,11 @@ export async function createSlotsBatch(
   }
 
   // Filter out duplicates based on existing slots in the window
-  const windowStartIso = new Date(dayBasesUtc[0]).toISOString();
-  const windowEndIso = new Date(dayBasesUtc[dayBasesUtc.length - 1] + oneDayMs).toISOString();
+  const windowStart = new Date(days[0]);
+  const windowEnd = new Date(days[days.length - 1]);
+  windowEnd.setDate(windowEnd.getDate() + 1); // Add one day to include the end date
+  const windowStartIso = windowStart.toISOString();
+  const windowEndIso = windowEnd.toISOString();
   const { data: existing } = await supabase
     .from("service_slots")
     .select("slot_at")

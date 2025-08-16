@@ -16,13 +16,13 @@ export default function QuickActions() {
       icon: iconCalendar(),
     },
     {
-      href: "/app/appointments?status=upcoming",
+      href: "/activity",
       label: "Track",
       aria: "Track appointments",
       icon: iconClock(),
     },
     {
-      href: "/app/documents",
+      href: "/app/wallet/new",
       label: "Upload",
       aria: "Upload documents",
       icon: iconUpload(),
@@ -33,11 +33,11 @@ export default function QuickActions() {
       aria: "Open wallet",
       icon: iconWallet(),
     },
-    { href: "/support", label: "Help", aria: "Get help", icon: iconHelp() },
+    { href: "#", label: "Help", aria: "Get help", icon: iconHelp() },
   ];
 
   return (
-    <div className="bg-white border-t-2 border-[var(--color-secondary)] px-5 py-6">
+    <div className="bg-white border-t-4 border-[var(--color-secondary)] rounded-t-3xl px-5 py-6">
       {/* Section Title */}
       <div className="mb-6">
         <h2 className="text-[20px] text-[#1d1d1d] leading-[28px]">
@@ -54,7 +54,7 @@ export default function QuickActions() {
             aria-label={a.aria}
             className="flex flex-col items-center gap-2"
           >
-            <div className="w-[50px] h-[50px] rounded-full bg-[var(--color-secondary)] border border-[var(--color-secondary)] grid place-items-center transition active:scale-95">
+            <div className="w-[60px] h-[60px] rounded-full bg-[var(--color-secondary)] border border-[var(--color-secondary)] grid place-items-center transition active:scale-95">
               {a.icon}
             </div>
             <span className="text-[12px] text-[#282828] leading-[20px] text-center">
