@@ -140,9 +140,10 @@ All tools:
 **cURL Test**:
 
 ```bash
+# Note: Requires valid authentication. Without auth cookie, returns {"error":"not_authenticated"}
 curl -X POST http://localhost:3000/api/agent \
   -H "Content-Type: application/json" \
-  -H "Cookie: your-auth-cookie" \
+  -H "Cookie: your-supabase-auth-token=..." \
   -d '{"message":"What documents do I need for Passport Renewal?","context":{"serviceId":"passport-renewal"}}'
 ```
 
@@ -161,9 +162,10 @@ curl -X POST http://localhost:3000/api/agent \
 **cURL Test**:
 
 ```bash
+# Note: Requires valid authentication
 curl -X POST http://localhost:3000/api/agent \
   -H "Content-Type: application/json" \
-  -H "Cookie: your-auth-cookie" \
+  -H "Cookie: your-supabase-auth-token=..." \
   -d '{"message":"Find me a morning slot next week","context":{"serviceId":"passport-renewal","branchId":"colombo-hq","dateFromISO":"2024-01-15T00:00:00.000Z","dateToISO":"2024-01-22T23:59:59.999Z"}}'
 ```
 
@@ -181,9 +183,10 @@ curl -X POST http://localhost:3000/api/agent \
 **cURL Test**:
 
 ```bash
+# Note: Requires valid authentication
 curl -X POST http://localhost:3000/api/agent \
   -H "Content-Type: application/json" \
-  -H "Cookie: your-auth-cookie" \
+  -H "Cookie: your-supabase-auth-token=..." \
   -d '{"message":"What appointments do I have?"}'
 ```
 
@@ -229,7 +232,7 @@ done
   Summary: Initial creation of the agent implementation plan file.
 
 - Task #2-7: f925a38
-  Files changed: apps/civigo-citizen/src/app/(protected)/_agent_tools.ts, apps/civigo-citizen/src/lib/agent/types.ts, apps/civigo-citizen/src/lib/agent/schemas.ts, apps/civigo-citizen/src/lib/agent/constants.ts, apps/civigo-citizen/src/app/api/agent/route.ts, apps/civigo-citizen/src/components/agent/ChatButton.tsx, apps/civigo-citizen/src/components/agent/ChatDrawer.tsx, apps/civigo-citizen/src/components/agent/MessageList.tsx, apps/civigo-citizen/src/components/agent/SuggestedActions.tsx, apps/civigo-citizen/src/app/(protected)/layout.tsx
+  Files changed: apps/civigo-citizen/src/app/(protected)/\_agent_tools.ts, apps/civigo-citizen/src/lib/agent/types.ts, apps/civigo-citizen/src/lib/agent/schemas.ts, apps/civigo-citizen/src/lib/agent/constants.ts, apps/civigo-citizen/src/app/api/agent/route.ts, apps/civigo-citizen/src/components/agent/ChatButton.tsx, apps/civigo-citizen/src/components/agent/ChatDrawer.tsx, apps/civigo-citizen/src/components/agent/MessageList.tsx, apps/civigo-citizen/src/components/agent/SuggestedActions.tsx, apps/civigo-citizen/src/app/(protected)/layout.tsx
   Summary: Implemented server-side tools, shared types/schemas/constants, API route, and minimal chat UI components.
 
 - Task #8 (prep): 47feb96
@@ -247,3 +250,15 @@ done
 - Task #10: ea603af
   Files changed: apps/civigo-citizen/docs/agent-implementation.md
   Summary: Added comprehensive demo scripts, environment setup instructions, and testing commands for all three main use cases.
+
+- Additional: c71adce
+  Files changed: apps/civigo-citizen/src/app/(protected)/app/assistant/, apps/civigo-citizen/src/app/(protected)/app/page.tsx, apps/civigo-citizen/src/app/(protected)/layout.tsx
+  Summary: Created AI assistant GUI page with mobile-responsive chat interface and navigation integration.
+
+- Final: d3508bd
+  Files changed: apps/civigo-citizen/src/app/api/agent/route.ts, apps/civigo-citizen/README.md, package files
+  Summary: **INTEGRATED REAL GEMINI API** - Replaced placeholder with actual Google Generative AI function calling for intelligent responses.
+
+- Context: 659a396
+  Files changed: apps/civigo-citizen/src/app/api/agent/route.ts, apps/civigo-citizen/src/lib/agent/constants.ts, apps/civigo-citizen/src/app/(protected)/app/assistant/_components/AssistantInterface.tsx
+  Summary: **REAL DATABASE CONTEXT** - Fetch actual services, branches, user data from database. Named AI "Nethra" with comprehensive system context.

@@ -38,74 +38,6 @@ export default function AssistantInterface() {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async (
-    messageText: string,
-    newContext?: Partial<AssistantContext>
-  ) => {
-    if (!messageText.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: messageText,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-
-    const updatedContext = { ...context, ...newContext };
-    setContext(updatedContext);
-
-    try {
-      const request: AgentRequest = {
-        message: messageText,
-        context: updatedContext,
-      };
-
-      const response = await fetch("/api/agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || "Failed to send message");
-      }
-
-      if (data.disabled) {
-        throw new Error("AI Assistant is currently disabled");
-      }
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.answer,
-        timestamp: new Date(),
-        actions: data.actions,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send message"
-      );
-
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Initialize the conversation when component mounts
   useEffect(() => {
     if (!isInitialized) {
@@ -140,12 +72,15 @@ export default function AssistantInterface() {
         } catch (error) {
           console.error("Error initializing chat:", error);
           // Fallback welcome message if API fails
-          setMessages([{
-            id: "welcome",
-            role: "assistant",
-            content: "Hello! I'm Nethra, your AI assistant for Civigo services. How can I help you today?",
-            timestamp: new Date(),
-          }]);
+          setMessages([
+            {
+              id: "welcome",
+              role: "assistant",
+              content:
+                "Hello! I'm Nethra, your AI assistant for Civigo services. How can I help you today?",
+              timestamp: new Date(),
+            },
+          ]);
         } finally {
           setIsLoading(false);
         }
