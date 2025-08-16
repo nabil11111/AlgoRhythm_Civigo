@@ -103,7 +103,13 @@ create table if not exists public.appointment_documents (
   unique (appointment_id, document_id)
 );
 
--- TODO (later migration): Storage policies to restrict to path prefix user/{auth.uid()} and signed URL access.
+-- Storage buckets
+insert into storage.buckets (id, name, public)
+values 
+  ('nic-media', 'nic-media', false),
+  ('departments', 'departments', false),
+  ('feedback', 'feedback', false)
+on conflict (id) do nothing;
 
 COMMIT;
 

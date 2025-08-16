@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { getServiceRoleClient } from "@/utils/supabase/server";
 import { finalizeOnboarding } from "../finalize/_actions";
 
@@ -19,12 +18,17 @@ export async function saveFaceCapture(formData: FormData) {
   const parsed = schema.safeParse({ face_path: formData.get("face_path") });
   if (!parsed.success) return { ok: false, error: "invalid" } as const;
 
-  await supabase
+  // Update identity_verifications with face_capture_path
+  const { error: updateError } = await supabase
     .from("identity_verifications")
     .update({
       face_capture_path: parsed.data.face_path,
     })
     .eq("user_temp_id", tempId);
+
+  if (updateError) {
+    return { ok: false, error: "db_update_failed" } as const;
+  }
 
   // Call finalizeOnboarding to create auth user and profile
   const finalizeResult = await finalizeOnboarding(null);
@@ -72,7 +76,7 @@ export async function saveFaceCapture(formData: FormData) {
 
   // Redirect to login page after successful onboarding completion
   revalidatePath("/onboarding/login/password");
-  redirect("/onboarding/login/password");
+  return { ok: true } as const;
 }
 
 export async function uploadFaceCapture(

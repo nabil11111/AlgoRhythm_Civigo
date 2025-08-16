@@ -84,9 +84,41 @@ export default function FaceClient({
 
   async function onNext() {
     if (!uploadPath) return;
-    const fd = new FormData();
-    fd.set("face_path", uploadPath);
-    await saveAction(fd);
+    setPending(true);
+    try {
+      const fd = new FormData();
+      fd.set("face_path", uploadPath);
+      const result = await saveAction(fd);
+      if (result && !result.ok) {
+        // Provide more specific error messages based on error type
+        let errorMessage = "Failed to save face capture. Please try again.";
+        if (result.error === "no_session") {
+          errorMessage =
+            "Session expired. Please restart the onboarding process.";
+        } else if (result.error === "db_update_failed") {
+          errorMessage = "Database error. Please try again.";
+        } else if (result.error === "no_idv") {
+          errorMessage =
+            "Verification record not found. Please restart onboarding.";
+        } else if (result.error === "media_missing") {
+          errorMessage =
+            "Required photos are missing. Please complete all photo steps.";
+        } else if (result.error === "incomplete") {
+          errorMessage =
+            "Onboarding information incomplete. Please complete all steps.";
+        }
+        toast.error(errorMessage);
+        setPending(false);
+        return;
+      }
+      // Success - the redirect should happen from the server action
+      // But if we reach here, it means redirect didn't work, so we handle it client-side
+      window.location.href = "/onboarding/login/password";
+    } catch (error) {
+      console.error("Face capture save error:", error);
+      toast.error("An error occurred. Please try again.");
+      setPending(false);
+    }
   }
 
   return (
