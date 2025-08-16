@@ -37,6 +37,56 @@ function checkRateLimit(userId: string | null, ip: string | null): boolean {
   return true;
 }
 
+// Basic helpers to keep UX seamless without requiring internal IDs from user
+function normalize(value: unknown): string {
+  return String(value || "").toLowerCase().trim();
+}
+
+function inferServiceIdFromMessage(
+  services: Array<{ id: string; name: string; code?: string; department?: string }>,
+  message: string
+): string | undefined {
+  const m = normalize(message);
+  let best: { id: string; score: number } | undefined;
+  for (const s of services) {
+    const name = normalize(s.name);
+    const code = normalize(s.code);
+    const dept = normalize(s.department);
+    let score = 0;
+    if (m.includes(name)) score += 3;
+    if (code && m.includes(code)) score += 2;
+    if (dept && m.includes(dept)) score += 1;
+    if (!best || score > best.score) best = { id: s.id, score };
+  }
+  return best && best.score > 0 ? best.id : undefined;
+}
+
+function inferBranchIdFromMessage(
+  branches: Array<{ id: string; name: string; code?: string; address?: string }>,
+  message: string
+): string | undefined {
+  const m = normalize(message);
+  let best: { id: string; score: number } | undefined;
+  for (const b of branches) {
+    const name = normalize(b.name);
+    const code = normalize((b as any).code);
+    const addr = normalize(b.address);
+    let score = 0;
+    if (m.includes(name)) score += 3;
+    if (code && m.includes(code)) score += 2;
+    if (addr && m.includes(addr)) score += 1;
+    if (!best || score > best.score) best = { id: b.id, score };
+  }
+  return best && best.score > 0 ? best.id : undefined;
+}
+
+function next7DayRange(): { fromISO: string; toISO: string } {
+  const now = new Date();
+  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+  const to = new Date(from.getTime() + 7 * 24 * 60 * 60 * 1000);
+  return { fromISO: from.toISOString(), toISO: to.toISOString() };
+}
+
 // Get initial context for the conversation
 async function getInitialContext() {
   try {
@@ -338,7 +388,6 @@ ${prompt}`;
     // Start chat with tools (casting to any to bypass TypeScript issues)
     const chat = model.startChat({ tools: tools as any });
     const result = await chat.sendMessage(prompt);
-
     let response = result.response;
 
     // Handle function calls: perform tool calls server-side and finalize response here
@@ -346,7 +395,9 @@ ${prompt}`;
     if (candidates && candidates[0]?.content?.parts) {
       const firstCall = (candidates[0].content.parts as any[]).find(
         (p) => p && p.functionCall
-      )?.functionCall as undefined | { name: string; args?: Record<string, unknown> };
+      )?.functionCall as
+        | undefined
+        | { name: string; args?: Record<string, unknown> };
 
       if (firstCall) {
         const name = firstCall.name;
@@ -355,7 +406,9 @@ ${prompt}`;
         switch (name) {
           case "getUserAppointments": {
             const appts = await Tools.getUserAppointments();
-            const upcoming = appts.filter((a) => new Date(a.appointment_at) > new Date());
+            const upcoming = appts.filter(
+              (a) => new Date(a.appointment_at) > new Date()
+            );
             return AgentResponseSchema.parse({
               answer:
                 upcoming.length === 0
@@ -375,8 +428,11 @@ ${prompt}`;
             const serviceId = String(args.serviceId || context.serviceId || "");
             const info = await Tools.getServiceInstructions(serviceId);
             const docs = await Tools.getUserDocuments();
-            const hasInstr = info.instructions_richtext || info.instructions_pdf_url;
-            const answer = `${info.serviceName}: ${hasInstr ? "Instructions available." : "No instructions found."} You currently have ${docs.length} documents.`;
+            const hasInstr =
+              info.instructions_richtext || info.instructions_pdf_url;
+            const answer = `${info.serviceName}: ${
+              hasInstr ? "Instructions available." : "No instructions found."
+            } You currently have ${docs.length} documents.`;
             return AgentResponseSchema.parse({
               answer,
               actions: [
@@ -387,18 +443,35 @@ ${prompt}`;
           }
           case "searchSlots": {
             const serviceId = String(args.serviceId || context.serviceId || "");
-            const dateFromISO = String(args.dateFromISO || context.dateFromISO || "");
+            const dateFromISO = String(
+              args.dateFromISO || context.dateFromISO || ""
+            );
             const dateToISO = String(args.dateToISO || context.dateToISO || "");
-            const branchId = args.branchId ? String(args.branchId) : context.branchId;
+            const branchId = args.branchId
+              ? String(args.branchId)
+              : context.branchId;
 
-            const slots = await Tools.searchSlots(serviceId, dateFromISO, dateToISO, branchId);
+            const slots = await Tools.searchSlots(
+              serviceId,
+              dateFromISO,
+              dateToISO,
+              branchId
+            );
             const count = slots.length;
             return AgentResponseSchema.parse({
-              answer: count === 0 ? "No slots found in that range." : `Found ${count} slots in that range.`,
+              answer:
+                count === 0
+                  ? "No slots found in that range."
+                  : `Found ${count} slots in that range.`,
               actions: [
                 {
                   type: "showSlots",
-                  params: { serviceId, branchId, fromISO: dateFromISO, toISO: dateToISO },
+                  params: {
+                    serviceId,
+                    branchId,
+                    fromISO: dateFromISO,
+                    toISO: dateToISO,
+                  },
                 },
               ],
             });
@@ -416,24 +489,28 @@ ${prompt}`;
       }
     }
 
-    const answer = response.text();
+    // Default: produce a proactive, short answer with suggested actions
+    const text = response.text();
+    const initial = await getInitialContext();
+    const inferredServiceId = initial?.services ? inferServiceIdFromMessage(initial.services, message) : undefined;
+    const inferredBranchId = initial?.branches ? inferBranchIdFromMessage(initial.branches, message) : undefined;
+    const { fromISO, toISO } = next7DayRange();
 
-    // Parse suggested actions from the response
-    const actions = [];
-    if (answer.includes("appointments") || answer.includes("schedule")) {
-      actions.push({ type: "openAppointments" });
-    }
-    if (context.serviceId) {
+    const actions: any[] = [];
+    if (inferredServiceId) {
+      actions.push({ type: "openService", params: { serviceId: inferredServiceId } });
       actions.push({
-        type: "openService",
-        params: { serviceId: context.serviceId },
+        type: "showSlots",
+        params: { serviceId: inferredServiceId, branchId: inferredBranchId, fromISO, toISO },
       });
+    } else if (initial?.services?.length) {
+      // Propose the top service as a starting point
+      const s = initial.services[0];
+      actions.push({ type: "openService", params: { serviceId: s.id } });
     }
 
-    return AgentResponseSchema.parse({
-      answer,
-      actions,
-    });
+    const answer = text && text.trim().length > 0 ? text : "I can help with services, documents, and appointments. I’ll suggest the next steps below.";
+    return AgentResponseSchema.parse({ answer, actions });
   } catch (error) {
     console.error("Gemini API error:", error);
     // Fallback: propose popular services to avoid dead-ends
@@ -444,7 +521,10 @@ ${prompt}`;
       top.length > 0
         ? `Let's continue. Please pick a service to proceed:\n${lines}`
         : "Please tell me which service you need and a date range (for example: next week).";
-    const actions = top.map((s) => ({ type: "openService" as const, params: { serviceId: s.id } }));
+    const actions = top.map((s) => ({
+      type: "openService" as const,
+      params: { serviceId: s.id },
+    }));
     return AgentResponseSchema.parse({ answer, actions });
   }
 }
