@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getProfile } from "@/utils/supabase/server";
 import Navbar from "../_components/Navbar";
+import { signOut } from "../_actions";
 
 export default async function SettingsPage() {
   const profile = await getProfile();
@@ -103,6 +104,18 @@ export default async function SettingsPage() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* Logout */}
+        <div className="mt-8">
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="w-full h-[50px] border-2 border-[var(--color-primary)] rounded-[25px] px-5 text-[16px] text-[#1d1d1d] hover:bg-gray-50 transition-colors"
+            >
+              Logout
+            </button>
+          </form>
         </div>
       </div>
 

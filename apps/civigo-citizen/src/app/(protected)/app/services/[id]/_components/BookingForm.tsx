@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getBrowserClient } from "@/utils/supabase/client";
 import DocumentSelector from "../../../../_components/DocumentSelector";
@@ -35,6 +35,8 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   const [loadingDates, setLoadingDates] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+  const [slotsErrorMessage, setSlotsErrorMessage] = useState<string>("");
+  const slotsAbortControllerRef = useRef<AbortController | null>(null);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
 
   // Helper to compute UTC range for a given local YYYY-MM-DD
@@ -139,12 +141,38 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
 
   const fetchAvailableSlots = async () => {
     setLoadingSlots(true);
+    setSlotsErrorMessage("");
     try {
       console.log("Fetching slots for selected date:", selectedDate);
 
       // Fetch slots (scoped to the selected day) and appointments to check capacity
       const { startIso, endIsoExclusive } =
         getSelectedDateUtcRange(selectedDate);
+
+      // Abort any previous in-flight request
+      if (slotsAbortControllerRef.current) {
+        try {
+          slotsAbortControllerRef.current.abort();
+        } catch (e) {
+          console.warn("Abort previous slots request error (ignored):", e);
+        }
+      }
+      const controller = new AbortController();
+      slotsAbortControllerRef.current = controller;
+
+      // Timeout safeguard in case network stalls
+      const timeoutId = window.setTimeout(() => {
+        console.warn("Slots request timed out");
+        try {
+          controller.abort();
+        } catch {
+          /* no-op */
+        }
+        setLoadingSlots(false);
+        setAvailableSlots([]);
+        setSlotsErrorMessage("Timed out loading time slots. Please try again.");
+      }, 15000);
+
       const [slotsResult, appointmentsResult] = await Promise.all([
         supabase
           .from("service_slots")
@@ -154,13 +182,17 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
           .eq("active", true)
           .gte("slot_at", startIso)
           .lt("slot_at", endIsoExclusive)
-          .order("slot_at", { ascending: true }),
+          .order("slot_at", { ascending: true })
+          .abortSignal(controller.signal),
         supabase
           .from("appointments")
           .select("slot_id, appointment_at, status")
           .eq("service_id", serviceId)
-          .in("status", ["booked"]),
+          .in("status", ["booked"])
+          .abortSignal(controller.signal),
       ]);
+
+      window.clearTimeout(timeoutId);
 
       const allSlots = slotsResult.data || [];
       const appointments = appointmentsResult.data || [];
@@ -172,6 +204,21 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
         slotsError: slotsResult.error,
         appointmentsError: appointmentsResult.error,
       });
+
+      if (slotsResult.error) {
+        console.error("Slots query error:", slotsResult.error);
+        setSlotsErrorMessage(
+          slotsResult.error.message ||
+            "Could not load time slots. Please try again."
+        );
+      }
+
+      if (appointmentsResult.error) {
+        console.warn(
+          "Appointments query error (capacity may be approximate):",
+          appointmentsResult.error
+        );
+      }
 
       if (allSlots) {
         // Filter by capacity only (date is already filtered at DB level)
@@ -194,9 +241,16 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       } else {
         setAvailableSlots([]);
       }
-    } catch (error) {
-      console.error("Error fetching available slots:", error);
-      setAvailableSlots([]);
+    } catch (error: any) {
+      if (error?.name === "AbortError") {
+        console.log(
+          "Slots request was aborted (likely due to a new selection)"
+        );
+      } else {
+        console.error("Error fetching available slots:", error);
+        setAvailableSlots([]);
+        setSlotsErrorMessage("Failed to load time slots.");
+      }
     } finally {
       setLoadingSlots(false);
     }
@@ -536,6 +590,10 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
           </h2>
           {loadingSlots ? (
             <div className="text-center py-4">Loading time slots...</div>
+          ) : slotsErrorMessage ? (
+            <div className="text-center py-8 text-red-500 text-[14px]">
+              {slotsErrorMessage}
+            </div>
           ) : availableSlots.length > 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-2">
               {availableSlots.map((slot) => (
