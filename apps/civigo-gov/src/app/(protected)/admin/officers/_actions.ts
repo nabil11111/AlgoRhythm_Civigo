@@ -48,12 +48,15 @@ export async function createOfficerProfile(
         (u) => u.email?.toLowerCase() === parsed.email.toLowerCase()
       ) ?? null;
     if (!target) {
-      // Create auth user on the fly
+      // Create auth user on the fly with officer role in user_metadata
       const created = await sr.auth.admin.createUser({
         email: parsed.email,
         email_confirm: true,
         password: parsed.temporaryPassword || undefined,
-        user_metadata: { full_name: parsed.full_name },
+        user_metadata: { 
+          full_name: parsed.full_name,
+          role: "officer"
+        },
       });
       if (created.error)
         return {
