@@ -128,7 +128,10 @@ export default async function ServicesPage({
             </span>
           </Link>
 
-          <Link href="/app/assistant" className="flex flex-col items-center gap-2">
+          <Link
+            href="/app/assistant"
+            className="flex flex-col items-center gap-2"
+          >
             <div className="w-[50px] h-[50px] rounded-full bg-[var(--color-primary)] border border-[var(--color-primary)] grid place-items-center">
               <AIIcon />
             </div>
@@ -254,15 +257,7 @@ export default async function ServicesPage({
           </div>
         </div>
 
-        {/* AI Assistant FAB */}
-        <div className="fixed bottom-24 right-5">
-          <Link
-            href="/app/assistant"
-            className="w-11 h-11 bg-[var(--color-primary)] rounded-full grid place-items-center shadow-lg hover:bg-[var(--color-primary)]/90 transition-colors"
-          >
-            <AIIcon />
-          </Link>
-        </div>
+        {/* Removed AI Assistant FAB */}
       </div>
 
       <Navbar activeTab="services" />
@@ -349,8 +344,6 @@ function MapPinIcon() {
     </svg>
   );
 }
-
-
 
 function SearchSmallIcon() {
   return (

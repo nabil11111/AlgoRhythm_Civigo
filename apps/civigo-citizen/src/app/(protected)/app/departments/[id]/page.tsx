@@ -184,12 +184,7 @@ export default async function DepartmentDetailsPage({
           )}
         </div>
 
-        {/* AI Assistant FAB */}
-        <div className="fixed bottom-24 right-5">
-          <button className="w-11 h-11 bg-[var(--color-primary)] rounded-full grid place-items-center shadow-lg">
-            <AIIcon />
-          </button>
-        </div>
+        {/* Removed AI Assistant FAB */}
       </div>
 
       <Navbar activeTab="services" />
@@ -260,24 +255,4 @@ function ArrowRightIcon() {
   );
 }
 
-function AIIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M9 12l2 2 4-4"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r="9"
-        stroke="white"
-        strokeWidth="2"
-        fill="none"
-      />
-    </svg>
-  );
-}
+// Removed AIIcon

@@ -9,6 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${SCRIPT_DIR}/.."
 DOCKER_COMPOSE_FILE="${REPO_ROOT}/docker-compose.yml"
+KONG_CONFIG_FILE="${REPO_ROOT}/docker/kong/kong.yml"
 
 BASE_URL="${SUPABASE_URL:-http://localhost:54321}"
 PASSWORD="12345678"
@@ -25,6 +26,9 @@ require sed
 require awk
 require tr
 require jq
+require grep
+require cut
+require tail
 
 extract_key_from_compose() {
   local key_name="$1"
@@ -56,12 +60,26 @@ resolve_service_role_key() {
   key="$(extract_key_from_compose "SERVICE_KEY")"
   if [[ -n "${key}" ]]; then echo -n "${key}"; return; fi
 
+  # Fallback: extract from Kong gateway config used by local Supabase
+  if [[ -f "${KONG_CONFIG_FILE}" ]]; then
+    # Find the first service_role consumer and read its key from subsequent lines
+    local line_num
+    line_num="$(grep -n "^[[:space:]]*- username:[[:space:]]*service_role" "${KONG_CONFIG_FILE}" | head -n1 | cut -d: -f1)"
+    if [[ -n "${line_num}" ]]; then
+      key="$(tail -n +"${line_num}" "${KONG_CONFIG_FILE}" \
+        | grep -m1 "^[[:space:]]*- key:" \
+        | awk -F": " '{print $2}' \
+        | tr -d '"\r\n')"
+      if [[ -n "${key}" ]]; then echo -n "${key}"; return; fi
+    fi
+  fi
+
   echo "" # not found
 }
 
 SERVICE_ROLE_KEY="$(resolve_service_role_key)"
 if [[ -z "${SERVICE_ROLE_KEY}" ]]; then
-  echo "Error: Could not determine service role key from env or docker-compose.yml" >&2
+  echo "Error: Could not determine service role key from env, docker-compose.yml, or docker/kong/kong.yml" >&2
   exit 1
 fi
 

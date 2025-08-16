@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { 
-  Plus, 
-  Search, 
-  Settings, 
-  Calendar, 
-  FileText, 
+import {
+  Plus,
+  Search,
+  Settings,
+  Calendar,
+  FileText,
   MoreVertical,
   MapPin,
   Clock,
   Eye,
   Edit,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +25,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import CreateServiceDialog from "./CreateServiceDialog";
 
 interface Department {
   id: string;
@@ -70,36 +71,47 @@ export function ServicesManagement({
   branches,
   serviceSettings,
   activeSlots,
-  deptId
+  deptId,
 }: ServicesManagementProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
 
-  const filteredServices = services.filter(service => 
-    service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.code.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredServices = services.filter(
+    (service) =>
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getServiceBranchStatus = (serviceId: string, branchId: string) => {
-    const setting = serviceSettings.find(s => s.service_id === serviceId && s.branch_id === branchId);
+    const setting = serviceSettings.find(
+      (s) => s.service_id === serviceId && s.branch_id === branchId
+    );
     return setting?.enabled ?? true;
   };
 
   const getActiveSlotCount = (serviceId: string, branchId: string) => {
-    return activeSlots.filter(slot => 
-      slot.service_id === serviceId && 
-      slot.branch_id === branchId && 
-      slot.active
+    return activeSlots.filter(
+      (slot) =>
+        slot.service_id === serviceId &&
+        slot.branch_id === branchId &&
+        slot.active
     ).length;
   };
 
-  const handleBranchToggle = async (serviceId: string, branchId: string, enabled: boolean) => {
+  const handleBranchToggle = async (
+    serviceId: string,
+    branchId: string,
+    enabled: boolean
+  ) => {
     try {
-      const res = await fetch(`/officer/departments/${deptId}/services/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deptId, serviceId, branchId, enabled }),
-      });
+      const res = await fetch(
+        `/officer/departments/${deptId}/services/toggle`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deptId, serviceId, branchId, enabled }),
+        }
+      );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         console.error("Toggle failed", err);
@@ -119,9 +131,11 @@ export function ServicesManagement({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Services</h1>
-          <p className="text-gray-600 mt-1">{department.name} • {services.length} services</p>
+          <p className="text-gray-600 mt-1">
+            {department.name} • {services.length} services
+          </p>
         </div>
-
+        <CreateServiceDialog deptId={deptId} />
       </div>
 
       {/* Search and Filters */}
@@ -143,8 +157,10 @@ export function ServicesManagement({
               className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
               <option value="all">All Branches</option>
-              {branches.map(branch => (
-                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
               ))}
             </select>
           </div>
@@ -158,17 +174,23 @@ export function ServicesManagement({
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No services found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No services found
+            </h3>
             <p className="text-gray-500 mb-4">
-              {searchTerm ? "Try adjusting your search criteria." : "Get started by creating your first service."}
+              {searchTerm
+                ? "Try adjusting your search criteria."
+                : "Get started by creating your first service."}
             </p>
-
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredServices.map((service) => (
-            <Card key={service.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={service.id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
                 <div className="space-y-1">
                   <CardTitle className="text-lg">{service.name}</CardTitle>
@@ -192,13 +214,17 @@ export function ServicesManagement({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={`/officer/departments/${deptId}/services/${service.id}`}>
+                      <Link
+                        href={`/officer/departments/${deptId}/services/${service.id}`}
+                      >
                         <Eye className="w-4 h-4 mr-2" />
                         View Details
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={`/officer/departments/${deptId}/services/${service.id}`}>
+                      <Link
+                        href={`/officer/departments/${deptId}/services/${service.id}`}
+                      >
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Service
                       </Link>
@@ -211,7 +237,7 @@ export function ServicesManagement({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Branch Availability */}
                 <div>
@@ -221,19 +247,36 @@ export function ServicesManagement({
                   </h4>
                   <div className="space-y-2">
                     {branches.map((branch) => {
-                      const isEnabled = getServiceBranchStatus(service.id, branch.id);
-                      const slotCount = getActiveSlotCount(service.id, branch.id);
-                      
+                      const isEnabled = getServiceBranchStatus(
+                        service.id,
+                        branch.id
+                      );
+                      const slotCount = getActiveSlotCount(
+                        service.id,
+                        branch.id
+                      );
+
                       return (
-                        <div key={branch.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <div
+                          key={branch.id}
+                          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                        >
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-2">
                               <Switch
                                 checked={isEnabled}
-                                onCheckedChange={(checked) => handleBranchToggle(service.id, branch.id, checked)}
+                                onCheckedChange={(checked) =>
+                                  handleBranchToggle(
+                                    service.id,
+                                    branch.id,
+                                    checked
+                                  )
+                                }
                                 size="sm"
                               />
-                              <span className="text-sm font-medium">{branch.name}</span>
+                              <span className="text-sm font-medium">
+                                {branch.name}
+                              </span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -248,14 +291,28 @@ export function ServicesManagement({
 
                 {/* Quick Actions */}
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1" asChild>
-                    <Link href={`/officer/departments/${deptId}/services/${service.id}/slots`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    asChild
+                  >
+                    <Link
+                      href={`/officer/departments/${deptId}/services/${service.id}/slots`}
+                    >
                       <Calendar className="w-4 h-4 mr-1" />
                       Slots
                     </Link>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1" asChild>
-                    <Link href={`/officer/departments/${deptId}/services/${service.id}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    asChild
+                  >
+                    <Link
+                      href={`/officer/departments/${deptId}/services/${service.id}`}
+                    >
                       <Settings className="w-4 h-4 mr-1" />
                       Setup
                     </Link>
@@ -270,15 +327,17 @@ export function ServicesManagement({
       {/* Branch Overview */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Branch Overview</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            Branch Overview
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {branches.map((branch) => {
-              const enabledServices = services.filter(service => 
+              const enabledServices = services.filter((service) =>
                 getServiceBranchStatus(service.id, branch.id)
               ).length;
-              
+
               return (
                 <div key={branch.id} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
@@ -288,12 +347,21 @@ export function ServicesManagement({
                     </Badge>
                   </div>
                   {branch.address && (
-                    <p className="text-sm text-gray-600 mb-2">{branch.address}</p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {branch.address}
+                    </p>
                   )}
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>{enabledServices}/{services.length} services</span>
                     <span>
-                      {activeSlots.filter(slot => slot.branch_id === branch.id).length} active slots
+                      {enabledServices}/{services.length} services
+                    </span>
+                    <span>
+                      {
+                        activeSlots.filter(
+                          (slot) => slot.branch_id === branch.id
+                        ).length
+                      }{" "}
+                      active slots
                     </span>
                   </div>
                 </div>

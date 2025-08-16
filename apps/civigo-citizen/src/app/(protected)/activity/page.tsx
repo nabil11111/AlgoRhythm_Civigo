@@ -517,16 +517,7 @@ export default async function ActivityPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* AI Assistant FAB */}
-      <div className="fixed bottom-24 right-5">
-        <button className="w-11 h-11 bg-[var(--color-primary)] rounded-full grid place-items-center shadow-lg">
-          <div className="w-6 h-6 bg-white rounded-sm grid place-items-center">
-            <span className="text-[10px] font-bold text-[var(--color-primary)]">
-              AI
-            </span>
-          </div>
-        </button>
-      </div>
+      {/* Removed AI Assistant FAB */}
 
       {/* Bottom Navigation */}
       <Navbar activeTab="activity" />

@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -17,10 +17,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Disable telemetry during the build.
-ENV NEXT_TELEMETRY_DISABLED 1
+# Next.js build settings
+# - Disable telemetry
+# - Disable Lightning CSS (native binding not available on alpine arm64)
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_DISABLE_LIGHTNINGCSS=1
 
 RUN npm run build
 

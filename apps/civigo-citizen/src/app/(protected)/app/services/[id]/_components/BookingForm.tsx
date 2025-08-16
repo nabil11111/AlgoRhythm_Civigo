@@ -32,27 +32,24 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+  const [loadingDates, setLoadingDates] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
 
-  // Add some test dates for debugging (add dates for current month)
-  React.useEffect(() => {
-    // Always add some test available dates for debugging
-    const today = new Date();
-    const testDates = [];
-    for (let i = 1; i <= 10; i++) {
-      const testDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() + i
-      );
-      if (!isWeekend(testDate)) {
-        testDates.push(testDate.toISOString().split("T")[0]);
-      }
-    }
-    setAvailableDates(testDates);
-    console.log("Test dates added for debugging:", testDates);
-  }, []); // Run once on mount
+  // Helper to compute UTC range for a given local YYYY-MM-DD
+  const getSelectedDateUtcRange = (dateStr: string) => {
+    const [yearStr, monthStr, dayStr] = dateStr.split("-");
+    const year = Number(yearStr);
+    const monthIndex = Number(monthStr) - 1; // JS Date month is 0-based
+    const day = Number(dayStr);
+    const startLocal = new Date(year, monthIndex, day, 0, 0, 0, 0);
+    const endLocalExclusive = new Date(year, monthIndex, day + 1, 0, 0, 0, 0);
+    return {
+      startIso: startLocal.toISOString(),
+      endIsoExclusive: endLocalExclusive.toISOString(),
+    };
+  };
 
   const supabase = getBrowserClient();
   const router = useRouter();
@@ -79,7 +76,7 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   }, [selectedDate, selectedBranch, serviceId]);
 
   const fetchAvailableDates = async () => {
-    setLoading(true);
+    setLoadingDates(true);
     try {
       const startDate = new Date();
       const endDate = new Date();
@@ -136,16 +133,18 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       console.error("Error fetching available dates:", error);
       setAvailableDates([]);
     } finally {
-      setLoading(false);
+      setLoadingDates(false);
     }
   };
 
   const fetchAvailableSlots = async () => {
-    setLoading(true);
+    setLoadingSlots(true);
     try {
       console.log("Fetching slots for selected date:", selectedDate);
 
-      // Fetch slots and appointments to check capacity
+      // Fetch slots (scoped to the selected day) and appointments to check capacity
+      const { startIso, endIsoExclusive } =
+        getSelectedDateUtcRange(selectedDate);
       const [slotsResult, appointmentsResult] = await Promise.all([
         supabase
           .from("service_slots")
@@ -153,6 +152,8 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
           .eq("service_id", serviceId)
           .eq("branch_id", selectedBranch)
           .eq("active", true)
+          .gte("slot_at", startIso)
+          .lt("slot_at", endIsoExclusive)
           .order("slot_at", { ascending: true }),
         supabase
           .from("appointments")
@@ -173,43 +174,23 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       });
 
       if (allSlots) {
-        // Filter slots by date and availability
-        const slotsForDate = allSlots.filter((slot) => {
-          const slotDate = new Date(slot.slot_at);
-
-          // Use LOCAL date extraction to match with available dates (consistent with fetchAvailableDates)
-          const localDateStr = `${slotDate.getFullYear()}-${String(
-            slotDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(slotDate.getDate()).padStart(2, "0")}`;
-
-          // Check if slot matches selected date
-          const dateMatches = localDateStr === selectedDate;
-
-          // Count booked appointments for this slot
+        // Filter by capacity only (date is already filtered at DB level)
+        const capacityFiltered = allSlots.filter((slot) => {
           const bookedCount = appointments.filter(
             (apt) => apt.slot_id === slot.id && apt.status === "booked"
           ).length;
-
-          // Check if slot has capacity
           const hasCapacity = bookedCount < slot.capacity;
-
-          console.log("Filtering slot:", {
+          console.log("Capacity check:", {
             slotAt: slot.slot_at,
-            slotLocalTime: slotDate.toString(),
-            extractedDate: localDateStr,
-            selectedDate: selectedDate,
-            dateMatches,
             capacity: slot.capacity,
             bookedCount,
             hasCapacity,
-            willShow: dateMatches && hasCapacity,
           });
-
-          return dateMatches && hasCapacity;
+          return hasCapacity;
         });
 
-        console.log("Filtered slots for date:", slotsForDate);
-        setAvailableSlots(slotsForDate);
+        console.log("Filtered slots for date:", capacityFiltered);
+        setAvailableSlots(capacityFiltered);
       } else {
         setAvailableSlots([]);
       }
@@ -217,7 +198,7 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       console.error("Error fetching available slots:", error);
       setAvailableSlots([]);
     } finally {
-      setLoading(false);
+      setLoadingSlots(false);
     }
   };
 
@@ -305,7 +286,7 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
   const handleBooking = async () => {
     if (!selectedSlot || !selectedBranch || !selectedDate) return;
 
-    setLoading(true);
+    setIsBooking(true);
     try {
       // Get the selected slot details
       const slot = availableSlots.find((s) => s.id === selectedSlot);
@@ -346,7 +327,7 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
     } catch (error) {
       console.error("Error navigating to confirmation:", error);
     } finally {
-      setLoading(false);
+      setIsBooking(false);
     }
   };
 
@@ -553,7 +534,7 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
           <h2 className="text-[16px] font-bold text-[#4f4f4f] mb-4">
             Select Time:
           </h2>
-          {loading ? (
+          {loadingSlots ? (
             <div className="text-center py-4">Loading time slots...</div>
           ) : availableSlots.length > 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-2">
@@ -603,17 +584,17 @@ export default function BookingForm({ serviceId, branches }: BookingFormProps) {
       {/* Next Button */}
       <button
         onClick={handleBooking}
-        disabled={!selectedSlot || loading}
+        disabled={!selectedSlot || loadingSlots || isBooking}
         className={`
           w-full h-[43px] font-bold rounded-lg text-[16px] transition-colors
           ${
-            selectedSlot && !loading
+            selectedSlot && !loadingSlots && !isBooking
               ? "bg-[var(--color-primary)] text-white hover:bg-blue-700"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }
         `}
       >
-        {loading ? "Processing..." : "Next"}
+        {isBooking ? "Processing..." : "Next"}
       </button>
     </>
   );

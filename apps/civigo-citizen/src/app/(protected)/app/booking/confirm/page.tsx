@@ -326,12 +326,7 @@ export default async function BookingConfirmPage({ searchParams }: PageProps) {
           </Link>
         </div>
 
-        {/* AI Assistant FAB */}
-        <div className="fixed bottom-24 right-5">
-          <button className="w-11 h-11 bg-[var(--color-primary)] rounded-full grid place-items-center shadow-lg">
-            <AIIcon />
-          </button>
-        </div>
+        {/* Removed AI Assistant FAB */}
       </div>
 
       <Navbar activeTab="services" />
@@ -354,16 +349,7 @@ function BackArrowIcon() {
   );
 }
 
-function AIIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-        fill="white"
-      />
-    </svg>
-  );
-}
+// Removed AIIcon
 
 function IDCardIcon() {
   return (
