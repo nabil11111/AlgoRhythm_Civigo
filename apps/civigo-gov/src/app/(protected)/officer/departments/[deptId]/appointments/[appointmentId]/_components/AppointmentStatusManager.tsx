@@ -12,7 +12,8 @@ import {
   CheckCircle,
   XCircle,
   UserX,
-  AlertTriangle
+  AlertTriangle,
+  Shield
 } from "lucide-react";
 
 
@@ -21,6 +22,7 @@ interface Appointment {
   status: string;
   no_show?: boolean;
   appointment_at: string;
+  confirmed_at?: string | null;
   checked_in_at?: string | null;
   started_at?: string | null;
   completed_at?: string | null;
@@ -30,16 +32,18 @@ interface Appointment {
 interface AppointmentStatusManagerProps {
   appointment: Appointment;
   deptId: string;
-  markCheckedInAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markStartedAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markCompletedAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markCancelledAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markNoShowAction: (data: { id: string; deptId: string; value: boolean }) => Promise<any>;
+  markConfirmedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markCheckedInAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markStartedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markCompletedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markCancelledAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markNoShowAction: (data: { id: string; deptId: string; value: boolean }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
 }
 
 export function AppointmentStatusManager({
   appointment,
   deptId,
+  markConfirmedAction,
   markCheckedInAction,
   markStartedAction,
   markCompletedAction,
@@ -48,7 +52,7 @@ export function AppointmentStatusManager({
 }: AppointmentStatusManagerProps) {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-  const handleAction = async (action: () => Promise<any>, actionName: string) => {
+  const handleAction = async (action: () => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>, actionName: string) => {
     setIsProcessing(actionName);
     try {
       await action();
@@ -77,6 +81,12 @@ export function AppointmentStatusManager({
           color: "bg-blue-50 text-blue-700 border-blue-200",
           icon: <Calendar className="w-4 h-4" />
         };
+      case "confirmed":
+        return {
+          label: "Confirmed",
+          color: "bg-green-50 text-green-700 border-green-200",
+          icon: <Shield className="w-4 h-4" />
+        };
       case "checked_in":
         return {
           label: "Checked In",
@@ -92,7 +102,7 @@ export function AppointmentStatusManager({
       case "completed":
         return {
           label: "Completed",
-          color: "bg-green-50 text-green-700 border-green-200",
+          color: "bg-emerald-50 text-emerald-700 border-emerald-200",
           icon: <CheckCircle className="w-4 h-4" />
         };
       case "cancelled":
@@ -112,10 +122,11 @@ export function AppointmentStatusManager({
 
   const statusInfo = getStatusInfo(appointment.status, appointment.no_show);
 
-  const canCheckIn = appointment.status === "booked" && !appointment.checked_in_at;
+  const canConfirm = appointment.status === "booked" && !appointment.confirmed_at;
+  const canCheckIn = (appointment.status === "booked" || appointment.status === "confirmed") && !appointment.checked_in_at;
   const canStart = appointment.checked_in_at && !appointment.started_at;
   const canComplete = appointment.started_at && !appointment.completed_at;
-  const canCancel = appointment.status === "booked";
+  const canCancel = appointment.status === "booked" || appointment.status === "confirmed";
   const canMarkNoShow = !appointment.no_show && appointment.status !== "completed";
 
   const isCompleted = appointment.status === "completed";
@@ -143,6 +154,16 @@ export function AppointmentStatusManager({
               {new Date(appointment.appointment_at).toLocaleString()}
             </span>
           </div>
+          
+          {appointment.confirmed_at && (
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-gray-600">Confirmed</span>
+              <span className="text-gray-500 ml-auto">
+                {new Date(appointment.confirmed_at).toLocaleString()}
+              </span>
+            </div>
+          )}
           
           {appointment.checked_in_at && (
             <div className="flex items-center gap-3 text-sm">
@@ -197,6 +218,22 @@ export function AppointmentStatusManager({
           <div className="pt-4 border-t">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Available Actions</h4>
             <div className="grid grid-cols-2 gap-2">
+              {canConfirm && (
+                <Button
+                  onClick={() => handleAction(
+                    () => markConfirmedAction({ id: appointment.id, deptId }),
+                    "Confirm"
+                  )}
+                  disabled={isProcessing !== null}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center gap-2 col-span-2 border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  <Shield className="w-4 h-4" />
+                  {isProcessing === "Confirm" ? "Processing..." : "Confirm Appointment"}
+                </Button>
+              )}
+
               {canCheckIn && (
                 <Button
                   onClick={() => handleAction(

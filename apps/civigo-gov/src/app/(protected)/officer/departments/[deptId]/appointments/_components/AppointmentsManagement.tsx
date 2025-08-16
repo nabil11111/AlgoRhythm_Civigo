@@ -18,7 +18,8 @@ import {
   UserX,
   Eye,
   Phone,
-  MapPin
+  MapPin,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +57,7 @@ interface Appointment {
   reference_code: string;
   appointment_at: string;
   status: string;
+  confirmed_at?: string | null;
   checked_in_at?: string | null;
   started_at?: string | null;
   completed_at?: string | null;
@@ -78,11 +80,12 @@ interface AppointmentsManagementProps {
     date: string;
     search: string;
   };
-  markCheckedInAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markStartedAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markCompletedAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markCancelledAction: (data: { id: string; deptId: string }) => Promise<any>;
-  markNoShowAction: (data: { id: string; deptId: string; value: boolean }) => Promise<any>;
+  markConfirmedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markCheckedInAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markStartedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markCompletedAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markCancelledAction: (data: { id: string; deptId: string }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
+  markNoShowAction: (data: { id: string; deptId: string; value: boolean }) => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>;
 }
 
 export function AppointmentsManagement({
@@ -93,6 +96,7 @@ export function AppointmentsManagement({
   stats,
   deptId,
   filters,
+  markConfirmedAction,
   markCheckedInAction,
   markStartedAction,
   markCompletedAction,
@@ -131,9 +135,10 @@ export function AppointmentsManagement({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "booked": return "bg-blue-50 text-blue-700 border-blue-200";
+      case "confirmed": return "bg-green-50 text-green-700 border-green-200";
       case "checked_in": return "bg-orange-50 text-orange-700 border-orange-200";
       case "started": return "bg-purple-50 text-purple-700 border-purple-200";
-      case "completed": return "bg-green-50 text-green-700 border-green-200";
+      case "completed": return "bg-emerald-50 text-emerald-700 border-emerald-200";
       case "cancelled": return "bg-red-50 text-red-700 border-red-200";
       case "no_show": return "bg-gray-50 text-gray-700 border-gray-200";
       default: return "bg-gray-50 text-gray-700 border-gray-200";
@@ -143,6 +148,7 @@ export function AppointmentsManagement({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "booked": return <Calendar className="w-4 h-4" />;
+      case "confirmed": return <Shield className="w-4 h-4" />;
       case "checked_in": return <UserCheck className="w-4 h-4" />;
       case "started": return <Play className="w-4 h-4" />;
       case "completed": return <CheckCircle className="w-4 h-4" />;
@@ -159,8 +165,12 @@ export function AppointmentsManagement({
     return format(date, "MMM d, HH:mm");
   };
 
+  const canConfirm = (appointment: Appointment) => {
+    return appointment.status === "booked" && !appointment.confirmed_at;
+  };
+
   const canCheckIn = (appointment: Appointment) => {
-    return appointment.status === "booked" && !appointment.checked_in_at;
+    return (appointment.status === "booked" || appointment.status === "confirmed") && !appointment.checked_in_at;
   };
 
   const canStart = (appointment: Appointment) => {
@@ -172,11 +182,11 @@ export function AppointmentsManagement({
   };
 
   const canCancel = (appointment: Appointment) => {
-    return appointment.status === "booked";
+    return appointment.status === "booked" || appointment.status === "confirmed";
   };
 
   // Action handlers
-  const handleAction = async (action: () => Promise<any>, appointmentId: string) => {
+  const handleAction = async (action: () => Promise<{ ok: boolean; error?: string; message?: string; data?: { id: string } }>, appointmentId: string) => {
     try {
       await action();
       // Reload the page to show updated data
@@ -292,6 +302,7 @@ export function AppointmentsManagement({
               >
                 <option value="all">All Statuses</option>
                 <option value="booked">Booked</option>
+                <option value="confirmed">Confirmed</option>
                 <option value="checked_in">Checked In</option>
                 <option value="started">Started</option>
                 <option value="completed">Completed</option>
@@ -371,25 +382,30 @@ export function AppointmentsManagement({
       ) : viewMode === "list" ? (
         <div className="space-y-4">
           {filteredAppointments.map((appointment) => (
-            <Card key={appointment.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={appointment.id} 
+              className="hover:shadow-md transition-shadow cursor-pointer group"
+              onClick={() => window.location.href = `/officer/departments/${deptId}/appointments/${appointment.id}`}
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
                       <span className="text-blue-600 font-mono text-xs font-bold">
                         {appointment.reference_code.slice(-4)}
                       </span>
                     </div>
                     
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                           {appointment.profiles?.full_name || "Unknown Citizen"}
                         </h3>
                         {appointment.profiles?.phone && (
                           <a 
                             href={`tel:${appointment.profiles.phone}`} 
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 z-10"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Phone className="w-4 h-4" />
                           </a>
@@ -416,7 +432,7 @@ export function AppointmentsManagement({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                     <Badge 
                       className={`${getStatusColor(appointment.status)} border`}
                     >
@@ -444,6 +460,19 @@ export function AppointmentsManagement({
                         </DropdownMenuItem>
                         
                         <DropdownMenuSeparator />
+                        
+                        {canConfirm(appointment) && (
+                          <DropdownMenuItem
+                            onClick={() => handleAction(
+                              () => markConfirmedAction({ id: appointment.id, deptId }),
+                              appointment.id
+                            )}
+                            className="text-green-600"
+                          >
+                            <Shield className="w-4 h-4 mr-2" />
+                            Confirm
+                          </DropdownMenuItem>
+                        )}
                         
                         {canCheckIn(appointment) && (
                           <DropdownMenuItem

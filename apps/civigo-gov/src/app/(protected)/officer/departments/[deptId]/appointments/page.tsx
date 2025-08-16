@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getProfile, getServerClient } from "@/utils/supabase/server";
 import { OfficerDepartmentParam } from "@/lib/validation";
 import { AppointmentsManagement } from "./_components/AppointmentsManagement";
-import { markCheckedIn, markStarted, markCompleted, markCancelled, markNoShow } from "../_actions";
+import { markConfirmed, markCheckedIn, markStarted, markCompleted, markCancelled, markNoShow } from "../_actions";
 
 type PageProps = {
   params: Promise<{ deptId: string }>;
@@ -83,7 +83,7 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
     supabase
       .from("appointments")
       .select(`
-        id, reference_code, appointment_at, status, checked_in_at, started_at, completed_at, no_show,
+        id, reference_code, appointment_at, status, confirmed_at, checked_in_at, started_at, completed_at, no_show,
         services:service_id(id, name, code),
         profiles:citizen_id(full_name, phone),
         service_slots:slot_id(branch_id, branches:branch_id(name))
@@ -97,7 +97,7 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
           return supabase
             .from("appointments")
             .select(`
-              id, reference_code, appointment_at, status, checked_in_at, started_at, completed_at, no_show,
+              id, reference_code, appointment_at, status, confirmed_at, checked_in_at, started_at, completed_at, no_show,
               services:service_id(id, name, code),
               profiles:citizen_id(full_name, phone),
               service_slots:slot_id(branch_id, branches:branch_id(name))
@@ -150,6 +150,7 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
         date: dateFilter,
         search: searchTerm
       }}
+      markConfirmedAction={markConfirmed}
       markCheckedInAction={markCheckedIn}
       markStartedAction={markStarted}
       markCompletedAction={markCompleted}

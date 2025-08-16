@@ -5,7 +5,7 @@ import { OfficerAppointmentParam } from "@/lib/validation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, FileText } from "lucide-react";
-import { markCheckedIn, markStarted, markCompleted, markCancelled, markNoShow } from "../../_actions";
+import { markConfirmed, markCheckedIn, markStarted, markCompleted, markCancelled, markNoShow } from "../../_actions";
 import { AppointmentStatusManager } from "./_components/AppointmentStatusManager";
 
 type PageProps = {
@@ -26,7 +26,7 @@ export default async function AppointmentDetailsPage({ params }: PageProps) {
   const { data: appt } = await supabase
     .from("appointments")
     .select(
-      `id, status, no_show, appointment_at, checked_in_at, started_at, completed_at, cancelled_at,
+      `id, status, no_show, appointment_at, confirmed_at, checked_in_at, started_at, completed_at, cancelled_at,
        citizen_id, citizen_gov_id,
        service:services(id, name, department_id)`
     )
@@ -212,12 +212,14 @@ export default async function AppointmentDetailsPage({ params }: PageProps) {
               status: appt.status as string,
               no_show: appt.no_show || false,
               appointment_at: appt.appointment_at as string,
+              confirmed_at: appt.confirmed_at,
               checked_in_at: appt.checked_in_at,
               started_at: appt.started_at,
               completed_at: appt.completed_at,
               cancelled_at: appt.cancelled_at
             }}
             deptId={deptId}
+            markConfirmedAction={markConfirmed}
             markCheckedInAction={markCheckedIn}
             markStartedAction={markStarted}
             markCompletedAction={markCompleted}
