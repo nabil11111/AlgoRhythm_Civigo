@@ -9,6 +9,7 @@ import {
 import { SYSTEM_PROMPT } from "@/lib/agent/constants";
 import { getProfile } from "@/utils/supabase/server";
 import * as Tools from "@/app/(protected)/_agent_tools";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 // Simple in-memory rate limiter: 10 requests / 5 min per key
 const RATE_LIMIT_MAX = 10;
@@ -36,8 +37,7 @@ function checkRateLimit(userId: string | null, ip: string | null): boolean {
   return true;
 }
 
-// Minimal Gemini function-calling loop (pseudo-implementation)
-// We do not include actual SDK usage details; placeholder structure respects server-only execution.
+// Real Gemini function-calling implementation
 export async function runAgent(
   message: string,
   context: {
@@ -83,85 +83,173 @@ export async function runAgent(
     throw new Error("Invalid branchId");
   }
 
-  // For this implementation, we avoid external model calls and simulate a minimal deterministic flow
-  // respecting the constraint to keep all tool use server-side and validated.
-  // Replace with real Gemini function-calling logic wired to SYSTEM_PROMPT and response schema.
-
-  // Heuristic: if message contains "appointments"
-  if (/appointments?/i.test(message)) {
-    const appts = await Tools.getUserAppointments();
-    return AgentResponseSchema.parse({
-      answer:
-        appts.length === 0
-          ? "You have no appointments."
-          : `You have ${appts.length} appointments.`,
-      actions: [{ type: "openAppointments" }],
-    });
+  // Initialize Gemini API
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY not configured");
   }
 
-  // If asking for slots
-  if (
-    /slot|book|availability/i.test(message) &&
-    context.serviceId &&
-    context.dateFromISO &&
-    context.dateToISO
-  ) {
-    const slots = await Tools.searchSlots(
-      context.serviceId,
-      context.dateFromISO,
-      context.dateToISO,
-      context.branchId
-    );
-    return AgentResponseSchema.parse({
-      answer:
-        slots.length === 0
-          ? "No slots in that range."
-          : `Found ${slots.length} slots.`,
-      actions: [
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    systemInstruction: SYSTEM_PROMPT
+  });
+
+  // Define available tools for Gemini
+  const tools = [
+    {
+      functionDeclarations: [
         {
-          type: "showSlots",
-          params: {
-            serviceId: context.serviceId,
-            branchId: context.branchId,
-            fromISO: context.dateFromISO,
-            toISO: context.dateToISO,
-          },
+          name: "getServiceInstructions",
+          description: "Get instructions and requirements for a government service",
+          parameters: {
+            type: SchemaType.OBJECT,
+            properties: {
+              serviceId: { type: SchemaType.STRING, description: "The service ID" }
+            },
+            required: ["serviceId"]
+          }
         },
-      ],
-      missing: undefined,
-    });
-  }
+        {
+          name: "searchSlots",
+          description: "Search for available appointment slots",
+          parameters: {
+            type: SchemaType.OBJECT,
+            properties: {
+              serviceId: { type: SchemaType.STRING, description: "The service ID" },
+              dateFromISO: { type: SchemaType.STRING, description: "Start date in ISO format" },
+              dateToISO: { type: SchemaType.STRING, description: "End date in ISO format" },
+              branchId: { type: SchemaType.STRING, description: "Optional branch ID" }
+            },
+            required: ["serviceId", "dateFromISO", "dateToISO"]
+          }
+        },
+        {
+          name: "bookSlot",
+          description: "Book an appointment slot",
+          parameters: {
+            type: SchemaType.OBJECT,
+            properties: {
+              slotId: { type: SchemaType.STRING, description: "The slot ID to book" },
+              notes: { type: SchemaType.STRING, description: "Optional notes" }
+            },
+            required: ["slotId"]
+          }
+        },
+        {
+          name: "getUserDocuments",
+          description: "Get user's uploaded documents",
+          parameters: { 
+            type: SchemaType.OBJECT, 
+            properties: {} 
+          }
+        },
+        {
+          name: "getUserAppointments", 
+          description: "Get user's appointments",
+          parameters: { 
+            type: SchemaType.OBJECT, 
+            properties: {} 
+          }
+        }
+      ]
+    }
+  ];
 
-  // If asking for documents/instructions
-  if (/document|instruction|requirement/i.test(message) && context.serviceId) {
-    const info = await Tools.getServiceInstructions(context.serviceId);
-    const docs = await Tools.getUserDocuments();
-    const answer = `${info.serviceName}: ${
-      info.instructions_richtext
-        ? "Found instructions"
-        : info.instructions_pdf_url
-        ? "PDF available"
-        : "No instructions"
-    }. You have ${docs.length} documents.`;
+  // Build conversation history with context
+  const contextInfo = Object.entries(context)
+    .filter(([_, value]) => value)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(", ");
+  
+  const prompt = contextInfo 
+    ? `Context: ${contextInfo}\n\nUser: ${message}`
+    : `User: ${message}`;
+
+  try {
+    // Start chat with tools (casting to any to bypass TypeScript issues)
+    const chat = model.startChat({ tools: tools as any });
+    const result = await chat.sendMessage(prompt);
+
+    let response = result.response;
+    
+    // Handle function calls - simplified approach
+    const candidates = result.response.candidates;
+    if (candidates && candidates[0]?.content?.parts) {
+      for (const part of candidates[0].content.parts) {
+        if ((part as any).functionCall) {
+          const call = (part as any).functionCall;
+          let toolResult;
+          
+          switch (call.name) {
+            case "getServiceInstructions":
+              toolResult = await Tools.getServiceInstructions((call.args as any).serviceId);
+              break;
+            case "searchSlots":
+              toolResult = await Tools.searchSlots(
+                (call.args as any).serviceId,
+                (call.args as any).dateFromISO,
+                (call.args as any).dateToISO,
+                (call.args as any).branchId
+              );
+              break;
+            case "bookSlot":
+              toolResult = await Tools.bookSlot({
+                slotId: (call.args as any).slotId,
+                notes: (call.args as any).notes
+              });
+              break;
+            case "getUserDocuments":
+              toolResult = await Tools.getUserDocuments();
+              break;
+            case "getUserAppointments":
+              toolResult = await Tools.getUserAppointments();
+              break;
+            default:
+              toolResult = { error: "Unknown function" };
+          }
+          
+          // Send function result back to model
+          const functionResults = [{
+            functionResponse: {
+              name: call.name,
+              response: toolResult
+            }
+          }];
+          
+          const finalResult = await chat.sendMessage(functionResults as any);
+          response = finalResult.response;
+        }
+      }
+    }
+
+    const answer = response.text();
+    
+    // Parse suggested actions from the response
+    const actions = [];
+    if (answer.includes("appointments") || answer.includes("schedule")) {
+      actions.push({ type: "openAppointments" });
+    }
+    if (context.serviceId) {
+      actions.push({ 
+        type: "openService", 
+        params: { serviceId: context.serviceId } 
+      });
+    }
+
     return AgentResponseSchema.parse({
       answer,
-      actions: [
-        { type: "openService", params: { serviceId: context.serviceId } },
-        { type: "openAppointments" },
-      ],
+      actions
+    });
+
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    // Fallback to simple response if Gemini fails
+    return AgentResponseSchema.parse({
+      answer: "I'm sorry, I'm having trouble processing your request right now. Please try again.",
+      actions: []
     });
   }
-
-  // Default: ask for missing inputs
-  return AgentResponseSchema.parse({
-    answer: "Which service and date range would you like?",
-    actions: [],
-    missing: {
-      serviceId: !context.serviceId,
-      dateRange: !context.dateFromISO || !context.dateToISO,
-      branchId: !context.branchId,
-    },
-  });
 }
 
 export async function POST(req: NextRequest) {
@@ -173,8 +261,8 @@ export async function POST(req: NextRequest) {
   }
 
   const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0] || 
-    req.headers.get("x-real-ip") || 
+    req.headers.get("x-forwarded-for")?.split(",")[0] ||
+    req.headers.get("x-real-ip") ||
     null;
   const profile = await getProfile();
   const userId = profile?.id ?? null;

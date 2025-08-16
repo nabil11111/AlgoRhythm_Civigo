@@ -30,8 +30,9 @@ RLS notes:
 
 Setup:
 
-1) Add env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (and optionally `SUPABASE_SERVICE_ROLE_KEY` for server).
-2) Install and run: `npm i` then `npm run dev`.
+1. Add env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (and optionally `SUPABASE_SERVICE_ROLE_KEY` for server).
+2. **AI Agent**: Add `AGENT_ENABLED=true` and `GEMINI_API_KEY=your-api-key` for AI assistant.
+3. Install and run: `npm i` then `npm run dev`.
 
 Booking flow (RPC-first):
 
