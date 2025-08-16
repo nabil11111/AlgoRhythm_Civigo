@@ -7,7 +7,7 @@ import {
   ServiceIdSchema,
 } from "@/lib/agent/schemas";
 import { SYSTEM_PROMPT } from "@/lib/agent/constants";
-import { getProfile } from "@/utils/supabase/server";
+import { getProfile, getServerClient } from "@/utils/supabase/server";
 import * as Tools from "@/app/(protected)/_agent_tools";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
@@ -67,15 +67,17 @@ async function getInitialContext() {
     // Get branches/locations available
     const { data: branches } = await supabase
       .from("branches")
-      .select(`
+      .select(
+        `
         id,
         name,
         code,
         address,
         department_id,
         departments!inner(name, code)
-      `)
-      .eq('active', true)
+      `
+      )
+      .eq("active", true)
       .order("name");
 
     // Get user's current appointments and documents
@@ -100,14 +102,15 @@ async function getInitialContext() {
           department: (s as any).departments?.name,
           departmentCode: (s as any).departments?.code,
         })) || [],
-      branches: branches?.map((b) => ({
-        id: b.id,
-        name: b.name,
-        code: b.code,
-        address: b.address,
-        department: (b as any).departments?.name,
-        departmentCode: (b as any).departments?.code,
-      })) || [],
+      branches:
+        branches?.map((b) => ({
+          id: b.id,
+          name: b.name,
+          code: b.code,
+          address: b.address,
+          department: (b as any).departments?.name,
+          departmentCode: (b as any).departments?.code,
+        })) || [],
       currentAppointments: appointments.slice(0, 5), // Last 5 appointments
       documentsCount: documents.length,
       currentDate: new Date().toISOString(),
@@ -287,12 +290,22 @@ Current User:
 
 Available Services in System:
 ${initialContext.services
-  .map((s) => `- ${s.name} (ID: ${s.id}) - ${s.department} [${s.departmentCode}]${s.description ? ` - ${s.description}` : ''}`)
+  .map(
+    (s) =>
+      `- ${s.name} (ID: ${s.id}) - ${s.department} [${s.departmentCode}]${
+        s.description ? ` - ${s.description}` : ""
+      }`
+  )
   .join("\n")}
 
 Available Branches/Locations:
 ${initialContext.branches
-  .map((b) => `- ${b.name} (ID: ${b.id}) - ${b.department} [${b.departmentCode}]${b.address ? ` - ${b.address}` : ''}`)
+  .map(
+    (b) =>
+      `- ${b.name} (ID: ${b.id}) - ${b.department} [${b.departmentCode}]${
+        b.address ? ` - ${b.address}` : ""
+      }`
+  )
   .join("\n")}
 
 User's Current Status:
