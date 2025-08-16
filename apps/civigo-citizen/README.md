@@ -70,7 +70,8 @@ Appointments filters:
 - `/app/appointments?status=upcoming|past` to filter by time relative to now; default shows all.
 - Pagination persists across filters; filter changes reset page to 1.
 
-Search guidance:
+Agent (feature-flagged):
 
-- For multi-column search, use PostgREST `or` with `ilike` (e.g., `or(code.ilike.%q%,name.ilike.%q%)`).
-- Avoid chaining multiple `ilike` calls which would AND the conditions.
+- Set `AGENT_ENABLED=true` to enable the chat UI mount; otherwise hidden.
+- API route `/api/agent` uses server-only tools with RLS; no file contents or signed URLs are returned.
+- Optional `GEMINI_API_KEY` (server only) for future Gemini integration; not exposed to client.

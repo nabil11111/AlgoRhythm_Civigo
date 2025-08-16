@@ -38,7 +38,7 @@ function checkRateLimit(userId: string | null, ip: string | null): boolean {
 
 // Minimal Gemini function-calling loop (pseudo-implementation)
 // We do not include actual SDK usage details; placeholder structure respects server-only execution.
-async function runAgent(
+export async function runAgent(
   message: string,
   context: {
     serviceId?: string;
@@ -93,6 +93,20 @@ async function runAgent(
         },
       ],
       missing: undefined,
+    });
+  }
+
+  // If asking for documents/instructions
+  if (/document|instruction|requirement/i.test(message) && context.serviceId) {
+    const info = await Tools.getServiceInstructions(context.serviceId);
+    const docs = await Tools.getUserDocuments();
+    const answer = `${info.serviceName}: ${info.instructions_richtext ? "Found instructions" : info.instructions_pdf_url ? "PDF available" : "No instructions"}. You have ${docs.length} documents.`;
+    return AgentResponseSchema.parse({
+      answer,
+      actions: [
+        { type: "openService", params: { serviceId: context.serviceId } },
+        { type: "openAppointments" },
+      ],
     });
   }
 

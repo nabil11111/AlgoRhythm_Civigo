@@ -27,6 +27,11 @@ export default async function ProtectedLayout({
       data-agent-enabled={agentEnabled ? "true" : "false"}
     >
       <main className="w-full">{children}</main>
+      {agentEnabled ? (
+        // Render client mount lazily to avoid server import at top-level
+        // biome-ignore lint/suspicious/noAsyncPromiseExecutor: SSR function context
+        (await import("@/components/agent/AgentMount")).default()
+      ) : null}
     </div>
   );
 }
