@@ -19,20 +19,15 @@ interface AssistantContext {
   branchId?: string;
   dateFromISO?: string;
   dateToISO?: string;
+  isInitialMessage?: boolean;
 }
 
 export default function AssistantInterface() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hi! I'm your AI assistant. I can help you with appointments, documents, and government services. What would you like to know?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [context, setContext] = useState<AssistantContext>({});
+  const [isInitialized, setIsInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -43,7 +38,10 @@ export default function AssistantInterface() {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async (messageText: string, newContext?: Partial<AssistantContext>) => {
+  const sendMessage = async (
+    messageText: string,
+    newContext?: Partial<AssistantContext>
+  ) => {
     if (!messageText.trim()) return;
 
     const userMessage: Message = {
@@ -53,7 +51,7 @@ export default function AssistantInterface() {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     const updatedContext = { ...context, ...newContext };
@@ -89,18 +87,136 @@ export default function AssistantInterface() {
         actions: data.actions,
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to send message");
-      
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send message"
+      );
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: "Sorry, I encountered an error. Please try again.",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initialize the conversation when component mounts
+  useEffect(() => {
+    if (!isInitialized) {
+      setIsInitialized(true);
+      // Auto-initialize the conversation with context
+      const initMessage = async () => {
+        setIsLoading(true);
+        try {
+          const request: AgentRequest = {
+            message: "Hello! I need help with government services.",
+            context: { isInitialMessage: true },
+          };
+
+          const response = await fetch("/api/agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(request),
+          });
+
+          const data = await response.json();
+
+          if (response.ok && !data.disabled) {
+            const assistantMessage: Message = {
+              id: Date.now().toString(),
+              role: "assistant",
+              content: data.answer,
+              timestamp: new Date(),
+              actions: data.actions,
+            };
+            setMessages([assistantMessage]);
+          }
+        } catch (error) {
+          console.error("Error initializing chat:", error);
+          // Fallback welcome message if API fails
+          setMessages([{
+            id: "welcome",
+            role: "assistant",
+            content: "Hello! I'm Nethra, your AI assistant for Civigo services. How can I help you today?",
+            timestamp: new Date(),
+          }]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      initMessage();
+    }
+  }, [isInitialized]);
+
+  const sendMessage = async (
+    messageText: string,
+    newContext?: Partial<AssistantContext>
+  ) => {
+    if (!messageText.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: messageText,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    const updatedContext = { ...context, ...newContext };
+    setContext(updatedContext);
+
+    try {
+      const request: AgentRequest = {
+        message: messageText,
+        context: updatedContext,
+      };
+
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to send message");
+      }
+
+      if (data.disabled) {
+        throw new Error("AI Assistant is currently disabled");
+      }
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.answer,
+        timestamp: new Date(),
+        actions: data.actions,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send message"
+      );
+
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Sorry, I encountered an error. Please try again.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -114,18 +230,28 @@ export default function AssistantInterface() {
     }
   };
 
-  const handleSuggestedAction = (action: NonNullable<AgentResponse["actions"]>[0]) => {
+  const handleSuggestedAction = (
+    action: NonNullable<AgentResponse["actions"]>[0]
+  ) => {
     switch (action.type) {
       case "selectBranch":
         if (action.params?.branchId && action.params?.branchName) {
-          setContext(prev => ({ ...prev, branchId: action.params!.branchId }));
-          sendMessage(`Selected branch: ${action.params.branchName}`, { branchId: action.params.branchId });
+          setContext((prev) => ({
+            ...prev,
+            branchId: action.params!.branchId,
+          }));
+          sendMessage(`Selected branch: ${action.params.branchName}`, {
+            branchId: action.params.branchId,
+          });
         }
         break;
       case "selectDateRange":
         if (action.params?.fromISO && action.params?.toISO) {
-          const newContext = { dateFromISO: action.params.fromISO, dateToISO: action.params.toISO };
-          setContext(prev => ({ ...prev, ...newContext }));
+          const newContext = {
+            dateFromISO: action.params.fromISO,
+            dateToISO: action.params.toISO,
+          };
+          setContext((prev) => ({ ...prev, ...newContext }));
           sendMessage(`Selected date range`, newContext);
         }
         break;
@@ -134,7 +260,9 @@ export default function AssistantInterface() {
         break;
       case "book":
         if (action.params?.slotId) {
-          sendMessage(`Book slot ${action.params.slotId}`, { slotId: action.params.slotId });
+          sendMessage(`Book slot ${action.params.slotId}`, {
+            slotId: action.params.slotId,
+          });
         }
         break;
       case "openService":
@@ -155,7 +283,9 @@ export default function AssistantInterface() {
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+            className={`flex ${
+              message.role === "user" ? "justify-end" : "justify-start"
+            }`}
           >
             <div
               className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 rounded-lg ${
@@ -175,12 +305,14 @@ export default function AssistantInterface() {
                       className="w-full text-xs sm:text-sm"
                       onClick={() => handleSuggestedAction(action)}
                     >
-                      {action.type === "selectBranch" && `Select ${action.params?.branchName}`}
+                      {action.type === "selectBranch" &&
+                        `Select ${action.params?.branchName}`}
                       {action.type === "selectDateRange" && "Select Date Range"}
                       {action.type === "showSlots" && "Show Available Slots"}
                       {action.type === "book" && "Book This Slot"}
                       {action.type === "openService" && "View Service Details"}
-                      {action.type === "openAppointments" && "View My Appointments"}
+                      {action.type === "openAppointments" &&
+                        "View My Appointments"}
                     </Button>
                   ))}
                 </div>
@@ -196,8 +328,14 @@ export default function AssistantInterface() {
             <div className="bg-white text-gray-900 shadow-sm border px-4 py-2 rounded-lg">
               <div className="flex space-x-1">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
               </div>
             </div>
           </div>
@@ -214,7 +352,8 @@ export default function AssistantInterface() {
             {context.branchId && <div>Branch: {context.branchId}</div>}
             {context.dateFromISO && context.dateToISO && (
               <div>
-                Dates: {new Date(context.dateFromISO).toLocaleDateString()} - {new Date(context.dateToISO).toLocaleDateString()}
+                Dates: {new Date(context.dateFromISO).toLocaleDateString()} -{" "}
+                {new Date(context.dateToISO).toLocaleDateString()}
               </div>
             )}
           </div>
@@ -238,7 +377,11 @@ export default function AssistantInterface() {
           disabled={isLoading}
           className="flex-1 text-sm sm:text-base"
         />
-        <Button type="submit" disabled={isLoading || !input.trim()} className="px-4 sm:px-6">
+        <Button
+          type="submit"
+          disabled={isLoading || !input.trim()}
+          className="px-4 sm:px-6"
+        >
           Send
         </Button>
       </form>

@@ -37,6 +37,87 @@ function checkRateLimit(userId: string | null, ip: string | null): boolean {
   return true;
 }
 
+// Get initial context for the conversation
+async function getInitialContext() {
+  try {
+    const profile = await getProfile();
+    if (!profile) return null;
+
+    // Get available services from database with their departments
+    const supabase = await getServerClient();
+    const { data: services } = await supabase
+      .from("services")
+      .select(
+        `
+        id, 
+        name, 
+        code, 
+        description,
+        department_id,
+        departments!inner(
+          id,
+          name,
+          code
+        )
+      `
+      )
+      .eq("active", true)
+      .order("name");
+
+    // Get branches/locations available
+    const { data: branches } = await supabase
+      .from("branches")
+      .select(`
+        id,
+        name,
+        code,
+        address,
+        department_id,
+        departments!inner(name, code)
+      `)
+      .eq('active', true)
+      .order("name");
+
+    // Get user's current appointments and documents
+    const [appointments, documents] = await Promise.all([
+      Tools.getUserAppointments().catch(() => []),
+      Tools.getUserDocuments().catch(() => []),
+    ]);
+
+    return {
+      user: {
+        id: profile.id,
+        name: profile.full_name,
+        govId: profile.gov_id,
+        role: profile.role,
+      },
+      services:
+        services?.map((s) => ({
+          id: s.id,
+          name: s.name,
+          code: s.code,
+          description: s.description,
+          department: (s as any).departments?.name,
+          departmentCode: (s as any).departments?.code,
+        })) || [],
+      branches: branches?.map((b) => ({
+        id: b.id,
+        name: b.name,
+        code: b.code,
+        address: b.address,
+        department: (b as any).departments?.name,
+        departmentCode: (b as any).departments?.code,
+      })) || [],
+      currentAppointments: appointments.slice(0, 5), // Last 5 appointments
+      documentsCount: documents.length,
+      currentDate: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("Error getting initial context:", error);
+    return null;
+  }
+}
+
 // Real Gemini function-calling implementation
 export async function runAgent(
   message: string,
@@ -45,6 +126,7 @@ export async function runAgent(
     branchId?: string;
     dateFromISO?: string;
     dateToISO?: string;
+    isInitialMessage?: boolean;
   }
 ) {
   // Validate and sanitize inputs
@@ -90,9 +172,9 @@ export async function runAgent(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ 
+  const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
-    systemInstruction: SYSTEM_PROMPT
+    systemInstruction: SYSTEM_PROMPT,
   });
 
   // Define available tools for Gemini
@@ -101,14 +183,18 @@ export async function runAgent(
       functionDeclarations: [
         {
           name: "getServiceInstructions",
-          description: "Get instructions and requirements for a government service",
+          description:
+            "Get instructions and requirements for a government service",
           parameters: {
             type: SchemaType.OBJECT,
             properties: {
-              serviceId: { type: SchemaType.STRING, description: "The service ID" }
+              serviceId: {
+                type: SchemaType.STRING,
+                description: "The service ID",
+              },
             },
-            required: ["serviceId"]
-          }
+            required: ["serviceId"],
+          },
         },
         {
           name: "searchSlots",
@@ -116,13 +202,25 @@ export async function runAgent(
           parameters: {
             type: SchemaType.OBJECT,
             properties: {
-              serviceId: { type: SchemaType.STRING, description: "The service ID" },
-              dateFromISO: { type: SchemaType.STRING, description: "Start date in ISO format" },
-              dateToISO: { type: SchemaType.STRING, description: "End date in ISO format" },
-              branchId: { type: SchemaType.STRING, description: "Optional branch ID" }
+              serviceId: {
+                type: SchemaType.STRING,
+                description: "The service ID",
+              },
+              dateFromISO: {
+                type: SchemaType.STRING,
+                description: "Start date in ISO format",
+              },
+              dateToISO: {
+                type: SchemaType.STRING,
+                description: "End date in ISO format",
+              },
+              branchId: {
+                type: SchemaType.STRING,
+                description: "Optional branch ID",
+              },
             },
-            required: ["serviceId", "dateFromISO", "dateToISO"]
-          }
+            required: ["serviceId", "dateFromISO", "dateToISO"],
+          },
         },
         {
           name: "bookSlot",
@@ -130,41 +228,98 @@ export async function runAgent(
           parameters: {
             type: SchemaType.OBJECT,
             properties: {
-              slotId: { type: SchemaType.STRING, description: "The slot ID to book" },
-              notes: { type: SchemaType.STRING, description: "Optional notes" }
+              slotId: {
+                type: SchemaType.STRING,
+                description: "The slot ID to book",
+              },
+              notes: { type: SchemaType.STRING, description: "Optional notes" },
             },
-            required: ["slotId"]
-          }
+            required: ["slotId"],
+          },
         },
         {
           name: "getUserDocuments",
           description: "Get user's uploaded documents",
-          parameters: { 
-            type: SchemaType.OBJECT, 
-            properties: {} 
-          }
+          parameters: {
+            type: SchemaType.OBJECT,
+            properties: {},
+          },
         },
         {
-          name: "getUserAppointments", 
+          name: "getUserAppointments",
           description: "Get user's appointments",
-          parameters: { 
-            type: SchemaType.OBJECT, 
-            properties: {} 
-          }
-        }
-      ]
-    }
+          parameters: {
+            type: SchemaType.OBJECT,
+            properties: {},
+          },
+        },
+      ],
+    },
   ];
 
-  // Build conversation history with context
+  // Build conversation with context
+  let prompt = `User: ${message}`;
+
+  // Add conversation context if available
   const contextInfo = Object.entries(context)
-    .filter(([_, value]) => value)
+    .filter(([key, value]) => key !== "isInitialMessage" && value)
     .map(([key, value]) => `${key}: ${value}`)
     .join(", ");
-  
-  const prompt = contextInfo 
-    ? `Context: ${contextInfo}\n\nUser: ${message}`
-    : `User: ${message}`;
+
+  if (contextInfo) {
+    prompt = `Context: ${contextInfo}\n\n${prompt}`;
+  }
+
+  // For initial message or when no context, add comprehensive background
+  if (
+    context.isInitialMessage ||
+    (!context.serviceId && message.length < 100)
+  ) {
+    const initialContext = await getInitialContext();
+    if (initialContext) {
+      const backgroundPrompt = `
+SYSTEM CONTEXT for this conversation:
+
+Current User:
+- Name: ${initialContext.user.name}
+- Government ID: ${initialContext.user.govId}
+- Current Date: ${new Date(initialContext.currentDate).toLocaleDateString()}
+
+Available Services in System:
+${initialContext.services
+  .map((s) => `- ${s.name} (ID: ${s.id}) - ${s.department} [${s.departmentCode}]${s.description ? ` - ${s.description}` : ''}`)
+  .join("\n")}
+
+Available Branches/Locations:
+${initialContext.branches
+  .map((b) => `- ${b.name} (ID: ${b.id}) - ${b.department} [${b.departmentCode}]${b.address ? ` - ${b.address}` : ''}`)
+  .join("\n")}
+
+User's Current Status:
+- Active Appointments: ${initialContext.currentAppointments.length}
+- Uploaded Documents: ${initialContext.documentsCount}
+
+Recent Appointments:
+${
+  initialContext.currentAppointments.length > 0
+    ? initialContext.currentAppointments
+        .map(
+          (a) =>
+            `- ${a.status} appointment on ${new Date(
+              a.appointment_at
+            ).toLocaleDateString()}`
+        )
+        .join("\n")
+    : "- No recent appointments"
+}
+
+Now respond to the user's message with this context in mind.
+
+${prompt}`;
+
+      prompt = backgroundPrompt;
+    }
+  }
 
   try {
     // Start chat with tools (casting to any to bypass TypeScript issues)
@@ -172,7 +327,7 @@ export async function runAgent(
     const result = await chat.sendMessage(prompt);
 
     let response = result.response;
-    
+
     // Handle function calls - simplified approach
     const candidates = result.response.candidates;
     if (candidates && candidates[0]?.content?.parts) {
@@ -180,10 +335,12 @@ export async function runAgent(
         if ((part as any).functionCall) {
           const call = (part as any).functionCall;
           let toolResult;
-          
+
           switch (call.name) {
             case "getServiceInstructions":
-              toolResult = await Tools.getServiceInstructions((call.args as any).serviceId);
+              toolResult = await Tools.getServiceInstructions(
+                (call.args as any).serviceId
+              );
               break;
             case "searchSlots":
               toolResult = await Tools.searchSlots(
@@ -196,7 +353,7 @@ export async function runAgent(
             case "bookSlot":
               toolResult = await Tools.bookSlot({
                 slotId: (call.args as any).slotId,
-                notes: (call.args as any).notes
+                notes: (call.args as any).notes,
               });
               break;
             case "getUserDocuments":
@@ -208,15 +365,17 @@ export async function runAgent(
             default:
               toolResult = { error: "Unknown function" };
           }
-          
+
           // Send function result back to model
-          const functionResults = [{
-            functionResponse: {
-              name: call.name,
-              response: toolResult
-            }
-          }];
-          
+          const functionResults = [
+            {
+              functionResponse: {
+                name: call.name,
+                response: toolResult,
+              },
+            },
+          ];
+
           const finalResult = await chat.sendMessage(functionResults as any);
           response = finalResult.response;
         }
@@ -224,30 +383,30 @@ export async function runAgent(
     }
 
     const answer = response.text();
-    
+
     // Parse suggested actions from the response
     const actions = [];
     if (answer.includes("appointments") || answer.includes("schedule")) {
       actions.push({ type: "openAppointments" });
     }
     if (context.serviceId) {
-      actions.push({ 
-        type: "openService", 
-        params: { serviceId: context.serviceId } 
+      actions.push({
+        type: "openService",
+        params: { serviceId: context.serviceId },
       });
     }
 
     return AgentResponseSchema.parse({
       answer,
-      actions
+      actions,
     });
-
   } catch (error) {
     console.error("Gemini API error:", error);
     // Fallback to simple response if Gemini fails
     return AgentResponseSchema.parse({
-      answer: "I'm sorry, I'm having trouble processing your request right now. Please try again.",
-      actions: []
+      answer:
+        "I'm sorry, I'm having trouble processing your request right now. Please try again.",
+      actions: [],
     });
   }
 }
