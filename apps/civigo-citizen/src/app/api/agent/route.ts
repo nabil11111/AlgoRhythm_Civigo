@@ -51,26 +51,38 @@ export async function runAgent(
   if (!message || message.trim().length === 0) {
     throw new Error("Message cannot be empty");
   }
-  
+
   // Limit message length for security
   if (message.length > 1000) {
     throw new Error("Message too long");
   }
-  
+
   // Validate context parameters if provided
-  if (context.serviceId && !ServiceIdSchema.safeParse(context.serviceId).success) {
+  if (
+    context.serviceId &&
+    !ServiceIdSchema.safeParse(context.serviceId).success
+  ) {
     throw new Error("Invalid serviceId");
   }
-  if (context.dateFromISO && !IsoDateSchema.safeParse(context.dateFromISO).success) {
+  if (
+    context.dateFromISO &&
+    !IsoDateSchema.safeParse(context.dateFromISO).success
+  ) {
     throw new Error("Invalid dateFromISO");
   }
-  if (context.dateToISO && !IsoDateSchema.safeParse(context.dateToISO).success) {
+  if (
+    context.dateToISO &&
+    !IsoDateSchema.safeParse(context.dateToISO).success
+  ) {
     throw new Error("Invalid dateToISO");
   }
-  if (context.branchId && !ServiceIdSchema.safeParse(context.branchId).success) {
+  if (
+    context.branchId &&
+    !ServiceIdSchema.safeParse(context.branchId).success
+  ) {
     throw new Error("Invalid branchId");
   }
-  
+
   // For this implementation, we avoid external model calls and simulate a minimal deterministic flow
   // respecting the constraint to keep all tool use server-side and validated.
   // Replace with real Gemini function-calling logic wired to SYSTEM_PROMPT and response schema.
@@ -161,7 +173,9 @@ export async function POST(req: NextRequest) {
   }
 
   const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0] || req.ip || null;
+    req.headers.get("x-forwarded-for")?.split(",")[0] || 
+    req.headers.get("x-real-ip") || 
+    null;
   const profile = await getProfile();
   const userId = profile?.id ?? null;
 
@@ -210,12 +224,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Agent error:", error);
-    
+
     // Map known tool errors to user-friendly messages
     const errorMessage = error instanceof Error ? error.message : "unknown";
     let userMessage = "Something went wrong. Please try again.";
     let statusCode = 500;
-    
+
     switch (errorMessage) {
       case "not_authenticated":
         userMessage = "Authentication required.";
@@ -238,11 +252,11 @@ export async function POST(req: NextRequest) {
         statusCode = 503;
         break;
     }
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: errorMessage,
-        message: userMessage
+        message: userMessage,
       }),
       {
         status: statusCode,
