@@ -341,56 +341,77 @@ ${prompt}`;
 
     let response = result.response;
 
-    // Handle function calls - simplified approach
+    // Handle function calls: perform tool calls server-side and finalize response here
     const candidates = result.response.candidates;
     if (candidates && candidates[0]?.content?.parts) {
-      for (const part of candidates[0].content.parts) {
-        if ((part as any).functionCall) {
-          const call = (part as any).functionCall;
-          let toolResult;
+      const firstCall = (candidates[0].content.parts as any[]).find(
+        (p) => p && p.functionCall
+      )?.functionCall as undefined | { name: string; args?: Record<string, unknown> };
 
-          switch (call.name) {
-            case "getServiceInstructions":
-              toolResult = await Tools.getServiceInstructions(
-                (call.args as any).serviceId
-              );
-              break;
-            case "searchSlots":
-              toolResult = await Tools.searchSlots(
-                (call.args as any).serviceId,
-                (call.args as any).dateFromISO,
-                (call.args as any).dateToISO,
-                (call.args as any).branchId
-              );
-              break;
-            case "bookSlot":
-              toolResult = await Tools.bookSlot({
-                slotId: (call.args as any).slotId,
-                notes: (call.args as any).notes,
-              });
-              break;
-            case "getUserDocuments":
-              toolResult = await Tools.getUserDocuments();
-              break;
-            case "getUserAppointments":
-              toolResult = await Tools.getUserAppointments();
-              break;
-            default:
-              toolResult = { error: "Unknown function" };
+      if (firstCall) {
+        const name = firstCall.name;
+        const args = (firstCall.args ?? {}) as Record<string, unknown>;
+
+        switch (name) {
+          case "getUserAppointments": {
+            const appts = await Tools.getUserAppointments();
+            const upcoming = appts.filter((a) => new Date(a.appointment_at) > new Date());
+            return AgentResponseSchema.parse({
+              answer:
+                upcoming.length === 0
+                  ? "You have no upcoming appointments."
+                  : `You have ${upcoming.length} upcoming appointments.`,
+              actions: [{ type: "openAppointments" }],
+            });
           }
+          case "getUserDocuments": {
+            const docs = await Tools.getUserDocuments();
+            return AgentResponseSchema.parse({
+              answer: `You have ${docs.length} documents in your wallet.`,
+              actions: [],
+            });
+          }
+          case "getServiceInstructions": {
+            const serviceId = String(args.serviceId || context.serviceId || "");
+            const info = await Tools.getServiceInstructions(serviceId);
+            const docs = await Tools.getUserDocuments();
+            const hasInstr = info.instructions_richtext || info.instructions_pdf_url;
+            const answer = `${info.serviceName}: ${hasInstr ? "Instructions available." : "No instructions found."} You currently have ${docs.length} documents.`;
+            return AgentResponseSchema.parse({
+              answer,
+              actions: [
+                { type: "openService", params: { serviceId } },
+                { type: "openAppointments" },
+              ],
+            });
+          }
+          case "searchSlots": {
+            const serviceId = String(args.serviceId || context.serviceId || "");
+            const dateFromISO = String(args.dateFromISO || context.dateFromISO || "");
+            const dateToISO = String(args.dateToISO || context.dateToISO || "");
+            const branchId = args.branchId ? String(args.branchId) : context.branchId;
 
-          // Send function result back to model
-          const functionResults = [
-            {
-              functionResponse: {
-                name: call.name,
-                response: toolResult,
-              },
-            },
-          ];
-
-          const finalResult = await chat.sendMessage(functionResults as any);
-          response = finalResult.response;
+            const slots = await Tools.searchSlots(serviceId, dateFromISO, dateToISO, branchId);
+            const count = slots.length;
+            return AgentResponseSchema.parse({
+              answer: count === 0 ? "No slots found in that range." : `Found ${count} slots in that range.`,
+              actions: [
+                {
+                  type: "showSlots",
+                  params: { serviceId, branchId, fromISO: dateFromISO, toISO: dateToISO },
+                },
+              ],
+            });
+          }
+          case "bookSlot": {
+            const slotId = String(args.slotId || "");
+            const notes = args.notes ? String(args.notes) : undefined;
+            const res = await Tools.bookSlot({ slotId, notes });
+            return AgentResponseSchema.parse({
+              answer: `Booked successfully. Reference code: ${res.reference_code}.`,
+              actions: [{ type: "openAppointments" }],
+            });
+          }
         }
       }
     }
@@ -415,12 +436,16 @@ ${prompt}`;
     });
   } catch (error) {
     console.error("Gemini API error:", error);
-    // Fallback to simple response if Gemini fails
-    return AgentResponseSchema.parse({
-      answer:
-        "I'm sorry, I'm having trouble processing your request right now. Please try again.",
-      actions: [],
-    });
+    // Fallback: propose popular services to avoid dead-ends
+    const initial = await getInitialContext();
+    const top = initial?.services?.slice(0, 4) ?? [];
+    const lines = top.map((s) => `- ${s.name} (${s.department})`).join("\n");
+    const answer =
+      top.length > 0
+        ? `Let's continue. Please pick a service to proceed:\n${lines}`
+        : "Please tell me which service you need and a date range (for example: next week).";
+    const actions = top.map((s) => ({ type: "openService" as const, params: { serviceId: s.id } }));
+    return AgentResponseSchema.parse({ answer, actions });
   }
 }
 
