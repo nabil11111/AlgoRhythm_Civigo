@@ -36,7 +36,10 @@ type ConversationState = {
 };
 
 const CONV_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const convMap = new Map<string, { updatedAt: number; state: ConversationState }>();
+const convMap = new Map<
+  string,
+  { updatedAt: number; state: ConversationState }
+>();
 
 function getConv(userId: string): ConversationState {
   const rec = convMap.get(userId);

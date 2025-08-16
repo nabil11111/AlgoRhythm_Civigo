@@ -22,12 +22,12 @@ export default async function ProtectedLayout({
     redirect("/onboarding/nic");
   }
   const agentEnabled = process.env.AGENT_ENABLED === "true";
-  
+
   // Dynamic import for client component
-  const AgentMount = agentEnabled 
-    ? (await import("@/components/agent/AgentMount")).default 
+  const AgentMount = agentEnabled
+    ? (await import("@/components/agent/AgentMount")).default
     : null;
-  
+
   return (
     <div
       className="min-h-screen bg-white text-[#171717]"

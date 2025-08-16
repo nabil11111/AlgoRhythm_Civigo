@@ -5,7 +5,11 @@ describe("Agent schemas", () => {
   it("valid AgentRequestSchema", () => {
     const parsed = AgentRequestSchema.safeParse({
       message: "Find slots",
-      context: { serviceId: "svc-1", dateFromISO: new Date().toISOString(), dateToISO: new Date(Date.now() + 86400000).toISOString() },
+      context: {
+        serviceId: "svc-1",
+        dateFromISO: new Date().toISOString(),
+        dateToISO: new Date(Date.now() + 86400000).toISOString(),
+      },
     });
     expect(parsed.success).toBe(true);
   });
@@ -15,5 +19,3 @@ describe("Agent schemas", () => {
     expect(parsed.success).toBe(true);
   });
 });
-
-
