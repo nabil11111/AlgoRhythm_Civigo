@@ -16,6 +16,43 @@ const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
 const rateMap = new Map<string, { windowStart: number; count: number }>();
 
+// Ephemeral conversation state per user (in-memory, TTL-based)
+type ConversationStage =
+  | "await_service"
+  | "await_branch"
+  | "await_dates"
+  | "await_slot"
+  | "await_confirm"
+  | "idle";
+
+type ConversationState = {
+  serviceId?: string;
+  branchId?: string;
+  dateFromISO?: string;
+  dateToISO?: string;
+  lastSlots?: Array<{ id: string; slot_at: string; branch_id: string }>;
+  pendingBookSlotId?: string;
+  stage: ConversationStage;
+};
+
+const CONV_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const convMap = new Map<string, { updatedAt: number; state: ConversationState }>();
+
+function getConv(userId: string): ConversationState {
+  const rec = convMap.get(userId);
+  const now = Date.now();
+  if (!rec || now - rec.updatedAt > CONV_TTL_MS) {
+    const fresh: ConversationState = { stage: "idle" };
+    convMap.set(userId, { updatedAt: now, state: fresh });
+    return fresh;
+  }
+  return rec.state;
+}
+
+function saveConv(userId: string, state: ConversationState) {
+  convMap.set(userId, { updatedAt: Date.now(), state });
+}
+
 function rateKey(userId: string | null, ip: string | null): string {
   return `${userId ?? "anon"}:${ip ?? "0.0.0.0"}`;
 }
@@ -39,11 +76,18 @@ function checkRateLimit(userId: string | null, ip: string | null): boolean {
 
 // Basic helpers to keep UX seamless without requiring internal IDs from user
 function normalize(value: unknown): string {
-  return String(value || "").toLowerCase().trim();
+  return String(value || "")
+    .toLowerCase()
+    .trim();
 }
 
 function inferServiceIdFromMessage(
-  services: Array<{ id: string; name: string; code?: string; department?: string }>,
+  services: Array<{
+    id: string;
+    name: string;
+    code?: string;
+    department?: string;
+  }>,
   message: string
 ): string | undefined {
   const m = normalize(message);
@@ -62,7 +106,12 @@ function inferServiceIdFromMessage(
 }
 
 function inferBranchIdFromMessage(
-  branches: Array<{ id: string; name: string; code?: string; address?: string }>,
+  branches: Array<{
+    id: string;
+    name: string;
+    code?: string;
+    address?: string;
+  }>,
   message: string
 ): string | undefined {
   const m = normalize(message);
@@ -82,7 +131,9 @@ function inferBranchIdFromMessage(
 
 function next7DayRange(): { fromISO: string; toISO: string } {
   const now = new Date();
-  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+  const from = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0)
+  );
   const to = new Date(from.getTime() + 7 * 24 * 60 * 60 * 1000);
   return { fromISO: from.toISOString(), toISO: to.toISOString() };
 }
@@ -489,27 +540,55 @@ ${prompt}`;
       }
     }
 
-    // Default: produce a proactive, short answer with suggested actions
+    // Default: produce a proactive, short answer with suggested actions and update conversation state
     const text = response.text();
     const initial = await getInitialContext();
-    const inferredServiceId = initial?.services ? inferServiceIdFromMessage(initial.services, message) : undefined;
-    const inferredBranchId = initial?.branches ? inferBranchIdFromMessage(initial.branches, message) : undefined;
+    const userId = initial?.user?.id ?? "anon";
+    const conv = getConv(userId);
+
+    const inferredServiceId = initial?.services
+      ? inferServiceIdFromMessage(initial.services, message)
+      : undefined;
+    const inferredBranchId = initial?.branches
+      ? inferBranchIdFromMessage(initial.branches, message)
+      : undefined;
     const { fromISO, toISO } = next7DayRange();
 
     const actions: any[] = [];
     if (inferredServiceId) {
-      actions.push({ type: "openService", params: { serviceId: inferredServiceId } });
+      actions.push({
+        type: "openService",
+        params: { serviceId: inferredServiceId },
+      });
       actions.push({
         type: "showSlots",
-        params: { serviceId: inferredServiceId, branchId: inferredBranchId, fromISO, toISO },
+        params: {
+          serviceId: inferredServiceId,
+          branchId: inferredBranchId,
+          fromISO,
+          toISO,
+        },
       });
+
+      // update conv state
+      conv.serviceId = conv.serviceId || inferredServiceId;
+      if (inferredBranchId) conv.branchId = conv.branchId || inferredBranchId;
+      conv.dateFromISO = conv.dateFromISO || fromISO;
+      conv.dateToISO = conv.dateToISO || toISO;
+      conv.stage = conv.branchId ? "await_dates" : "await_branch";
+      saveConv(userId, conv);
     } else if (initial?.services?.length) {
       // Propose the top service as a starting point
       const s = initial.services[0];
       actions.push({ type: "openService", params: { serviceId: s.id } });
+      conv.stage = "await_service";
+      saveConv(userId, conv);
     }
 
-    const answer = text && text.trim().length > 0 ? text : "I can help with services, documents, and appointments. I’ll suggest the next steps below.";
+    const answer =
+      text && text.trim().length > 0
+        ? text
+        : "I can help with services, documents, and appointments. I’ll suggest the next steps below.";
     return AgentResponseSchema.parse({ answer, actions });
   } catch (error) {
     console.error("Gemini API error:", error);
